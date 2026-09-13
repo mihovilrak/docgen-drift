@@ -10,7 +10,7 @@ Each phase has an exit criterion. Do not start the next phase until it is met.
 
 - [x] `package.json` (ESM, Node >= 20), `tsconfig.json` (strict), `.gitignore`
 - [x] Toolchain: `tsup` build, `vitest` test, `eslint` + `prettier`
-- [ ] `git init`, initial commit
+- [x] `git init`, initial commit
 - [x] CLI entry point with `cac` or `commander`; `docgen --version` runs
 - [x] Fixture repos under `test/fixtures/` — a small TS project covering every symbol kind in the ARCHITECTURE table, attached/blocked/detached `//` groups, overloads, accessors, and a `Promise<void>` async function; plus a multi-project monorepo fixture with overlapping-ownership failure coverage
 - [x] Decide the npm package name (`docgen-drift`; `docgen` and `docgen-cli` are taken)
