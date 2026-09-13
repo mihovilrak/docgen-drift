@@ -31,6 +31,10 @@ interface CheckCommandOptions extends CommonOptions {
   readonly since?: string;
 }
 
+interface ExplainCommandOptions extends CommonOptions {
+  readonly json?: boolean;
+}
+
 const commandRoot = (root: unknown): string =>
   resolve(typeof root === "string" ? root : ".");
 
@@ -72,6 +76,24 @@ cli
         : `Extracted ${String(symbols.length)} symbols.\n`,
     );
   });
+
+cli
+  .command("explain <symbol> [root]", "Print assembled context for one symbol")
+  .option("--config <path>", "Path to .docgenrc.json")
+  .option("--json", "Print context metadata as JSON")
+  .action(
+    async (symbol: string, root: unknown, options: ExplainCommandOptions) => {
+      const workspaceRoot = commandRoot(root);
+      const config = await loadConfig(workspaceRoot, options.config);
+      const { runExplain } = await import("./cli/explain.js");
+      const result = await runExplain(workspaceRoot, symbol, config);
+      process.stdout.write(
+        options.json === true
+          ? `${JSON.stringify(result, null, 2)}\n`
+          : `${result.text}\n`,
+      );
+    },
+  );
 
 cli
   .command("baseline [root]", "Record the current documentation state")

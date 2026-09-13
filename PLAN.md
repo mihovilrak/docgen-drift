@@ -66,18 +66,18 @@ No LLM. Everything here is deterministic and must be tested against fixtures.
 
 Still no LLM. The output of this phase is inspectable text.
 
-- [ ] Forward edges: resolve call expressions in each body to declarations, single pass
-- [ ] Reverse index by inverting forward edges — **not** `findReferencesAsNodes()` per symbol
-- [ ] Test-reference index: call sites in test files, with enclosing `it` / `test` / `describe` literals
-- [ ] Tarjan SCC + reverse topological ordering, cycles condensed
-- [ ] `core/budget.ts` — ranked knapsack over the source table in ARCHITECTURE
-- [ ] Attached leading comments as labelled source-note context, controlled by `docs.leadingComments.includeInContext`
-- [ ] Call-site extraction: line +/-2, enclosing function name, module-diversity sampling
-- [ ] Referenced type declarations, depth 1, fields only
-- [ ] `git log -L` commit subject lookup, cached, with a timeout and a clean fallback
-- [ ] Token counting for the target model; budget enforcement with graceful degradation
-- [ ] **`docgen explain <symbol>`** — print the exact assembled context for one symbol
-- [ ] Benchmark graph construction on the 100k-LOC repo
+- [x] Forward edges: resolve call expressions in each body to declarations, single pass
+- [x] Reverse index by inverting forward edges — **not** `findReferencesAsNodes()` per symbol
+- [x] Test-reference index: call sites in test files, with enclosing `it` / `test` / `describe` literals
+- [x] Tarjan SCC + reverse topological ordering, cycles condensed
+- [x] `core/budget.ts` — ranked knapsack over the source table in ARCHITECTURE
+- [x] Attached leading comments as labelled source-note context, controlled by `docs.leadingComments.includeInContext`
+- [x] Call-site extraction: line +/-2, enclosing function name, module-diversity sampling
+- [x] Referenced type declarations, depth 1, fields only
+- [x] `git log -L` commit subject lookup, cached, with a timeout and a clean fallback
+- [x] Token counting for the target model; budget enforcement with graceful degradation
+- [x] **`docgen explain <symbol>`** — print the exact assembled context for one symbol
+- [x] Benchmark graph construction on the 100k-LOC repo
 
 **Exit:** `docgen explain` on ten hand-picked symbols in a real repo produces context a human would call sufficient to write the docstring. If a human cannot write a good docstring from that bundle, the model will not either — fix the assembler before touching Phase 4.
 

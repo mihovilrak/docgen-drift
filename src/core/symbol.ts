@@ -85,6 +85,39 @@ export interface Graph {
   readonly reverse: readonly GraphEdge[];
 }
 
+export interface CallSite {
+  readonly callee: SymbolId;
+  readonly caller?: SymbolId;
+  readonly filePath: string;
+  readonly modulePath: string;
+  readonly line: number;
+  readonly enclosingFunction?: string;
+  readonly text: string;
+}
+
+export interface TestReference {
+  readonly symbol: SymbolId;
+  readonly filePath: string;
+  readonly line: number;
+  readonly names: readonly string[];
+}
+
+export interface ReferencedType {
+  readonly name: string;
+  readonly declaration: string;
+}
+
+export interface ContextIndex {
+  readonly callSites: ReadonlyMap<SymbolId, readonly CallSite[]>;
+  readonly testReferences: ReadonlyMap<SymbolId, readonly TestReference[]>;
+  readonly referencedTypes: ReadonlyMap<SymbolId, readonly ReferencedType[]>;
+}
+
+export interface SymbolIndex {
+  readonly graph: Graph;
+  readonly context: ContextIndex;
+}
+
 export interface Edit {
   readonly filePath: string;
   readonly start: number;

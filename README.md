@@ -11,6 +11,7 @@ docgen inverts that. The default workflow produces **zero** docstrings on day on
 ```bash
 docgen baseline          # record what exists today. writes no docs. no LLM calls.
 docgen check             # CI gate: fail when a documented symbol changed but its doc didn't
+docgen explain <symbol>  # inspect the exact context assembled for a symbol
 docgen check --fix       # regenerate only the docs that drifted
 ```
 
@@ -44,7 +45,7 @@ And it is allowed to say nothing. `SKIP` is a first-class model output, and a se
 
 ## Status
 
-Version 0.1.0 implements extraction, `baseline`, and the LLM-free `check` path with human, JSON, and SARIF reports. Generation remains unimplemented. See [PLAN.md](PLAN.md) for the build order and [ARCHITECTURE.md](ARCHITECTURE.md) for the design.
+Version 0.1.0 implements extraction, `baseline`, the LLM-free `check` path with human, JSON, and SARIF reports, and inspectable graph-backed context assembly through `explain`. Generation remains unimplemented. See [PLAN.md](PLAN.md) for the build order and [ARCHITECTURE.md](ARCHITECTURE.md) for the design.
 
 TypeScript and JavaScript first, via the TypeScript compiler API. Python and Go are planned behind a language adapter interface (see [ARCHITECTURE.md](ARCHITECTURE.md#language-adapters)) but no adapter beyond TS/JS will be written until the TS path is genuinely good.
 

@@ -3,6 +3,7 @@ import { performance } from "node:perf_hooks";
 import { resolve } from "node:path";
 
 import { extractSymbols } from "../src/adapters/typescript/extract/index.js";
+import { buildGraph } from "../src/adapters/typescript/graph.js";
 import { loadProject } from "../src/adapters/typescript/loadProject.js";
 import {
   loadWorkspace,
@@ -17,6 +18,8 @@ interface BenchmarkResult {
   readonly files: number;
   readonly lines: number;
   readonly symbols: number;
+  readonly edges?: number;
+  readonly graphWallMs?: number;
 }
 
 const printResult = (result: BenchmarkResult): void => {
@@ -39,10 +42,18 @@ const countLines = async (filePaths: readonly string[]): Promise<number> => {
 
 const [mode, target, pattern, concurrencyText] = process.argv.slice(2);
 
-if (mode === "single" && target !== undefined) {
+if ((mode === "single" || mode === "graph") && target !== undefined) {
   const startedAt = performance.now();
   const project = await loadProject({ tsconfigPath: resolve(target) });
   const symbols = extractSymbols(project);
+  const graphStartedAt = performance.now();
+  const graph =
+    mode === "graph"
+      ? buildGraph(project, symbols, {
+          referencedTypeSymbolIds: new Set(),
+        }).graph
+      : undefined;
+  const graphWallMs = performance.now() - graphStartedAt;
   const wallMs = performance.now() - startedAt;
   const lines = await countLines(
     project.sourceFiles.map((sourceFile) => sourceFile.getFilePath()),
@@ -55,6 +66,8 @@ if (mode === "single" && target !== undefined) {
     files: project.sourceFiles.length,
     lines,
     symbols: symbols.length,
+    ...(graph === undefined ? {} : { edges: graph.forward.length }),
+    ...(graph === undefined ? {} : { graphWallMs }),
   });
 } else if (
   mode === "workspace" &&
@@ -97,7 +110,7 @@ if (mode === "single" && target !== undefined) {
   });
 } else {
   process.stderr.write(
-    "Usage: benchmark-extraction.ts single <tsconfig> | workspace <root> <project-glob> [concurrency]\n",
+    "Usage: benchmark-extraction.ts single|graph <tsconfig> | workspace <root> <project-glob> [concurrency]\n",
   );
   process.exitCode = 2;
 }
