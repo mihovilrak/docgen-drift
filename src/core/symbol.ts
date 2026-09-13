@@ -1,0 +1,93 @@
+export type SymbolId = string;
+
+export type SymbolKind =
+  | "function"
+  | "variable-function"
+  | "method"
+  | "method-signature"
+  | "getter"
+  | "setter"
+  | "class"
+  | "interface"
+  | "type-alias"
+  | "enum"
+  | "variable";
+
+export type SymbolVisibility = "public" | "protected" | "private" | "package";
+
+export interface SourceRange {
+  readonly start: number;
+  readonly end: number;
+  readonly startLine: number;
+  readonly startColumn: number;
+  readonly endLine: number;
+  readonly endColumn: number;
+}
+
+export interface ExistingDocTag {
+  readonly name: string;
+  readonly text: string;
+  readonly parameterName?: string;
+  readonly raw: string;
+  readonly known: boolean;
+}
+
+export interface ExistingDoc {
+  readonly description: string;
+  readonly tags: readonly ExistingDocTag[];
+  readonly raw: string;
+  readonly range: SourceRange;
+}
+
+export type SourceNoteBlockReason = "directive" | "license" | "triple-slash";
+
+export interface SourceNote {
+  readonly text: string;
+  readonly raw: string;
+  readonly range: SourceRange;
+  readonly replacementEligible: boolean;
+  readonly blockedBy?: SourceNoteBlockReason;
+}
+
+export interface Parameter {
+  readonly name: string;
+  readonly text: string;
+  readonly optional: boolean;
+  readonly rest: boolean;
+}
+
+export interface Symbol {
+  readonly id: SymbolId;
+  readonly name: string;
+  readonly containerName?: string;
+  readonly kind: SymbolKind;
+  readonly filePath: string;
+  readonly signature: string;
+  readonly body: string;
+  readonly parameters: readonly Parameter[];
+  readonly returnsValue?: boolean;
+  readonly asynchronous: boolean;
+  readonly exported: boolean;
+  readonly visibility: SymbolVisibility;
+  readonly declaration: SourceRange;
+  readonly existingDoc: ExistingDoc | null;
+  readonly sourceNote: SourceNote | null;
+}
+
+export interface GraphEdge {
+  readonly from: SymbolId;
+  readonly to: SymbolId;
+}
+
+export interface Graph {
+  readonly symbols: readonly SymbolId[];
+  readonly forward: readonly GraphEdge[];
+  readonly reverse: readonly GraphEdge[];
+}
+
+export interface Edit {
+  readonly filePath: string;
+  readonly start: number;
+  readonly end: number;
+  readonly text: string;
+}

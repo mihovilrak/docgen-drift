@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Guidance for AI Agents working in this repository. ALWAYS return short summaries at the end or responces. NEVER write your thoughts and verbose coding comments. ONLY comment what isn't obvious from the code alone
+Guidance for AI Agents working in this repository. ALWAYS return short summaries at the end of responses. NEVER write your thoughts and verbose coding comments. ONLY comment what isn't obvious from the code alone.
 
 ## What this is
 
@@ -36,6 +36,9 @@ node ./dist/cli.js check --json     # run the CLI from a build
 ## Code conventions
 
 - ESM only, Node >= 20, `strict` TypeScript. No `any` in `core/`.
+- Prefer cohesive modules around 150 lines, with 200 lines as a soft upper bound. A larger module is acceptable when splitting it would break the logic or make it less readable.
+- Prefer arrow functions over function declarations in JavaScript and TypeScript.
+- Avoid overengineering. Use the simplest design that satisfies the current phase and invariants; add abstractions only for a concrete need.
 - Errors: return typed results from `core/`, throw only at the CLI boundary. The CLI maps errors to exit codes 0/1/2/3.
 - No default exports.
 - Anything deterministic gets a unit test against `test/fixtures/`. Do not mock `ts-morph` — run it on real fixture files.

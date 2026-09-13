@@ -1,3 +1,15 @@
+/**
+ * Measures the input text.
+ * @param input Text to measure.
+ * @returns The UTF-16 code unit count.
+ * @category measurement
+ */
+/**
+ * Measures the input text.
+ * @param input Text to measure.
+ * @returns The UTF-16 code unit count.
+ * @category measurement
+ */
 export function declaredFunction(input: string): number {
   return input.length;
 }
@@ -15,6 +27,14 @@ export class Counter {
     this.#values.push(value);
   }
 
+  protected reset(): void {
+    this.#values.length = 0;
+  }
+
+  private snapshot(): readonly number[] {
+    return this.#values;
+  }
+
   get total(): number {
     return this.#values.reduce((sum, value) => sum + value, 0);
   }
@@ -23,6 +43,20 @@ export class Counter {
     this.#values.length = 0;
     this.#values.push(value);
   }
+
+  protected reset(): void {}
+
+  private snapshot(): readonly number[] {
+    return this.#values;
+  }
+}
+
+class HiddenService {
+  run(): void {}
+}
+
+class HiddenService {
+  run(): void {}
 }
 
 export interface Store<T> {

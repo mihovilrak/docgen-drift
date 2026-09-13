@@ -23,22 +23,22 @@ Each phase has an exit criterion. Do not start the next phase until it is met.
 
 No LLM. Everything here is deterministic and must be tested against fixtures.
 
-- [ ] `core/symbol.ts` — language-neutral `Symbol`, `Graph`, `Edit` types
-- [ ] `adapters/typescript/loadProject.ts` — resolve `tsconfig.json`, apply include/exclude
-- [ ] `adapters/typescript/loadWorkspace.ts` — resolve `workspace.projects`, reject duplicate source ownership, and keep project loading bounded by `projectConcurrency`
-- [ ] `adapters/typescript/extract.ts` — every symbol kind in the ARCHITECTURE table
-  - [ ] `FunctionDeclaration`
-  - [ ] `VariableStatement` with arrow / function-expression initializer
-  - [ ] `MethodDeclaration`, `MethodSignature`, get/set accessors
-  - [ ] `ClassDeclaration`, `InterfaceDeclaration`, `TypeAliasDeclaration`, `EnumDeclaration`
-  - [ ] Overloads collapsed to the implementation signature
-- [ ] Signature rendering built from name + type params + params + return type node — **not** from `getSignature().getDeclaration().getText()`
-- [ ] Correct async return handling — unwrap `Promise<T>` before deciding `@returns` applies
-- [ ] Per-declaration `exported` and visibility, computed not assumed
-- [ ] `parseExistingDoc` — read the existing JSDoc into structured tags, preserving unknown tags verbatim
-- [ ] Extract attached ordinary leading-comment groups as structured source notes; exclude triple-slash references, licenses, directives, trailing/detached comments, and body comments from replacement eligibility
-- [ ] `docgen extract --json` debug command dumping the symbol table
-- [ ] Benchmark: index a 100k-LOC repo and a representative multi-project monorepo sequentially; record wall time and peak RSS in `docs/benchmarks.md`
+- [x] `core/symbol.ts` — language-neutral `Symbol`, `Graph`, `Edit` types
+- [x] `adapters/typescript/loadProject.ts` — resolve `tsconfig.json`, apply include/exclude
+- [x] `adapters/typescript/loadWorkspace.ts` — resolve `workspace.projects`, reject duplicate source ownership, and keep project loading bounded by `projectConcurrency`
+- [x] `adapters/typescript/extract.ts` — every symbol kind in the ARCHITECTURE table
+  - [x] `FunctionDeclaration`
+  - [x] `VariableStatement` with arrow / function-expression initializer
+  - [x] `MethodDeclaration`, `MethodSignature`, get/set accessors
+  - [x] `ClassDeclaration`, `InterfaceDeclaration`, `TypeAliasDeclaration`, `EnumDeclaration`
+  - [x] Overloads collapsed to the implementation signature
+- [x] Signature rendering built from name + type params + params + return type node — **not** from `getSignature().getDeclaration().getText()`
+- [x] Correct async return handling — unwrap `Promise<T>` before deciding `@returns` applies
+- [x] Per-declaration `exported` and visibility, computed not assumed
+- [x] `parseExistingDoc` — read the existing JSDoc into structured tags, preserving unknown tags verbatim
+- [x] Extract attached ordinary leading-comment groups as structured source notes; exclude triple-slash references, licenses, directives, trailing/detached comments, and body comments from replacement eligibility
+- [x] `docgen extract --json` debug command dumping the symbol table
+- [x] Benchmark: index a 100k-LOC repo and a representative multi-project monorepo sequentially; record wall time and peak RSS in `docs/benchmarks.md`
 
 **Exit:** on the fixture repo, extraction finds 100% of expected symbols with zero false positives, and the arrow-function case is covered by a test that would fail on the naive implementation.
 
