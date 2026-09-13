@@ -3,6 +3,7 @@ import { relative } from "node:path";
 import type { Node } from "ts-morph";
 
 import type { Symbol as DocumentationSymbol } from "../../../core/symbol.js";
+import { makeSymbolId } from "../../../core/id.js";
 import type { TypeScriptProjectHandle } from "../loadProject.js";
 import { sourceRange, toPosixPath } from "./range.js";
 
@@ -14,16 +15,12 @@ export const makeSymbol = (
   const filePath = toPosixPath(
     relative(handle.root, declaration.getSourceFile().getFilePath()),
   );
-  const suffix =
-    data.kind === "getter" || data.kind === "setter" ? `:${data.kind}` : "";
-  const qualifiedName =
-    data.containerName === undefined
-      ? data.name
-      : `${data.containerName}.${data.name}`;
+  const discriminator =
+    data.kind === "getter" || data.kind === "setter" ? data.kind : undefined;
 
   return {
     ...data,
-    id: `${filePath}#${qualifiedName}${suffix}`,
+    id: makeSymbolId(filePath, data.name, data.containerName, discriminator),
     filePath,
     declaration: sourceRange(
       declaration.getSourceFile(),

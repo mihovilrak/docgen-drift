@@ -46,17 +46,17 @@ No LLM. Everything here is deterministic and must be tested against fixtures.
 
 ## Phase 2 — Hashing, lockfile, `baseline`, `check` — *first release*
 
-- [ ] `core/hash.ts` — signature and body normalization (strip comments, collapse whitespace, keep parameter names); include normalized attached source notes when configured as context
-- [ ] Symbol id scheme, stable across line moves and file reformatting
-- [ ] `core/lock.ts` — shared/per-project `.docgen/lock.json` read/write, workspace-safe symbol ids, schema version, forward-compatible migration
-- [ ] `docgen baseline` — record current state, write no docs, make no LLM calls
-- [ ] `docgen check` — classify `unchanged` / `drifted` / `missing` / `orphaned`
-- [ ] Reporters: human (default), `--json`, `--sarif` for GitHub code scanning
-- [ ] Exit codes per ARCHITECTURE
-- [ ] `--since <ref>` — restrict to symbols touched in a diff range, for fast PR-scoped CI
-- [ ] Opt-out pragmas: `@docgen-ignore`, `@internal`, config path excludes
-- [ ] Tests: reformatting does not trip drift; renaming a parameter does trip it; moving a function within a file does not; editing a body does
-- [ ] Tests: shared and per-project lockfiles classify the same fixture symbols identically; `check` loads projects at configured concurrency and remains read-only/LLM-free
+- [x] `core/hash.ts` — signature and body normalization (strip comments, collapse whitespace, keep parameter names); include normalized attached source notes when configured as context
+- [x] Symbol id scheme, stable across line moves and file reformatting
+- [x] `core/lock.ts` — shared/per-project `.docgen/lock.json` read/write, workspace-safe symbol ids, schema version, forward-compatible migration
+- [x] `docgen baseline` — record current state, write no docs, make no LLM calls
+- [x] `docgen check` — classify `unchanged` / `drifted` / `missing` / `orphaned`
+- [x] Reporters: human (default), `--json`, `--sarif` for GitHub code scanning
+- [x] Exit codes per ARCHITECTURE
+- [x] `--since <ref>` — restrict to symbols touched in a diff range, for fast PR-scoped CI
+- [x] Opt-out pragmas: `@docgen-ignore`, `@internal`, config path excludes
+- [x] Tests: reformatting does not trip drift; renaming a parameter does trip it; moving a function within a file does not; editing a body does
+- [x] Tests: shared and per-project lockfiles classify the same fixture symbols identically; `check` loads projects at configured concurrency and remains read-only/LLM-free
 
 **Exit:** run `baseline` then `check` on a real third-party TS repo, make one edit, and get exactly one drift report with no false positives. **Ship this as v0.1.0.**
 

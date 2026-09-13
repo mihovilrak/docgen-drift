@@ -1,0 +1,94 @@
+import type { LockEntry, LockFile } from "./lock.js";
+import { EMPTY_DOC_HASH, type SymbolHashes } from "./hash.js";
+import type { Symbol as DocumentationSymbol, SymbolId } from "./symbol.js";
+
+export type CheckStatus = "unchanged" | "drifted" | "missing" | "orphaned";
+
+export interface CurrentSymbol {
+  readonly id: SymbolId;
+  readonly symbol: DocumentationSymbol;
+  readonly hashes: SymbolHashes;
+}
+
+export interface CheckResult {
+  readonly id: SymbolId;
+  readonly status: CheckStatus;
+  readonly filePath: string;
+  readonly startLine: number;
+  readonly symbol?: DocumentationSymbol;
+}
+
+export const classifySymbols = (
+  current: readonly CurrentSymbol[],
+  knownIds: ReadonlySet<SymbolId>,
+  lock: LockFile,
+): readonly CheckResult[] => {
+  const results: CheckResult[] = [];
+  const currentIds = new Set<SymbolId>();
+
+  for (const item of current) {
+    currentIds.add(item.id);
+    const stored = lock.symbols[item.id];
+    const status = classifyCurrent(item, stored);
+    results.push({
+      id: item.id,
+      status,
+      filePath: item.id.slice(0, item.id.indexOf("#")),
+      startLine: item.symbol.declaration.startLine,
+      symbol: item.symbol,
+    });
+  }
+
+  for (const [id, entry] of Object.entries(lock.symbols)) {
+    if (
+      currentIds.has(id) ||
+      knownIds.has(id) ||
+      entry.docHash === EMPTY_DOC_HASH
+    ) {
+      continue;
+    }
+    results.push({
+      id,
+      status: "orphaned",
+      filePath: entry.filePath,
+      startLine: entry.startLine,
+    });
+  }
+
+  return results.sort(
+    (left, right) =>
+      left.filePath.localeCompare(right.filePath) ||
+      left.startLine - right.startLine ||
+      left.id.localeCompare(right.id),
+  );
+};
+
+export const lockEntries = (
+  current: readonly CurrentSymbol[],
+): Readonly<Record<SymbolId, LockEntry>> =>
+  Object.fromEntries(
+    current.map((item) => [
+      item.id,
+      {
+        symbolHash: item.hashes.symbolHash,
+        docHash: item.hashes.docHash,
+        filePath: item.id.slice(0, item.id.indexOf("#")),
+        startLine: item.symbol.declaration.startLine,
+      },
+    ]),
+  );
+
+const classifyCurrent = (
+  current: CurrentSymbol,
+  stored: LockEntry | undefined,
+): CheckStatus => {
+  if (current.symbol.existingDoc === null) return "missing";
+  if (
+    stored !== undefined &&
+    stored.symbolHash !== current.hashes.symbolHash &&
+    stored.docHash === current.hashes.docHash
+  ) {
+    return "drifted";
+  }
+  return "unchanged";
+};

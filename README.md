@@ -44,7 +44,7 @@ And it is allowed to say nothing. `SKIP` is a first-class model output, and a se
 
 ## Status
 
-Pre-alpha. Nothing is implemented yet. See [PLAN.md](PLAN.md) for the build order and [ARCHITECTURE.md](ARCHITECTURE.md) for the design.
+Version 0.1.0 implements extraction, `baseline`, and the LLM-free `check` path with human, JSON, and SARIF reports. Generation remains unimplemented. See [PLAN.md](PLAN.md) for the build order and [ARCHITECTURE.md](ARCHITECTURE.md) for the design.
 
 TypeScript and JavaScript first, via the TypeScript compiler API. Python and Go are planned behind a language adapter interface (see [ARCHITECTURE.md](ARCHITECTURE.md#language-adapters)) but no adapter beyond TS/JS will be written until the TS path is genuinely good.
 

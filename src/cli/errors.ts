@@ -1,0 +1,14 @@
+import { ConfigError } from "../config/load.js";
+import { SinceError } from "./since.js";
+
+export type ExitCode = 0 | 1 | 2 | 3;
+
+export const checkExitCode = (issueCount: number): ExitCode =>
+  issueCount === 0 ? 0 : 1;
+
+export const errorExitCode = (error: unknown): ExitCode =>
+  error instanceof ConfigError ||
+  error instanceof SinceError ||
+  (error instanceof Error && error.name === "CACError")
+    ? 2
+    : 3;

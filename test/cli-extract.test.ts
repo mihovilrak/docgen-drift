@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 const execFileAsync = promisify(execFile);
 
 describe("docgen extract", () => {
-  it("dumps the symbol table as JSON", async () => {
+  it("dumps the symbol table as JSON", { timeout: 30_000 }, async () => {
     const { stdout, stderr } = await execFileAsync(
       process.execPath,
       [

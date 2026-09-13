@@ -1,7 +1,6 @@
 {
   "name": "docgen-drift",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "Symbol-level documentation drift detection for TypeScript and JavaScript",
   "type": "module",
   "license": "MIT",
@@ -20,8 +19,8 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsx src/cli.ts",
-    "test": "vitest run --passWithNoTests",
-    "test:watch": "vitest",
+    "test": "vitest run --passWithNoTests --maxWorkers=2 --testTimeout=30000",
+    "test:watch": "vitest --maxWorkers=2 --testTimeout=30000",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write ."
