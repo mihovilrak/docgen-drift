@@ -4,11 +4,7 @@ import { fileURLToPath } from "node:url";
 import tseslint from "typescript-eslint";
 
 const rootDirectory = dirname(fileURLToPath(import.meta.url));
-const typeScriptFiles = [
-  "src/**/*.ts",
-  "test/**/*.test.ts",
-  "*.config.ts",
-];
+const typeScriptFiles = ["src/**/*.ts", "test/**/*.test.ts", "*.config.ts"];
 
 export default tseslint.config(
   {
@@ -34,7 +30,8 @@ export default tseslint.config(
           paths: [
             {
               name: "ts-morph",
-              message: "ts-morph may only be imported from src/adapters/typescript/.",
+              message:
+                "ts-morph may only be imported from src/adapters/typescript/.",
             },
           ],
           patterns: ["ts-morph/*"],
