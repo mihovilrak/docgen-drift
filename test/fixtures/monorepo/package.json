@@ -1,0 +1,5 @@
+{
+  "name": "docgen-monorepo-fixture",
+  "private": true,
+  "type": "module"
+}

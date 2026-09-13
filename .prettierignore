@@ -1,0 +1,6 @@
+dist/
+coverage/
+node_modules/
+.pnpm-store/
+pnpm-lock.yaml
+Generate-Efficient-Docstrings.md

@@ -1,0 +1,10 @@
+node_modules/
+.pnpm-store/
+dist/
+coverage/
+*.tsbuildinfo
+.docgen/cache/
+.env
+.env.local
+.DS_Store
+*.log

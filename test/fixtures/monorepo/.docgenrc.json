@@ -1,0 +1,7 @@
+{
+  "workspace": {
+    "projects": ["packages/*/tsconfig.json"],
+    "projectConcurrency": 2,
+    "lockfile": "shared"
+  }
+}

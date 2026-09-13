@@ -1,0 +1,22 @@
+{
+  "include": ["src/**/*.ts"],
+  "tests": ["test/**/*.test.ts"],
+  "workspace": {
+    "projects": ["tsconfig.json"],
+    "lockfile": "shared",
+    "projectConcurrency": 1
+  },
+  "symbols": { "exportedOnly": true, "minBodyLines": 3 },
+  "docs": {
+    "style": "jsdoc",
+    "granularity": "standard",
+    "emitTypes": false,
+    "leadingComments": {
+      "includeInContext": true,
+      "onGenerate": "preserve"
+    }
+  },
+  "context": { "budgetTokens": 2000 },
+  "generate": { "model": "claude-sonnet-5" },
+  "judge": { "enabled": true }
+}
