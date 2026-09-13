@@ -8,6 +8,8 @@ import { ConfigError, loadConfig } from "./config/load.js";
 import { checkExitCode, errorExitCode } from "./cli/errors.js";
 import { filterByChanges, readChangedFiles } from "./cli/since.js";
 import { runBaseline, runCheck } from "./cli/run.js";
+import { scopeProjects } from "./cli/projectScope.js";
+import type { GenerationRunResult } from "./cli/generate.js";
 import { VERSION } from "./index.js";
 import {
   renderHuman,
@@ -29,9 +31,22 @@ interface CheckCommandOptions extends CommonOptions {
   readonly json?: boolean;
   readonly sarif?: boolean;
   readonly since?: string;
+  readonly fix?: boolean;
+  readonly project?: string;
+  readonly dryRun?: boolean;
+  readonly allowDirty?: boolean;
 }
 
 interface ExplainCommandOptions extends CommonOptions {
+  readonly json?: boolean;
+}
+
+interface FixCommandOptions extends CommonOptions {
+  readonly missing?: boolean;
+  readonly path?: string;
+  readonly project?: string;
+  readonly dryRun?: boolean;
+  readonly allowDirty?: boolean;
   readonly json?: boolean;
 }
 
@@ -113,12 +128,43 @@ cli
   .option("--json", "Print machine-readable JSON")
   .option("--sarif", "Print SARIF 2.1.0")
   .option("--since <ref>", "Restrict to symbols touched since a Git ref")
+  .option("--project <path-or-glob>", "Restrict to matching tsconfig projects")
+  .option("--fix", "Regenerate drifted documentation")
+  .option("--dry-run", "Print the source diff without writing")
+  .option("--allow-dirty", "Allow source writes with uncommitted changes")
   .action(async (root: unknown, options: CheckCommandOptions) => {
     if (options.json === true && options.sarif === true) {
       throw new ConfigError("--json and --sarif cannot be used together");
     }
     const workspaceRoot = commandRoot(root);
-    const config = await loadConfig(workspaceRoot, options.config);
+    const loaded = await loadConfig(workspaceRoot, options.config);
+    const config = scopeProjects(loaded, options.project);
+    if (options.fix === true) {
+      if (options.sarif === true) {
+        throw new ConfigError("--sarif cannot be combined with --fix");
+      }
+      if (options.since !== undefined) {
+        throw new ConfigError("--since cannot be combined with --fix");
+      }
+      const { runGeneration } = await import("./cli/generate.js");
+      const result = await runGeneration(workspaceRoot, config, {
+        mode: "drifted",
+        ...(options.dryRun === undefined ? {} : { dryRun: options.dryRun }),
+        ...(options.allowDirty === undefined
+          ? {}
+          : { allowDirty: options.allowDirty }),
+      });
+      process.stdout.write(
+        options.json === true
+          ? `${JSON.stringify(result, null, 2)}\n`
+          : renderGeneration(result, options.dryRun === true),
+      );
+      process.exitCode = result.failed.length === 0 ? 0 : 1;
+      return;
+    }
+    if (options.dryRun === true || options.allowDirty === true) {
+      throw new ConfigError("--dry-run and --allow-dirty require --fix");
+    }
     let { results } = await runCheck(workspaceRoot, config);
     if (options.since !== undefined) {
       results = filterByChanges(
@@ -136,6 +182,54 @@ cli
     );
     process.exitCode = checkExitCode(issues.length);
   });
+
+cli
+  .command("fix [root]", "Generate missing documentation in a bounded path")
+  .option("--missing", "Generate documentation for missing symbols")
+  .option("--path <path>", "Restrict backfill to this path")
+  .option("--project <path-or-glob>", "Restrict to matching tsconfig projects")
+  .option("--dry-run", "Print the source diff without writing")
+  .option("--allow-dirty", "Allow source writes with uncommitted changes")
+  .option("--json", "Print machine-readable JSON")
+  .option("--config <path>", "Path to .docgenrc.json")
+  .action(async (root: unknown, options: FixCommandOptions) => {
+    if (options.missing !== true) {
+      throw new ConfigError("fix currently requires --missing");
+    }
+    const workspaceRoot = commandRoot(root);
+    const loaded = await loadConfig(workspaceRoot, options.config);
+    const config = scopeProjects(loaded, options.project);
+    const { runGeneration } = await import("./cli/generate.js");
+    const result = await runGeneration(workspaceRoot, config, {
+      mode: "missing",
+      ...(options.path === undefined ? {} : { path: options.path }),
+      ...(options.dryRun === undefined ? {} : { dryRun: options.dryRun }),
+      ...(options.allowDirty === undefined
+        ? {}
+        : { allowDirty: options.allowDirty }),
+    });
+    process.stdout.write(
+      options.json === true
+        ? `${JSON.stringify(result, null, 2)}\n`
+        : renderGeneration(result, options.dryRun === true),
+    );
+    process.exitCode = result.failed.length === 0 ? 0 : 1;
+  });
+
+const renderGeneration = (
+  result: GenerationRunResult,
+  dryRun: boolean,
+): string => {
+  const details = [
+    ...result.skipped.map((item) => `${item.id} skipped: ${item.reason}`),
+    ...result.failed.map((item) => `${item.id} failed: ${item.reason}`),
+  ];
+  if (dryRun && result.diff !== "") details.push(result.diff);
+  details.push(
+    `${String(result.generated.length)} generated, ${String(result.skipped.length)} skipped, ${String(result.failed.length)} failed in ${String(result.changedFiles)} files; ${String(result.usage.inputTokens)} input tokens, ${String(result.usage.outputTokens)} output tokens, $${result.usage.costUsd.toFixed(6)}.`,
+  );
+  return `${details.join("\n")}\n`;
+};
 
 cli.help();
 cli.version(VERSION);

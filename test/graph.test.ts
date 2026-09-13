@@ -7,6 +7,7 @@ import { buildGraph } from "../src/adapters/typescript/graph.js";
 import { loadProject } from "../src/adapters/typescript/loadProject.js";
 import {
   reverseTopologicalOrder,
+  reverseTopologicalLevels,
   stronglyConnectedComponents,
 } from "../src/core/graph.js";
 
@@ -59,6 +60,14 @@ describe("TypeScript graph index", () => {
       order.findIndex((component) => component.members.includes(symbol));
     expect(position(leaf)).toBeLessThan(position(orchestrate));
     expect(position(mutualA)).toBeLessThan(position(orchestrate));
+
+    const levels = reverseTopologicalLevels(graph);
+    const levelOf = (symbol: string): number =>
+      levels.findIndex((level) =>
+        level.some((component) => component.members.includes(symbol)),
+      );
+    expect(levelOf(leaf)).toBeLessThan(levelOf(orchestrate));
+    expect(levelOf(mutualA)).toBe(levelOf(mutualB));
   });
 
   it("extracts referenced type fields without methods", async () => {

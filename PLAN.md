@@ -85,18 +85,18 @@ Still no LLM. The output of this phase is inspectable text.
 
 ## Phase 4 — Generation and insertion
 
-- [ ] `llm/client.ts` — Anthropic provider, concurrency limit, retry with backoff, cost accounting
-- [ ] Versioned prompt templates under `llm/prompt/`, `prompt_version` fed into the hash
-- [ ] Strict response schema (zod); one retry on validation failure, then drop
-- [ ] `SKIP` handled as a first-class outcome and reported, never coerced into a docstring
-- [ ] Topological-order execution: callee summaries feed callers
-- [ ] `renderDoc` — JSDoc rendering, no `{type}` annotations, existing unknown tags merged not clobbered
-- [ ] `applyEdits` — **reverse document order**, reparse on file-hash change, indentation and EOL preserved
-- [ ] Post-write validation: file reparses clean, or revert that edit
-- [ ] Prettier integration when the project has a config
-- [ ] `docgen check --fix` (drifted only) and `docgen fix --missing --path <p>` (backfill, path-bounded), with `--project <path-or-glob>` for monorepo scoping
-- [ ] Dirty-working-tree guard, `--allow-dirty` to override
-- [ ] `--dry-run` printing a unified diff
+- [x] `llm/client.ts` — Anthropic provider, concurrency limit, retry with backoff, cost accounting
+- [x] Versioned prompt templates under `llm/prompt/`, `prompt_version` fed into the hash
+- [x] Strict response schema (zod); one retry on validation failure, then drop
+- [x] `SKIP` handled as a first-class outcome and reported, never coerced into a docstring
+- [x] Topological-order execution: callee summaries feed callers
+- [x] `renderDoc` — JSDoc rendering, no `{type}` annotations, existing unknown tags merged not clobbered
+- [x] `applyEdits` — **reverse document order**, reparse on file-hash change, indentation and EOL preserved
+- [x] Post-write validation: file reparses clean, or revert that edit
+- [x] Prettier integration when the project has a config
+- [x] `docgen check --fix` (drifted only) and `docgen fix --missing --path <p>` (backfill, path-bounded), with `--project <path-or-glob>` for monorepo scoping
+- [x] Dirty-working-tree guard, `--allow-dirty` to override
+- [x] `--dry-run` printing a unified diff
 
 **Exit:** on the fixtures, generation is byte-identical across two runs given a stubbed LLM and every insertion round-trips through the parser.
 

@@ -118,6 +118,19 @@ export interface SymbolIndex {
   readonly context: ContextIndex;
 }
 
+export interface GeneratedThrow {
+  readonly type: string;
+  readonly when: string;
+}
+
+export interface GeneratedDoc {
+  readonly summary: string;
+  readonly detail?: string;
+  readonly params: Readonly<Record<string, string>>;
+  readonly returns?: string;
+  readonly throws: readonly GeneratedThrow[];
+}
+
 export interface Edit {
   readonly filePath: string;
   readonly start: number;

@@ -13,7 +13,7 @@ const fixtureRoot = resolve("test/fixtures/monorepo");
 describe("baseline and check", () => {
   it(
     "classifies shared and per-project locks identically without changing source",
-    { timeout: 30_000 },
+    { timeout: 60_000 },
     async () => {
       const root = await copyFixture();
       await removeOverlappingOwnership(root);

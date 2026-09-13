@@ -5,6 +5,7 @@ import { glob } from "tinyglobby";
 import type { DocgenConfig } from "../config/schema.js";
 import { hashSymbol, hashText, type HashRecipe } from "../core/hash.js";
 import { workspaceSymbolId } from "../core/id.js";
+import { PROMPT_VERSION } from "../llm/prompt/index.js";
 import type { CurrentSymbol } from "../core/plan.js";
 import type {
   Symbol as DocumentationSymbol,
@@ -98,10 +99,10 @@ export const canonicalId = (
   shared: boolean,
 ): SymbolId => (shared ? workspaceSymbolId(project.workspacePath, id) : id);
 
-const hashRecipe = (config: DocgenConfig): HashRecipe => ({
+export const hashRecipe = (config: DocgenConfig): HashRecipe => ({
   includeSourceNotes: config.docs.leadingComments.includeInContext,
   contextRecipeVersion: "1",
-  promptVersion: "none",
+  promptVersion: PROMPT_VERSION,
   configFingerprint: hashText(
     JSON.stringify({
       symbols: config.symbols,

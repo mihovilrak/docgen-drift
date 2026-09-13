@@ -90,6 +90,41 @@ export const runCheck = async (
   return { results: results.sort(compareResults) };
 };
 
+export const refreshLocks = async (
+  root: string,
+  config: DocgenConfig,
+  generatedIds: ReadonlySet<string>,
+): Promise<void> => {
+  const projects = await indexWorkspace(root, config);
+  if (config.workspace.lockfile === "shared") {
+    const path = sharedLockPath(root);
+    const previous = await loadLock(path);
+    const current = projects
+      .flatMap((project) => currentSymbols(project, config, true))
+      .filter((symbol) => generatedIds.has(symbol.id));
+    await saveLock(path, {
+      schemaVersion: LOCK_SCHEMA_VERSION,
+      symbols: { ...previous.symbols, ...lockEntries(current) },
+    });
+    return;
+  }
+
+  for (const project of projects) {
+    const path = projectLockPath(project);
+    const previous = await loadLock(path);
+    const current = currentSymbols(project, config, false).filter((symbol) =>
+      generatedIds.has(canonicalId(project, symbol.id, true)),
+    );
+    await saveLock(path, {
+      schemaVersion: LOCK_SCHEMA_VERSION,
+      symbols: {
+        ...previous.symbols,
+        ...lockEntries(current),
+      },
+    });
+  }
+};
+
 const loadLock = async (path: string): Promise<LockFile> => {
   const result = await readLock(path);
   if (!result.ok) throw new Error(result.error.message);

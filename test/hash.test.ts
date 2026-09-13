@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 
+import { hashRecipe } from "../src/cli/workspace.js";
+import { configSchema } from "../src/config/schema.js";
 import { hashSymbol, normalizeCode } from "../src/core/hash.js";
 import { makeSymbolId, workspaceSymbolId } from "../src/core/id.js";
 import type { Symbol as DocumentationSymbol } from "../src/core/symbol.js";
+import { PROMPT_VERSION } from "../src/llm/prompt/index.js";
 
 const recipe = {
   includeSourceNotes: true,
@@ -12,6 +15,12 @@ const recipe = {
 } as const;
 
 describe("symbol hashing", () => {
+  it("feeds the active prompt version into the workspace hash recipe", () => {
+    expect(hashRecipe(configSchema.parse({})).promptVersion).toBe(
+      PROMPT_VERSION,
+    );
+  });
+
   it("ignores comments and formatting without joining tokens", () => {
     expect(normalizeCode("return foo /* note */ +  bar; // tail")).toBe(
       "return foo+bar;",

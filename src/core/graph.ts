@@ -113,6 +113,40 @@ export const reverseTopologicalOrder = (
     .filter(isDefined);
 };
 
+export const reverseTopologicalLevels = (
+  graph: Graph,
+): readonly (readonly StronglyConnectedComponent[])[] => {
+  const components = reverseTopologicalOrder(graph);
+  const componentBySymbol = new Map<SymbolId, number>();
+  components.forEach((component, index) => {
+    for (const symbol of component.members)
+      componentBySymbol.set(symbol, index);
+  });
+
+  const levelByComponent = new Map<number, number>();
+  const levels: StronglyConnectedComponent[][] = [];
+  components.forEach((component, index) => {
+    const dependencies = graph.forward
+      .filter((edge) => component.members.includes(edge.from))
+      .map((edge) => componentBySymbol.get(edge.to))
+      .filter(isDefined)
+      .filter((dependency) => dependency !== index);
+    const level =
+      dependencies.length === 0
+        ? 0
+        : Math.max(
+            ...dependencies.map(
+              (dependency) => (levelByComponent.get(dependency) ?? 0) + 1,
+            ),
+          );
+    levelByComponent.set(index, level);
+    const values = levels[level];
+    if (values === undefined) levels[level] = [component];
+    else values.push(component);
+  });
+  return levels;
+};
+
 const adjacency = (
   graph: Graph,
 ): ReadonlyMap<SymbolId, readonly SymbolId[]> => {

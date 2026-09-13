@@ -10,6 +10,8 @@ export type {
   Edit,
   ExistingDoc,
   ExistingDocTag,
+  GeneratedDoc,
+  GeneratedThrow,
   Graph,
   GraphEdge,
   CallSite,

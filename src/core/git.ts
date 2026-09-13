@@ -34,6 +34,24 @@ export const clearGitSubjectCache = (): void => {
   subjectCache.clear();
 };
 
+export const isWorkingTreeDirty = async (root: string): Promise<boolean> => {
+  try {
+    const { stdout } = await execFileAsync(
+      "git",
+      ["status", "--porcelain", "--untracked-files=normal"],
+      {
+        cwd: root,
+        timeout: 5000,
+        maxBuffer: 1024 * 1024,
+        windowsHide: true,
+      },
+    );
+    return stdout.trim() !== "";
+  } catch {
+    throw new Error(`Cannot inspect Git working tree at ${root}`);
+  }
+};
+
 const lookupGitSubject = async (
   request: GitSubjectRequest,
 ): Promise<string | undefined> => {
