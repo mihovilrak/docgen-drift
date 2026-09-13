@@ -166,6 +166,18 @@ export const configSchema = z
     generate: generateSchema.prefault({}),
     judge: judgeSchema.prefault({}),
   })
-  .strict();
+  .strict()
+  .superRefine((config, context) => {
+    if (
+      config.docs.leadingComments.onGenerate === "replace" &&
+      !config.judge.enabled
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["judge", "enabled"],
+        message: "must be true when docs.leadingComments.onGenerate is replace",
+      });
+    }
+  });
 
 export type DocgenConfig = z.infer<typeof configSchema>;

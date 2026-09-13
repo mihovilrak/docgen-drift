@@ -35,6 +35,7 @@ interface CheckCommandOptions extends CommonOptions {
   readonly project?: string;
   readonly dryRun?: boolean;
   readonly allowDirty?: boolean;
+  readonly noJudge?: boolean;
 }
 
 interface ExplainCommandOptions extends CommonOptions {
@@ -48,6 +49,7 @@ interface FixCommandOptions extends CommonOptions {
   readonly dryRun?: boolean;
   readonly allowDirty?: boolean;
   readonly json?: boolean;
+  readonly noJudge?: boolean;
 }
 
 const commandRoot = (root: unknown): string =>
@@ -132,6 +134,7 @@ cli
   .option("--fix", "Regenerate drifted documentation")
   .option("--dry-run", "Print the source diff without writing")
   .option("--allow-dirty", "Allow source writes with uncommitted changes")
+  .option("--no-judge", "Apply generated documentation without judging it")
   .action(async (root: unknown, options: CheckCommandOptions) => {
     if (options.json === true && options.sarif === true) {
       throw new ConfigError("--json and --sarif cannot be used together");
@@ -153,6 +156,7 @@ cli
         ...(options.allowDirty === undefined
           ? {}
           : { allowDirty: options.allowDirty }),
+        ...(options.noJudge === undefined ? {} : { noJudge: options.noJudge }),
       });
       process.stdout.write(
         options.json === true
@@ -162,8 +166,14 @@ cli
       process.exitCode = result.failed.length === 0 ? 0 : 1;
       return;
     }
-    if (options.dryRun === true || options.allowDirty === true) {
-      throw new ConfigError("--dry-run and --allow-dirty require --fix");
+    if (
+      options.dryRun === true ||
+      options.allowDirty === true ||
+      options.noJudge === true
+    ) {
+      throw new ConfigError(
+        "--dry-run, --allow-dirty, and --no-judge require --fix",
+      );
     }
     let { results } = await runCheck(workspaceRoot, config);
     if (options.since !== undefined) {
@@ -190,6 +200,7 @@ cli
   .option("--project <path-or-glob>", "Restrict to matching tsconfig projects")
   .option("--dry-run", "Print the source diff without writing")
   .option("--allow-dirty", "Allow source writes with uncommitted changes")
+  .option("--no-judge", "Apply generated documentation without judging it")
   .option("--json", "Print machine-readable JSON")
   .option("--config <path>", "Path to .docgenrc.json")
   .action(async (root: unknown, options: FixCommandOptions) => {
@@ -207,6 +218,7 @@ cli
       ...(options.allowDirty === undefined
         ? {}
         : { allowDirty: options.allowDirty }),
+      ...(options.noJudge === undefined ? {} : { noJudge: options.noJudge }),
     });
     process.stdout.write(
       options.json === true
@@ -222,11 +234,12 @@ const renderGeneration = (
 ): string => {
   const details = [
     ...result.skipped.map((item) => `${item.id} skipped: ${item.reason}`),
+    ...result.rejected.map((item) => `${item.id} rejected: ${item.reason}`),
     ...result.failed.map((item) => `${item.id} failed: ${item.reason}`),
   ];
   if (dryRun && result.diff !== "") details.push(result.diff);
   details.push(
-    `${String(result.generated.length)} generated, ${String(result.skipped.length)} skipped, ${String(result.failed.length)} failed in ${String(result.changedFiles)} files; ${String(result.usage.inputTokens)} input tokens, ${String(result.usage.outputTokens)} output tokens, $${result.usage.costUsd.toFixed(6)}.`,
+    `${String(result.generated.length)} generated, ${String(result.skipped.length)} skipped, ${String(result.rejected.length)} rejected, ${String(result.failed.length)} failed in ${String(result.changedFiles)} files; ${String(result.usage.inputTokens)} input tokens, ${String(result.usage.outputTokens)} output tokens, $${result.usage.costUsd.toFixed(6)}.`,
   );
   return `${details.join("\n")}\n`;
 };

@@ -25,4 +25,20 @@ describe("configuration", () => {
     );
     await expect(loadConfig(root)).rejects.toBeInstanceOf(ConfigError);
   });
+
+  it("requires the judge when leading comments are replaced", async () => {
+    const root = await mkdtemp(join(tmpdir(), "docgen-config-replace-"));
+    await writeFile(
+      join(root, ".docgenrc.json"),
+      JSON.stringify({
+        docs: { leadingComments: { onGenerate: "replace" } },
+        judge: { enabled: false },
+      }),
+      "utf8",
+    );
+
+    await expect(loadConfig(root)).rejects.toThrow(
+      /must be true when docs\.leadingComments\.onGenerate is replace/u,
+    );
+  });
 });

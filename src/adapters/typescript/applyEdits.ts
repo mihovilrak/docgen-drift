@@ -1,4 +1,5 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { readFile, rename, stat, unlink, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 import { format, resolveConfig } from "prettier";
@@ -38,6 +39,8 @@ export interface ApplyEditsResult {
   readonly files: readonly ChangedFile[];
 }
 
+export type SourceWriter = (path: string, source: string) => Promise<void>;
+
 export const symbolAnchorHash = (symbol: DocumentationSymbol): string =>
   hashText(
     [
@@ -53,6 +56,7 @@ export const applyEdits = async (
   plans: readonly PlannedDocEdit[],
   config: DocgenConfig,
   write: boolean,
+  writeSource: SourceWriter = atomicWriteSource,
 ): Promise<ApplyEditsResult> => {
   const grouped = new Map<string, PlannedDocEdit[]>();
   for (const plan of plans) {
@@ -78,7 +82,8 @@ export const applyEdits = async (
     const resolvedPlans = resolvePlans(filePlans, symbols, failed);
     let after = before;
     for (const plan of [...resolvedPlans].sort(
-      (left, right) => editStart(right.symbol) - editStart(left.symbol),
+      (left, right) =>
+        editStart(right.symbol, config) - editStart(left.symbol, config),
     )) {
       const edit = buildEdit(plan, after, config);
       const candidate = `${after.slice(0, edit.start)}${edit.text}${after.slice(edit.end)}`;
@@ -116,8 +121,19 @@ export const applyEdits = async (
       }
       continue;
     }
+    if (write) {
+      try {
+        await writeSource(filePath, after);
+      } catch (error) {
+        for (const id of fileApplied) {
+          const index = applied.indexOf(id);
+          if (index >= 0) applied.splice(index, 1);
+          failed.push({ symbolId: id, reason: errorMessage(error) });
+        }
+        continue;
+      }
+    }
     files.push({ filePath, before, after });
-    if (write) await writeFile(filePath, after, "utf8");
   }
   return { applied, failed, files };
 };
@@ -168,8 +184,9 @@ const buildEdit = (
   config: DocgenConfig,
 ): { readonly start: number; readonly end: number; readonly text: string } => {
   const symbol = plan.symbol;
-  const start = editStart(symbol);
-  const indentation = indentationAt(source, start);
+  const replaceSourceNote = shouldReplaceSourceNote(symbol, config);
+  const start = editStart(symbol, config);
+  const indentation = indentationAt(source, symbol.declaration.start);
   const eol = eolOf(source);
   const rendered = renderDoc(plan.doc, symbol, {
     indentation,
@@ -181,16 +198,32 @@ const buildEdit = (
   });
   return {
     start,
-    end: symbol.existingDoc?.range.end ?? start,
-    text:
-      symbol.existingDoc === null
+    end: replaceSourceNote
+      ? symbol.declaration.start
+      : (symbol.existingDoc?.range.end ?? start),
+    text: replaceSourceNote
+      ? `${indentation}${rendered}${eol}${indentation}`
+      : symbol.existingDoc === null
         ? `${rendered}${eol}${indentation}`
         : rendered,
   };
 };
 
-const editStart = (symbol: DocumentationSymbol): number =>
-  symbol.existingDoc?.range.start ?? symbol.declaration.start;
+const editStart = (
+  symbol: DocumentationSymbol,
+  config: DocgenConfig,
+): number =>
+  shouldReplaceSourceNote(symbol, config)
+    ? (symbol.sourceNote?.range.start ?? symbol.declaration.start)
+    : (symbol.existingDoc?.range.start ?? symbol.declaration.start);
+
+const shouldReplaceSourceNote = (
+  symbol: DocumentationSymbol,
+  config: DocgenConfig,
+): boolean =>
+  config.docs.leadingComments.onGenerate === "replace" &&
+  symbol.existingDoc === null &&
+  symbol.sourceNote?.replacementEligible === true;
 
 const indentationAt = (source: string, position: number): string => {
   const lineStart = Math.max(
@@ -248,3 +281,14 @@ const extractOptions = (config: DocgenConfig) => ({
 
 const errorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : "Failed to format generated edits";
+
+const atomicWriteSource: SourceWriter = async (filePath, source) => {
+  const temporaryPath = `${filePath}.docgen-${String(process.pid)}-${randomUUID()}.tmp`;
+  const mode = (await stat(filePath)).mode;
+  try {
+    await writeFile(temporaryPath, source, { encoding: "utf8", mode });
+    await rename(temporaryPath, filePath);
+  } finally {
+    await unlink(temporaryPath).catch(() => undefined);
+  }
+};

@@ -110,6 +110,8 @@
 
 **`judge.enabled`** — disabling this makes the tool cheaper and materially worse. If you turn it off, expect filler docstrings and expect to review every one by hand.
 
+**`--no-judge`** — per-run escape hatch for `fix` and `check --fix`. It cannot be used when `docs.leadingComments.onGenerate` is `replace`, because a rejected generation must never remove its source note.
+
 **`check.reportMissing`** — off by default. Missing docs are a backlog, not a regression; failing CI on them turns adoption into the unreviewable-PR problem the tool exists to avoid. Turn it on per-path once a directory is fully documented.
 
 ## Environment

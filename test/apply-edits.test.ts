@@ -98,6 +98,119 @@ describe("TypeScript edit application", () => {
     ]);
     expect(await readFile(sourcePath, "utf8")).toBe(concurrentlyBroken);
   });
+
+  it("atomically replaces only an eligible attached source note", async () => {
+    const root = await copyFixture();
+    const sourcePath = join(root, "src/api.ts");
+    const source = (await readFile(sourcePath, "utf8")).replace(
+      "export const leaf",
+      "// Adds one so callers can reserve zero.\nexport const leaf",
+    );
+    await writeFile(sourcePath, source, "utf8");
+    const project = await loadProject({ tsconfigPath: root });
+    const leaf = findSymbol(extractSymbols(project), "leaf");
+
+    const result = await applyEdits(
+      project,
+      [plan(leaf, source)],
+      configSchema.parse({
+        symbols: { minBodyLines: 0 },
+        docs: { leadingComments: { onGenerate: "replace" } },
+      }),
+      true,
+    );
+
+    expect(result.failed).toEqual([]);
+    const written = await readFile(sourcePath, "utf8");
+    expect(written).not.toContain("// Adds one so callers can reserve zero.");
+    expect(written).toContain("/**\n * Document leaf behavior.");
+  });
+
+  it("never replaces a directive source-note group", async () => {
+    const root = await copyFixture();
+    const sourcePath = join(root, "src/api.ts");
+    const source = (await readFile(sourcePath, "utf8")).replace(
+      "export const leaf",
+      "// eslint-disable-next-line no-warning-comments\nexport const leaf",
+    );
+    await writeFile(sourcePath, source, "utf8");
+    const project = await loadProject({ tsconfigPath: root });
+    const leaf = findSymbol(extractSymbols(project), "leaf");
+
+    await applyEdits(
+      project,
+      [plan(leaf, source)],
+      configSchema.parse({
+        symbols: { minBodyLines: 0 },
+        docs: { leadingComments: { onGenerate: "replace" } },
+      }),
+      true,
+    );
+
+    const written = await readFile(sourcePath, "utf8");
+    expect(written).toContain(
+      "// eslint-disable-next-line no-warning-comments",
+    );
+    expect(written.indexOf("// eslint-disable")).toBeLessThan(
+      written.indexOf("/**\n * Document leaf behavior."),
+    );
+  });
+
+  it("preserves an eligible source note after a concurrent change", async () => {
+    const root = await copyFixture();
+    const sourcePath = join(root, "src/api.ts");
+    const source = (await readFile(sourcePath, "utf8")).replace(
+      "export const leaf",
+      "// Original behavioral note.\nexport const leaf",
+    );
+    await writeFile(sourcePath, source, "utf8");
+    const project = await loadProject({ tsconfigPath: root });
+    const leaf = findSymbol(extractSymbols(project), "leaf");
+    const changed = source.replace("Original behavioral", "Changed behavioral");
+    await writeFile(sourcePath, changed, "utf8");
+
+    const result = await applyEdits(
+      project,
+      [plan(leaf, source)],
+      configSchema.parse({
+        symbols: { minBodyLines: 0 },
+        docs: { leadingComments: { onGenerate: "replace" } },
+      }),
+      true,
+    );
+
+    expect(result.applied).toEqual([]);
+    expect(await readFile(sourcePath, "utf8")).toBe(changed);
+  });
+
+  it("preserves the source file when its atomic write fails", async () => {
+    const root = await copyFixture();
+    const sourcePath = join(root, "src/api.ts");
+    const source = (await readFile(sourcePath, "utf8")).replace(
+      "export const leaf",
+      "// Original behavioral note.\nexport const leaf",
+    );
+    await writeFile(sourcePath, source, "utf8");
+    const project = await loadProject({ tsconfigPath: root });
+    const leaf = findSymbol(extractSymbols(project), "leaf");
+
+    const result = await applyEdits(
+      project,
+      [plan(leaf, source)],
+      configSchema.parse({
+        symbols: { minBodyLines: 0 },
+        docs: { leadingComments: { onGenerate: "replace" } },
+      }),
+      true,
+      () => Promise.reject(new Error("simulated write failure")),
+    );
+
+    expect(result.applied).toEqual([]);
+    expect(result.failed).toEqual([
+      { symbolId: leaf.id, reason: "simulated write failure" },
+    ]);
+    expect(await readFile(sourcePath, "utf8")).toBe(source);
+  });
 });
 
 const copyFixture = async (): Promise<string> => {

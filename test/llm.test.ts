@@ -11,9 +11,11 @@ import {
 import { AnthropicProvider } from "../src/llm/providers/anthropic.js";
 import {
   GENERATION_PROMPT_VERSION,
+  JUDGE_PROMPT_VERSION,
+  PROMPT_VERSION,
   generationPrompt,
   generationSystemPrompt,
-} from "../src/llm/prompt/v1.js";
+} from "../src/llm/prompt/index.js";
 import { parseGenerationResponse } from "../src/llm/schema.js";
 
 describe("LLM generation", () => {
@@ -140,6 +142,8 @@ describe("LLM generation", () => {
     const prompt = generationPrompt(item, "assembled context");
 
     expect(GENERATION_PROMPT_VERSION).toBe("1");
+    expect(JUDGE_PROMPT_VERSION).toBe("1");
+    expect(PROMPT_VERSION).toBe("1:1");
     expect(generationSystemPrompt).toContain("plain text");
     expect(prompt).toContain(
       'params must contain exactly these keys: ["value"]',

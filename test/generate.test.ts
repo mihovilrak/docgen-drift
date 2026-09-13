@@ -125,6 +125,111 @@ describe("generation commands", () => {
     });
   });
 
+  it("reports judge rejections and supports the --no-judge escape hatch", async () => {
+    const rejectedRoot = await copyFixture();
+    const rejected = await runGeneration(
+      rejectedRoot,
+      config(),
+      { mode: "missing", path: "src", dryRun: true },
+      provider(new Set(), new Set(["src/api.ts#leaf"])),
+    );
+
+    expect(rejected.rejected).toEqual([
+      { id: "src/api.ts#leaf", reason: "Only restates the signature." },
+    ]);
+    expect(rejected.generated).toEqual(["src/api.ts#caller"]);
+
+    const unjudgedRoot = await copyFixture();
+    const unjudgedProvider = provider(new Set(), new Set(["src/api.ts#leaf"]));
+    const unjudged = await runGeneration(
+      unjudgedRoot,
+      config(),
+      { mode: "missing", path: "src", dryRun: true, noJudge: true },
+      unjudgedProvider,
+    );
+
+    expect(unjudged.rejected).toEqual([]);
+    expect(unjudged.generated).toHaveLength(2);
+    expect(
+      unjudgedProvider.requests.some((request) =>
+        request.prompt.startsWith("Judge generated documentation"),
+      ),
+    ).toBe(false);
+  });
+
+  it("requires judging for comment replacement", async () => {
+    await expect(
+      runGeneration(
+        await copyFixture(),
+        config({ replaceComments: true }),
+        {
+          mode: "missing",
+          path: "src",
+          dryRun: true,
+          noJudge: true,
+        },
+        provider(),
+      ),
+    ).rejects.toThrow(/requires the judge/u);
+  });
+
+  it("preserves source notes on SKIP, rejection, and validation failure", async () => {
+    const root = await copyFixture();
+    const sourcePath = join(root, "src/api.ts");
+    const withNotes = (await readFile(sourcePath, "utf8"))
+      .replace("export const leaf", "// Leaf intent.\nexport const leaf")
+      .replace("export const caller", "// Caller intent.\nexport const caller");
+    await writeFile(sourcePath, withNotes, "utf8");
+
+    const gated = await runGeneration(
+      root,
+      config({ replaceComments: true }),
+      { mode: "missing", path: "src", allowDirty: true },
+      provider(new Set(["src/api.ts#leaf"]), new Set(["src/api.ts#caller"])),
+    );
+    expect(gated.skipped).toHaveLength(1);
+    expect(gated.rejected).toHaveLength(1);
+    expect(await readFile(sourcePath, "utf8")).toBe(withNotes);
+
+    const invalid = await runGeneration(
+      root,
+      config({ replaceComments: true }),
+      { mode: "missing", path: "src", allowDirty: true },
+      provider(
+        new Set(),
+        new Set(),
+        new Set(["src/api.ts#leaf", "src/api.ts#caller"]),
+      ),
+    );
+    expect(invalid.failed).toHaveLength(2);
+    expect(await readFile(sourcePath, "utf8")).toBe(withNotes);
+  });
+
+  it("writes post-replacement hashes that are immediately clean", async () => {
+    const root = await copyFixture();
+    const sourcePath = join(root, "src/api.ts");
+    const withNotes = (await readFile(sourcePath, "utf8"))
+      .replace("export const leaf", "// Leaf intent.\nexport const leaf")
+      .replace("export const caller", "// Caller intent.\nexport const caller");
+    await writeFile(sourcePath, withNotes, "utf8");
+    const replaceConfig = config({ replaceComments: true });
+
+    const generated = await runGeneration(
+      root,
+      replaceConfig,
+      { mode: "missing", path: "src", allowDirty: true },
+      provider(),
+    );
+
+    expect(generated.generated).toHaveLength(2);
+    expect(await readFile(sourcePath, "utf8")).not.toContain("// Leaf intent.");
+    expect(
+      (await runCheck(root, replaceConfig)).results.map(
+        (result) => result.status,
+      ),
+    ).toEqual(["unchanged", "unchanged"]);
+  });
+
   it("normalizes --project directory, file, and glob scopes", () => {
     const base = config();
     expect(scopeProjects(base, "packages/alpha").workspace.projects).toEqual([
@@ -146,18 +251,25 @@ describe("generation commands", () => {
     expect(check).toContain("--project");
     expect(check).toContain("--dry-run");
     expect(check).toContain("--allow-dirty");
+    expect(check).toContain("--no-judge");
     expect(fix).toContain("--missing");
     expect(fix).toContain("--path");
     expect(fix).toContain("--project");
+    expect(fix).toContain("--no-judge");
   });
 });
 
-const config = (): DocgenConfig =>
+const config = (
+  options: { readonly replaceComments?: boolean } = {},
+): DocgenConfig =>
   configSchema.parse({
     include: ["src/**/*.ts"],
     tests: [],
     symbols: { minBodyLines: 0 },
     context: { sources: { gitSubject: false } },
+    ...(options.replaceComments === true
+      ? { docs: { leadingComments: { onGenerate: "replace" } } }
+      : {}),
   });
 
 const copyFixture = async (): Promise<string> => {
@@ -166,39 +278,66 @@ const copyFixture = async (): Promise<string> => {
   return root;
 };
 
-const provider = (skips: ReadonlySet<string> = new Set()): LlmProvider => ({
-  id: "stub",
-  isRetryable: () => false,
-  complete: async (request) => {
-    const id = idFromPrompt(request);
-    const params = paramsFromPrompt(request);
-    await Promise.resolve();
-    return {
-      value: skips.has(id)
-        ? {
+const provider = (
+  skips: ReadonlySet<string> = new Set(),
+  rejects: ReadonlySet<string> = new Set(),
+  invalid: ReadonlySet<string> = new Set(),
+): LlmProvider & { readonly requests: ProviderRequest[] } => {
+  const requests: ProviderRequest[] = [];
+  return {
+    id: "stub",
+    requests,
+    isRetryable: () => false,
+    complete: async (request) => {
+      requests.push(request);
+      const id = idFromPrompt(request);
+      if (invalid.has(id)) {
+        return {
+          value: { verdict: "OK" },
+          usage: { inputTokens: 2, outputTokens: 1, costUsd: 0.0001 },
+        };
+      }
+      if (request.prompt.startsWith("Judge generated documentation")) {
+        return {
+          value: {
             id,
-            summary: null,
-            detail: null,
-            params,
-            returns: null,
-            throws: [],
-            verdict: "SKIP",
-            reason: "Insufficient behavioral context.",
-          }
-        : {
-            id,
-            summary: `Document ${id.slice(id.lastIndexOf("#") + 1)} behavior.`,
-            detail: null,
-            params,
-            returns: "The computed value.",
-            throws: [],
-            verdict: "OK",
-            reason: null,
+            verdict: rejects.has(id) ? "REJECT" : "ACCEPT",
+            reason: rejects.has(id)
+              ? "Only restates the signature."
+              : "Adds supported behavior.",
           },
-      usage: { inputTokens: 10, outputTokens: 5, costUsd: 0.001 },
-    };
-  },
-});
+          usage: { inputTokens: 2, outputTokens: 1, costUsd: 0.0001 },
+        };
+      }
+      const params = paramsFromPrompt(request);
+      await Promise.resolve();
+      return {
+        value: skips.has(id)
+          ? {
+              id,
+              summary: null,
+              detail: null,
+              params,
+              returns: null,
+              throws: [],
+              verdict: "SKIP",
+              reason: "Insufficient behavioral context.",
+            }
+          : {
+              id,
+              summary: `Document ${id.slice(id.lastIndexOf("#") + 1)} behavior.`,
+              detail: null,
+              params,
+              returns: "The computed value.",
+              throws: [],
+              verdict: "OK",
+              reason: null,
+            },
+        usage: { inputTokens: 10, outputTokens: 5, costUsd: 0.001 },
+      };
+    },
+  };
+};
 
 const idFromPrompt = (request: ProviderRequest): string => {
   const match = request.prompt.match(/id must be exactly ("[^"]+")/u);

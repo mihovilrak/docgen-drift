@@ -22,12 +22,17 @@ export interface GenerationOptions {
   readonly path?: string;
   readonly dryRun?: boolean;
   readonly allowDirty?: boolean;
+  readonly noJudge?: boolean;
 }
 
 export interface GenerationRunResult {
   readonly requested: number;
   readonly generated: readonly SymbolId[];
   readonly skipped: readonly {
+    readonly id: SymbolId;
+    readonly reason: string;
+  }[];
+  readonly rejected: readonly {
     readonly id: SymbolId;
     readonly reason: string;
   }[];
@@ -74,6 +79,7 @@ export const runGeneration = async (
   if (targetIds.size === 0) return emptyResult();
 
   const provider = injectedProvider ?? createProvider(config.generate.provider);
+  const judgeEnabled = config.judge.enabled && options.noJudge !== true;
   const projectResults = await loadWorkspace(
     {
       root,
@@ -105,6 +111,7 @@ export const runGeneration = async (
           config,
           provider,
           options.dryRun !== true,
+          judgeEnabled,
         ),
       };
     },
@@ -127,6 +134,12 @@ export const runGeneration = async (
       id: canonicalResultId(project.workspacePath, item.id),
     })),
   );
+  const rejected = projectResults.flatMap((project) =>
+    project.result.rejected.map((item) => ({
+      ...item,
+      id: canonicalResultId(project.workspacePath, item.id),
+    })),
+  );
   const files = projectResults.flatMap((project) => project.result.edits.files);
   if (options.dryRun !== true && generated.length > 0) {
     await refreshLocks(root, config, new Set(generated));
@@ -135,6 +148,7 @@ export const runGeneration = async (
     requested: targetIds.size,
     generated,
     skipped,
+    rejected,
     failed,
     changedFiles: files.length,
     usage: projectResults.reduce(
@@ -162,9 +176,11 @@ const validateGenerationOptions = (
     throw new ConfigError("Missing-doc backfill requires --path <path>");
   }
   if (config.docs.leadingComments.onGenerate === "replace") {
-    throw new ConfigError(
-      "docs.leadingComments.onGenerate=replace requires the Phase 5 judge",
-    );
+    if (!config.judge.enabled || options.noJudge === true) {
+      throw new ConfigError(
+        "docs.leadingComments.onGenerate=replace requires the judge and cannot be combined with --no-judge",
+      );
+    }
   }
 };
 
@@ -214,6 +230,7 @@ const emptyResult = (): GenerationRunResult => ({
   requested: 0,
   generated: [],
   skipped: [],
+  rejected: [],
   failed: [],
   changedFiles: 0,
   usage: emptyUsage(),

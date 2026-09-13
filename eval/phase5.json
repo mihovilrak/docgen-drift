@@ -1,0 +1,1852 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-09-13",
+  "cases": [
+    {
+      "id": "P5-001",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/binder.ts",
+      "symbol": "declareSymbol",
+      "signature": "function declareSymbol(symbolTable: SymbolTable, parent: Symbol | undefined, node: Declaration, includes: SymbolFlags, excludes: SymbolFlags, isReplaceableByMethod?: boolean, isComputedName?: boolean): Symbol",
+      "referenceDoc": "Declares a Symbol for the node and adds it to symbols. Reports errors for conflicting identifier names.",
+      "candidateDoc": "Handles declareSymbol using the supplied arguments and returns its result.",
+      "humanUseful": false,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Recorded false keep: generic wording was incorrectly accepted.",
+      "ablation": {
+        "signatureOnlyScore": 2,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-002",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/builderState.ts",
+      "symbol": "getReferencedFiles",
+      "signature": "function getReferencedFiles(program: Program, sourceFile: SourceFile, getCanonicalFileName: GetCanonicalFileName): Set<Path> | undefined",
+      "referenceDoc": "Gets the referenced files for a file from the program with values for the keys as referenced file's path to be true",
+      "candidateDoc": "Gets the referenced files for a file from the program with values for the keys as referenced file's path to be true",
+      "humanUseful": true,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Recorded false reject: useful behavior was judged too conservative.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-003",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/checker.ts",
+      "symbol": "isThislessType",
+      "signature": "function isThislessType(node: TypeNode): boolean",
+      "referenceDoc": "A type is free of this references if it's the any, string, number, boolean, symbol, or void keyword, a string literal type, an array with an element type that is free of this references, or a type reference that is free of this references.",
+      "candidateDoc": "A type is free of this references if it's the any, string, number, boolean, symbol, or void keyword, a string literal type, an array with an element type that is free of this references, or a type reference that is free of this references.",
+      "humanUseful": true,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Recorded false reject: useful behavior was judged too conservative.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 5
+      }
+    },
+    {
+      "id": "P5-004",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/checker.ts",
+      "symbol": "getRelationKey",
+      "signature": "function getRelationKey(source: Type, target: Type, intersectionState: IntersectionState, relation: Map<string, RelationComparisonResult>, ignoreConstraints: boolean)",
+      "referenceDoc": "To improve caching, the relation key for two generic types uses the target's id plus ids of the type parameters. For other cases, the types ids are used.",
+      "candidateDoc": "To improve caching, the relation key for two generic types uses the target's id plus ids of the type parameters. For other cases, the types ids are used.",
+      "humanUseful": true,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Recorded false reject: useful behavior was judged too conservative.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 5
+      }
+    },
+    {
+      "id": "P5-005",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/checker.ts",
+      "symbol": "isJSConstructor",
+      "signature": "function isJSConstructor(node: Node | undefined): node is FunctionDeclaration | FunctionExpression",
+      "referenceDoc": "Indicates whether a declaration can be treated as a constructor in a JavaScript file.",
+      "candidateDoc": "Handles isJSConstructor using the supplied arguments and returns its result.",
+      "humanUseful": false,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Recorded false keep: generic wording was incorrectly accepted.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-006",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/commandLineParser.ts",
+      "symbol": "hasFileWithHigherPriorityExtension",
+      "signature": "function hasFileWithHigherPriorityExtension(file: string, literalFiles: Map<string, string>, wildcardFiles: Map<string, string>, extensions: readonly string[][], keyMapper: (value: string) => string)",
+      "referenceDoc": "Determines whether a literal or wildcard file has already been included that has a higher extension priority.",
+      "candidateDoc": "Determines whether a literal or wildcard file has already been included that has a higher extension priority.",
+      "humanUseful": true,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Recorded false reject: useful behavior was judged too conservative.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-007",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/core.ts",
+      "symbol": "memoizeOne",
+      "signature": "export function memoizeOne<A extends string | number | boolean | undefined, T>(callback: (arg: A) => T): (arg: A) => T",
+      "referenceDoc": "A version of `memoize` that supports a single primitive argument",
+      "candidateDoc": "A version of `memoize` that supports a single primitive argument",
+      "humanUseful": true,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Recorded false reject: useful behavior was judged too conservative.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-008",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/factory/emitNode.ts",
+      "symbol": "getOrCreateEmitNode",
+      "signature": "export function getOrCreateEmitNode(node: Node): EmitNode",
+      "referenceDoc": "Associates a node with the current transformation, initializing various transient transformation properties.",
+      "candidateDoc": "Associates a node with the current transformation, initializing various transient transformation properties.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-009",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/factory/utilities.ts",
+      "symbol": "isExportName",
+      "signature": "export function isExportName(node: Identifier): boolean",
+      "referenceDoc": "Gets whether an identifier should only be referred to by its export representation if the name points to an exported symbol.",
+      "candidateDoc": "Handles isExportName using the supplied arguments and returns its result.",
+      "humanUseful": false,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Only paraphrases the symbol name and signature.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-010",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/path.ts",
+      "symbol": "isUrl",
+      "signature": "export function isUrl(path: string): boolean",
+      "referenceDoc": "Determines whether a path starts with a URL scheme (e.g. starts with `http://`, `ftp://`, `file://`, etc.).",
+      "candidateDoc": "Determines whether a path starts with a URL scheme (e.g. starts with `http://`, `ftp://`, `file://`, etc.).",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-011",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/scanner.ts",
+      "symbol": "codePointUnchecked",
+      "signature": "function codePointUnchecked(pos: number)",
+      "referenceDoc": "Returns the code point for the character at the given position within `text`. This should only be used when pos is guaranteed to be within the bounds of `text` as this function does not perform bounds checks.",
+      "candidateDoc": "Returns the code point for the character at the given position within `text`. This should only be used when pos is guaranteed to be within the bounds of `text` as this function does not perform bounds checks.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 2,
+        "fullContextScore": 5
+      }
+    },
+    {
+      "id": "P5-012",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/transformer.ts",
+      "symbol": "suspendLexicalEnvironment",
+      "signature": "function suspendLexicalEnvironment(): void",
+      "referenceDoc": "Suspends the current lexical environment, usually after visiting a parameter list.",
+      "candidateDoc": "Suspends the current lexical environment, usually after visiting a parameter list.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-013",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/transformers/es2015.ts",
+      "symbol": "isTransformedSuperCall",
+      "signature": "function isTransformedSuperCall(node: Node): node is TransformedSuperCall",
+      "referenceDoc": "Tests whether `node` is a call like `_super.call(this, ...)` or `_super.apply(this, ...)`",
+      "candidateDoc": "Handles isTransformedSuperCall using the supplied arguments and returns its result.",
+      "humanUseful": false,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Only paraphrases the symbol name and signature.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-014",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/transformers/es2015.ts",
+      "symbol": "visitNewExpression",
+      "signature": "function visitNewExpression(node: NewExpression): LeftHandSideExpression",
+      "referenceDoc": "Visits a NewExpression that contains a spread element.",
+      "candidateDoc": "Visits a NewExpression that contains a spread element.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-015",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/transformers/generators.ts",
+      "symbol": "visitVariableStatement",
+      "signature": "function visitVariableStatement(node: VariableStatement): Statement | undefined",
+      "referenceDoc": "Visits a variable statement. This will be called when one of the following conditions are met: - The variable statement is contained within the body of a generator function.",
+      "candidateDoc": "Visits a variable statement. This will be called when one of the following conditions are met: - The variable statement is contained within the body of a generator function.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 5
+      }
+    },
+    {
+      "id": "P5-016",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/transformers/generators.ts",
+      "symbol": "emitEndfinally",
+      "signature": "function emitEndfinally(): void",
+      "referenceDoc": "Emits an Endfinally operation. This is used to handle `finally` block semantics.",
+      "candidateDoc": "Emits an Endfinally operation. This is used to handle `finally` block semantics.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-017",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/transformers/module/module.ts",
+      "symbol": "transformSourceFile",
+      "signature": "function transformSourceFile(node: SourceFile)",
+      "referenceDoc": "Transforms the module aspects of a SourceFile.",
+      "candidateDoc": "Handles transformSourceFile using the supplied arguments and returns its result.",
+      "humanUseful": false,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Only paraphrases the symbol name and signature.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-018",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/transformers/module/system.ts",
+      "symbol": "transformSourceFile",
+      "signature": "function transformSourceFile(node: SourceFile)",
+      "referenceDoc": "Transforms the module aspects of a SourceFile.",
+      "candidateDoc": "Transforms the module aspects of a SourceFile.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-019",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/transformers/module/system.ts",
+      "symbol": "visitCatchClause",
+      "signature": "function visitCatchClause(node: CatchClause): CatchClause",
+      "referenceDoc": "Visits the body of a CatchClause to hoist declarations.",
+      "candidateDoc": "Visits the body of a CatchClause to hoist declarations.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-020",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/transformers/ts.ts",
+      "symbol": "shouldEmitAccessorDeclaration",
+      "signature": "function shouldEmitAccessorDeclaration(node: AccessorDeclaration)",
+      "referenceDoc": "Determines whether to emit an accessor declaration. We should not emit the declaration if it does not have a body and is abstract.",
+      "candidateDoc": "Determines whether to emit an accessor declaration. We should not emit the declaration if it does not have a body and is abstract.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-021",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/transformers/utilities.ts",
+      "symbol": "isInitializedOrStaticProperty",
+      "signature": "function isInitializedOrStaticProperty(member: ClassElement, requireInitializer: boolean, isStatic: boolean)",
+      "referenceDoc": "Is a class element either a static or an instance property declaration with an initializer?",
+      "candidateDoc": "Handles isInitializedOrStaticProperty using the supplied arguments and returns its result.",
+      "humanUseful": false,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Only paraphrases the symbol name and signature.",
+      "ablation": {
+        "signatureOnlyScore": 2,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-022",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/types.ts",
+      "symbol": "isArrayType",
+      "signature": "isArrayType(type: Type): boolean",
+      "referenceDoc": "True if this type is the `Array` or `ReadonlyArray` type from lib.d.ts. This function will _not_ return true if passed a type which extends `Array` (for example, the TypeScript AST's `NodeArray` type).",
+      "candidateDoc": "True if this type is the `Array` or `ReadonlyArray` type from lib.d.ts. This function will _not_ return true if passed a type which extends `Array` (for example, the TypeScript AST's `NodeArray` type).",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 5
+      }
+    },
+    {
+      "id": "P5-023",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/types.ts",
+      "symbol": "enableEmitNotification",
+      "signature": "enableEmitNotification(kind: SyntaxKind): void",
+      "referenceDoc": "Enables before/after emit notifications in the pretty printer for the provided SyntaxKind.",
+      "candidateDoc": "Enables before/after emit notifications in the pretty printer for the provided SyntaxKind.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-024",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/utilities.ts",
+      "symbol": "isVariableDeclarationInitializedToRequire",
+      "signature": "export function isVariableDeclarationInitializedToRequire(node: Node): node is VariableDeclarationInitializedTo<RequireOrImportCall>",
+      "referenceDoc": "Returns true if the node is a VariableDeclaration initialized to a require call (see `isRequireCall`). This function does not test if the node is in a JavaScript file or not.",
+      "candidateDoc": "Returns true if the node is a VariableDeclaration initialized to a require call (see `isRequireCall`). This function does not test if the node is in a JavaScript file or not.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 5
+      }
+    },
+    {
+      "id": "P5-025",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/utilities.ts",
+      "symbol": "moveRangePastModifiers",
+      "signature": "export function moveRangePastModifiers(node: Node): TextRange",
+      "referenceDoc": "Moves the start position of a range past any decorators or modifiers.",
+      "candidateDoc": "Handles moveRangePastModifiers using the supplied arguments and returns its result.",
+      "humanUseful": false,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Only paraphrases the symbol name and signature.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-026",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/utilitiesPublic.ts",
+      "symbol": "getParseTreeNode",
+      "signature": "export function getParseTreeNode<T extends Node>(node: T | undefined, nodeTest?: (node: Node) => node is T): T | undefined",
+      "referenceDoc": "Gets the original parse tree node for a node.",
+      "candidateDoc": "Gets the original parse tree node for a node.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-027",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/utilitiesPublic.ts",
+      "symbol": "hasInitializer",
+      "signature": "export function hasInitializer(node: Node): node is HasInitializer",
+      "referenceDoc": "True if has initializer node attached to it.",
+      "candidateDoc": "True if has initializer node attached to it.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-028",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/compiler/watchUtilities.ts",
+      "symbol": "tryReadDirectory",
+      "signature": "function tryReadDirectory(rootDir: string, rootDirPath: Path)",
+      "referenceDoc": "If the readDirectory result was already cached, it returns that Otherwise gets result from host and caches it. The host request is done under try catch block to avoid caching incorrect result",
+      "candidateDoc": "If the readDirectory result was already cached, it returns that Otherwise gets result from host and caches it. The host request is done under try catch block to avoid caching incorrect result",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 5
+      }
+    },
+    {
+      "id": "P5-029",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/harness/vfsUtil.ts",
+      "symbol": "readFileSync",
+      "signature": "public readFileSync(path: string, encoding?: BufferEncoding | null): string | Buffer<ArrayBuffer>",
+      "referenceDoc": "Read from a file. NOTE: do not rename this method as it is intended to align with the same named export of the \"fs\" module.",
+      "candidateDoc": "Handles readFileSync using the supplied arguments and returns its result.",
+      "humanUseful": false,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Only paraphrases the symbol name and signature.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-030",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/server/project.ts",
+      "symbol": "getGlobalProjectErrors",
+      "signature": "override getGlobalProjectErrors(): readonly Diagnostic[]",
+      "referenceDoc": "Get the errors that dont have any file name associated",
+      "candidateDoc": "Get the errors that dont have any file name associated",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-031",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/services/completions.ts",
+      "symbol": "getScopeNode",
+      "signature": "function getScopeNode(initialToken: Node | undefined, position: number, sourceFile: SourceFile)",
+      "referenceDoc": "Finds the first node that \"embraces\" the position, so that one may accurately aggregate locals from the closest containing scope.",
+      "candidateDoc": "Finds the first node that \"embraces\" the position, so that one may accurately aggregate locals from the closest containing scope.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 2,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-032",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/services/findAllReferences.ts",
+      "symbol": "findOwnConstructorReferences",
+      "signature": "function findOwnConstructorReferences(classSymbol: Symbol, sourceFile: SourceFile, addNode: (node: Node) => void): void",
+      "referenceDoc": "`classSymbol` is the class where the constructor was defined. Reference the constructor and all calls to `new this()`.",
+      "candidateDoc": "`classSymbol` is the class where the constructor was defined. Reference the constructor and all calls to `new this()`.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-033",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/services/organizeImports.ts",
+      "symbol": "organizeImports",
+      "signature": "export function organizeImports( sourceFile: SourceFile, formatContext: formatting.FormatContext, host: LanguageServiceHost, program: Program, preferences: UserPreferences, mode: OrganizeImportsMode, ): FileTextChanges[]",
+      "referenceDoc": "Organize imports by: 1) Removing unused imports 2) Coalescing imports from the same module 3) Sorting imports",
+      "candidateDoc": "Handles organizeImports using the supplied arguments and returns its result.",
+      "humanUseful": false,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Only paraphrases the symbol name and signature.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-034",
+      "repository": "microsoft/TypeScript",
+      "commit": "c63de15a992d37f0d6cec03ac7631872838602cb",
+      "path": "src/services/textChanges.ts",
+      "symbol": "deleteNode",
+      "signature": "public deleteNode(sourceFile: SourceFile, node: Node, options: ConfigurableStartEnd = { leadingTriviaOption: LeadingTriviaOption.IncludeAll }): void",
+      "referenceDoc": "Stop! Consider using `delete` instead, which has logic for deleting nodes from delimited lists.",
+      "candidateDoc": "Stop! Consider using `delete` instead, which has logic for deleting nodes from delimited lists.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-035",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/bootstrap/src/Project.ts",
+      "symbol": "createProject",
+      "signature": "export async function createProject(options: ProjectOptions = {}): Promise<Project>",
+      "referenceDoc": "Asynchronously creates a new collection of source files to analyze.",
+      "candidateDoc": "Asynchronously creates a new collection of source files to analyze.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-036",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/common/src/errors.ts",
+      "symbol": "throwNotImplementedForSyntaxKindError",
+      "signature": "export function throwNotImplementedForSyntaxKindError(kind: ts.SyntaxKind, node?: Node): never",
+      "referenceDoc": "Gets an error saying that a feature is not implemented for a certain syntax kind.",
+      "candidateDoc": "Gets an error saying that a feature is not implemented for a certain syntax kind.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-037",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/common/src/fileSystem/matchGlobs.ts",
+      "symbol": "matchGlobs",
+      "signature": "export function matchGlobs(paths: ReadonlyArray<string>, patterns: string | ReadonlyArray<string>, cwd: string)",
+      "referenceDoc": "Checks the specified file paths to see if the match any of the specified patterns.",
+      "candidateDoc": "Handles matchGlobs using the supplied arguments and returns its result.",
+      "humanUseful": false,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Only paraphrases the symbol name and signature.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-038",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/Project.ts",
+      "symbol": "addSourceFileAtPath",
+      "signature": "addSourceFileAtPath(filePath: string): SourceFile",
+      "referenceDoc": "Adds an existing source file from a file path or throws if it doesn't exist. Will return the source file if it was already added.",
+      "candidateDoc": "Adds an existing source file from a file path or throws if it doesn't exist. Will return the source file if it was already added.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-039",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/compiler/ast/base/DecoratableNode.ts",
+      "symbol": "getDecorator",
+      "signature": "getDecorator(findFunction: (declaration: Decorator) => boolean): Decorator | undefined",
+      "referenceDoc": "Gets a decorator or undefined if it doesn't exist.",
+      "candidateDoc": "Gets a decorator or undefined if it doesn't exist.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-040",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/compiler/ast/base/QuestionDotTokenableNode.ts",
+      "symbol": "getQuestionDotTokenNodeOrThrow",
+      "signature": "getQuestionDotTokenNodeOrThrow(message?: string | (() => string)): Node<ts.QuestionDotToken>",
+      "referenceDoc": "Gets the question dot token node or throws.",
+      "candidateDoc": "Gets the question dot token node or throws.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-041",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/compiler/ast/base/TypeElementMemberedNode.ts",
+      "symbol": "getSetAccessorOrThrow",
+      "signature": "getSetAccessorOrThrow(findFunction: (member: SetAccessorDeclaration) => boolean): SetAccessorDeclaration",
+      "referenceDoc": "Gets the first set accessor by a find function or throws if not found.",
+      "candidateDoc": "Handles getSetAccessorOrThrow using the supplied arguments and returns its result.",
+      "humanUseful": false,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Only paraphrases the symbol name and signature.",
+      "ablation": {
+        "signatureOnlyScore": 2,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-042",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/compiler/ast/class/PropertyDeclaration.ts",
+      "symbol": "getStructure",
+      "signature": "getStructure(): PropertyDeclarationStructure",
+      "referenceDoc": "Gets the structure equivalent to this node.",
+      "candidateDoc": "Gets the structure equivalent to this node.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-043",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/compiler/ast/class/base/ClassLikeDeclarationBase.ts",
+      "symbol": "getStaticMethod",
+      "signature": "getStaticMethod(name: string): MethodDeclaration | undefined",
+      "referenceDoc": "Gets the first static method by name.",
+      "candidateDoc": "Gets the first static method by name.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-044",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/compiler/ast/common/Node.ts",
+      "symbol": "getLastChild",
+      "signature": "getLastChild<T extends Node>(condition?: (node: Node) => node is T): T | undefined",
+      "referenceDoc": "Gets the last child by a condition.",
+      "candidateDoc": "Gets the last child by a condition.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-045",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/compiler/ast/common/Node.ts",
+      "symbol": "getParentWhileKindOrThrow",
+      "signature": "getParentWhileKindOrThrow<TKind extends SyntaxKind>(kind: TKind, message?: string | (() => string))",
+      "referenceDoc": "Goes up the parents (ancestors) of the node while the parent is the specified syntax kind. Throws if the initial parent is not the specified syntax kind.",
+      "candidateDoc": "Handles getParentWhileKindOrThrow using the supplied arguments and returns its result.",
+      "humanUseful": false,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Only paraphrases the symbol name and signature.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 5
+      }
+    },
+    {
+      "id": "P5-046",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/compiler/ast/common/Node.ts",
+      "symbol": "getFirstAncestorOrThrow",
+      "signature": "getFirstAncestorOrThrow<T extends Node>(condition?: (node: Node) => node is T): T",
+      "referenceDoc": "Gets the first ancestor that matches the provided condition or throws if not found.",
+      "candidateDoc": "Gets the first ancestor that matches the provided condition or throws if not found.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-047",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/compiler/ast/common/Node.ts",
+      "symbol": "isBodyable",
+      "signature": "static isBodyable<T extends compiler.Node>(node: T | undefined): node is compiler.BodyableNode & compiler.BodyableNodeExtensionType & T",
+      "referenceDoc": "Gets if the node is a BodyableNode.",
+      "candidateDoc": "Gets if the node is a BodyableNode.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-048",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/compiler/ast/common/Node.ts",
+      "symbol": "isLiteralLike",
+      "signature": "static isLiteralLike<T extends compiler.Node>(node: T | undefined): node is compiler.LiteralLikeNode & compiler.LiteralLikeNodeExtensionType & T",
+      "referenceDoc": "Gets if the node is a LiteralLikeNode.",
+      "candidateDoc": "Gets if the node is a LiteralLikeNode.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-049",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/compiler/ast/common/Node.ts",
+      "symbol": "isTypeReference",
+      "signature": "static isTypeReference(node: compiler.Node | undefined): node is compiler.TypeReferenceNode",
+      "referenceDoc": "Gets if the node is a TypeReferenceNode.",
+      "candidateDoc": "Handles isTypeReference using the supplied arguments and returns its result.",
+      "humanUseful": false,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Only paraphrases the symbol name and signature.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-050",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/compiler/ast/doc/JSDocTemplateTag.ts",
+      "symbol": "getConstraintOrThrow",
+      "signature": "getConstraintOrThrow(message?: string | (() => string))",
+      "referenceDoc": "Gets the template tag's constraint if it exists or throws otherwise.",
+      "candidateDoc": "Gets the template tag's constraint if it exists or throws otherwise.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-051",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/compiler/ast/expression/object/ObjectDestructuringAssignment.ts",
+      "symbol": "getLeft",
+      "signature": "getLeft(): ObjectLiteralExpression",
+      "referenceDoc": "Gets the left object literal expression of the object destructuring assignment.",
+      "candidateDoc": "Gets the left object literal expression of the object destructuring assignment.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 2,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-052",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/compiler/ast/function/OverloadableNode.ts",
+      "symbol": "isImplementation",
+      "signature": "isImplementation(): boolean",
+      "referenceDoc": "Gets if this is the implementation.",
+      "candidateDoc": "Gets if this is the implementation.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-053",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/compiler/ast/module/ExportAssignment.ts",
+      "symbol": "isExportEquals",
+      "signature": "isExportEquals()",
+      "referenceDoc": "Gets if this is an export equals assignment. If this is false, then it's `export default`.",
+      "candidateDoc": "Handles isExportEquals using the supplied arguments and returns its result.",
+      "humanUseful": false,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Only paraphrases the symbol name and signature.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-054",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/compiler/ast/module/ImportClause.ts",
+      "symbol": "isDeferred",
+      "signature": "isDeferred()",
+      "referenceDoc": "Gets if this import clause has a defer phase modifier.",
+      "candidateDoc": "Gets if this import clause has a defer phase modifier.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-055",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/compiler/ast/module/ImportSpecifier.ts",
+      "symbol": "isTypeOnly",
+      "signature": "isTypeOnly()",
+      "referenceDoc": "Gets if this is a type only import specifier.",
+      "candidateDoc": "Gets if this is a type only import specifier.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-056",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/compiler/ast/module/SourceFile.ts",
+      "symbol": "getReferencingSourceFiles",
+      "signature": "getReferencingSourceFiles()",
+      "referenceDoc": "Gets any source files that reference this source file.",
+      "candidateDoc": "Gets any source files that reference this source file.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-057",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/compiler/ast/statement/BreakStatement.ts",
+      "symbol": "getLabelOrThrow",
+      "signature": "getLabelOrThrow(message?: string | (() => string))",
+      "referenceDoc": "Gets this break statement's label or throw if it does not exist.",
+      "candidateDoc": "Handles getLabelOrThrow using the supplied arguments and returns its result.",
+      "humanUseful": false,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Only paraphrases the symbol name and signature.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-058",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/compiler/ast/statement/StatementedNode.ts",
+      "symbol": "addFunctions",
+      "signature": "addFunctions(structures: ReadonlyArray<OptionalKind<FunctionDeclarationStructure>>): FunctionDeclaration[]",
+      "referenceDoc": "Adds function declarations as a child.",
+      "candidateDoc": "Adds function declarations as a child.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-059",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/compiler/ast/statement/VariableStatement.ts",
+      "symbol": "getDeclarationKind",
+      "signature": "getDeclarationKind(): VariableDeclarationKind",
+      "referenceDoc": "Gets the variable declaration kind.",
+      "candidateDoc": "Gets the variable declaration kind.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-060",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/compiler/ast/type/TypeParameterDeclaration.ts",
+      "symbol": "getConstraintOrThrow",
+      "signature": "getConstraintOrThrow(message?: string | (() => string))",
+      "referenceDoc": "Gets the constraint of the type parameter or throws if it doesn't exist.",
+      "candidateDoc": "Gets the constraint of the type parameter or throws if it doesn't exist.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-061",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/compiler/tools/LanguageService.ts",
+      "symbol": "getDefinitionsAtPosition",
+      "signature": "getDefinitionsAtPosition(sourceFile: SourceFile, pos: number): DefinitionInfo[]",
+      "referenceDoc": "Gets the definitions at the specified position.",
+      "candidateDoc": "Handles getDefinitionsAtPosition using the supplied arguments and returns its result.",
+      "humanUseful": false,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Only paraphrases the symbol name and signature.",
+      "ablation": {
+        "signatureOnlyScore": 2,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-062",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/compiler/tools/TypeChecker.ts",
+      "symbol": "isTypeAssignableTo",
+      "signature": "isTypeAssignableTo(sourceType: Type, targetType: Type)",
+      "referenceDoc": "Checks if a type is assignable to another type.",
+      "candidateDoc": "Checks if a type is assignable to another type.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-063",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/compiler/types/Type.ts",
+      "symbol": "isNullable",
+      "signature": "isNullable()",
+      "referenceDoc": "Gets if the type is possibly null or undefined.",
+      "candidateDoc": "Gets if the type is possibly null or undefined.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-064",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/factories/CompilerFactory.ts",
+      "symbol": "getDirectoryFromCacheOnlyIfInCache",
+      "signature": "getDirectoryFromCacheOnlyIfInCache(dirPath: StandardizedFilePath)",
+      "referenceDoc": "Gets a directory from the cache, but only if it's in the cache.",
+      "candidateDoc": "Gets a directory from the cache, but only if it's in the cache.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-065",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/fileSystem/Directory.ts",
+      "symbol": "getSourceFiles",
+      "signature": "getSourceFiles(globPatterns: ReadonlyArray<string>): SourceFile[]",
+      "referenceDoc": "Gets all the source files added to the project relative to the directory that match the provided patterns.",
+      "candidateDoc": "Handles getSourceFiles using the supplied arguments and returns its result.",
+      "humanUseful": false,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Only paraphrases the symbol name and signature.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-066",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/manipulation/manipulations/replaction.ts",
+      "symbol": "replaceSourceFileTextForFormatting",
+      "signature": "export function replaceSourceFileTextForFormatting(opts: { sourceFile: SourceFile; newText: string })",
+      "referenceDoc": "Replaces the text in a source file and assumes only the nodes will shift (no tree structure should change). This is very useful when making formatting changes that won't change the AST structure.",
+      "candidateDoc": "Replaces the text in a source file and assumes only the nodes will shift (no tree structure should change). This is very useful when making formatting changes that won't change the AST structure.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 5
+      }
+    },
+    {
+      "id": "P5-067",
+      "repository": "dsherret/ts-morph",
+      "commit": "c895bee3cca5b602b9d8a016804989faa2cefafa",
+      "path": "packages/ts-morph/src/structures/Structure.generated.ts",
+      "symbol": "isPropertyNamed",
+      "signature": "isPropertyNamed<T>(structure: T): structure is T & PropertyNamedNodeStructure",
+      "referenceDoc": "Gets if the provided structure is a PropertyNamedNodeStructure.",
+      "candidateDoc": "Gets if the provided structure is a PropertyNamedNodeStructure.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-068",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "examples/profiling/src/prime-number.ts",
+      "symbol": "randomBigInt",
+      "signature": "function randomBigInt(bitLength: number): bigint",
+      "referenceDoc": "Generate random `BigInt` with given bit length e.g. randomBigInt(8) -> 153n (1001 1001)",
+      "candidateDoc": "Generate random `BigInt` with given bit length e.g. randomBigInt(8) -> 153n (1001 1001)",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-069",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/browser/src/client/tester/expect/toBeInViewport.ts",
+      "symbol": "getViewportIntersection",
+      "signature": "async function getViewportIntersection(element: HTMLElement | SVGElement, expectedRatio: number): Promise<{ pass: boolean; ratio?: number }>",
+      "referenceDoc": "Get viewport intersection ratio using IntersectionObserver API This implementation follows Playwright's approach using IntersectionObserver as the primary mechanism",
+      "candidateDoc": "Handles getViewportIntersection using the supplied arguments and returns its result.",
+      "humanUseful": false,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Only paraphrases the symbol name and signature.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 5
+      }
+    },
+    {
+      "id": "P5-070",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/browser/src/node/commands/screenshotMatcher/index.ts",
+      "symbol": "writeScreenshot",
+      "signature": "async function writeScreenshot(path: string, image: TypedArray, project: TestProject)",
+      "referenceDoc": "Writes encoded images to disk, creating parent directories as needed.",
+      "candidateDoc": "Writes encoded images to disk, creating parent directories as needed.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-071",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/coverage-istanbul/src/provider.ts",
+      "symbol": "removeQueryParameters",
+      "signature": "function removeQueryParameters(filename: string)",
+      "referenceDoc": "Remove possible query parameters from filenames - From `/src/components/Header.component.ts?vue&type=script&src=true&lang.ts` - To `/src/components/Header.component.ts`",
+      "candidateDoc": "Remove possible query parameters from filenames - From `/src/components/Header.component.ts?vue&type=script&src=true&lang.ts` - To `/src/components/Header.component.ts`",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 2,
+        "fullContextScore": 5
+      }
+    },
+    {
+      "id": "P5-072",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/expect/src/jest-utils.ts",
+      "symbol": "isStandardSchema",
+      "signature": "export function isStandardSchema(obj: any): obj is StandardSchemaV1",
+      "referenceDoc": "Detects if an object is a Standard Schema V1 compatible schema",
+      "candidateDoc": "Detects if an object is a Standard Schema V1 compatible schema",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-073",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/pretty-format/src/collections.ts",
+      "symbol": "printListItems",
+      "signature": "export function printListItems( list: ArrayLike<unknown> | DataView | ArrayBuffer, config: Config, indentation: string, depth: number, refs: Refs, printer: Printer, ): string",
+      "referenceDoc": "Return items (for example, of an array) with spacing, indentation, and comma without surrounding punctuation (for example, brackets)",
+      "candidateDoc": "Handles printListItems using the supplied arguments and returns its result.",
+      "humanUseful": false,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Only paraphrases the symbol name and signature.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-074",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/pretty-format/src/index.ts",
+      "symbol": "printBasicValue",
+      "signature": "function printBasicValue( val: any, printFunctionName: boolean, escapeRegex: boolean, escapeString: boolean, ): string | null",
+      "referenceDoc": "The first port of call for printing an object, handles most of the data-types in JS.",
+      "candidateDoc": "The first port of call for printing an object, handles most of the data-types in JS.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-075",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/runner/src/artifact.ts",
+      "symbol": "recordAsyncOperation",
+      "signature": "export function recordAsyncOperation<T>( test: Test, promise: Promise<T>, ): Promise<T>",
+      "referenceDoc": "Records an async operation associated with a test task. This function tracks promises that should be awaited before a test completes. The promise is automatically removed from the test's promise list once it settles.",
+      "candidateDoc": "Records an async operation associated with a test task. This function tracks promises that should be awaited before a test completes. The promise is automatically removed from the test's promise list once it settles.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 5
+      }
+    },
+    {
+      "id": "P5-076",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/runner/src/run.ts",
+      "symbol": "getRetryCount",
+      "signature": "function getRetryCount(retry: number | { count?: number } | undefined): number",
+      "referenceDoc": "Normalizes retry configuration to extract individual values. Handles both number and object forms.",
+      "candidateDoc": "Normalizes retry configuration to extract individual values. Handles both number and object forms.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-077",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/runner/src/utils/collect.ts",
+      "symbol": "generateFileHash",
+      "signature": "export function generateFileHash( file: string, projectName: string | undefined, ): string",
+      "referenceDoc": "Generate a unique ID for a file based on its path and project name",
+      "candidateDoc": "Handles generateFileHash using the supplied arguments and returns its result.",
+      "humanUseful": false,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Only paraphrases the symbol name and signature.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-078",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/snapshot/src/port/utils.ts",
+      "symbol": "deepMergeSnapshot",
+      "signature": "export function deepMergeSnapshot(target: any, source: any): any",
+      "referenceDoc": "Deep merge, but considers asymmetric matchers. Unlike base util's deep merge, will merge any object-like instance. Compatible with Jest's snapshot matcher. Should not be used outside of snapshot.",
+      "candidateDoc": "Deep merge, but considers asymmetric matchers. Unlike base util's deep merge, will merge any object-like instance. Compatible with Jest's snapshot matcher. Should not be used outside of snapshot.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 5
+      }
+    },
+    {
+      "id": "P5-079",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/spy/src/types.ts",
+      "symbol": "getMockImplementation",
+      "signature": "getMockImplementation(): NormalizedProcedure<T> | undefined",
+      "referenceDoc": "Returns current permanent mock implementation if there is one. If mock was created with `vi.fn`, it will consider passed down method as a mock implementation. If mock was created with `vi.spyOn`, it will return `undefined` unless a custom implementation was provided.",
+      "candidateDoc": "Returns current permanent mock implementation if there is one. If mock was created with `vi.fn`, it will consider passed down method as a mock implementation. If mock was created with `vi.spyOn`, it will return `undefined` unless a custom implementation was provided.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 5
+      }
+    },
+    {
+      "id": "P5-080",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/spy/src/types.ts",
+      "symbol": "mockReturnValue",
+      "signature": "mockReturnValue(value: MockReturnType<T>): this",
+      "referenceDoc": "Accepts a value that will be returned whenever the mock function is called. TypeScript will only accept values that match the return type of the original function.",
+      "candidateDoc": "Accepts a value that will be returned whenever the mock function is called. TypeScript will only accept values that match the return type of the original function.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 5
+      }
+    },
+    {
+      "id": "P5-081",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/spy/src/types.ts",
+      "symbol": "mockResolvedValueOnce",
+      "signature": "mockResolvedValueOnce(value: Awaited<MockReturnType<T>>): this",
+      "referenceDoc": "Accepts a value that will be resolved during the next function call. TypeScript will only accept values that match the return type of the original function. If chained, each consecutive call will resolve the specified value.",
+      "candidateDoc": "Handles mockResolvedValueOnce using the supplied arguments and returns its result.",
+      "humanUseful": false,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Only paraphrases the symbol name and signature.",
+      "ablation": {
+        "signatureOnlyScore": 2,
+        "fullContextScore": 5
+      }
+    },
+    {
+      "id": "P5-082",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/utils/src/diff/cleanupSemantic.ts",
+      "symbol": "diff_commonPrefix",
+      "signature": "function diff_commonPrefix(text1: string, text2: string): number",
+      "referenceDoc": "Determine the common prefix of two strings.",
+      "candidateDoc": "Determine the common prefix of two strings.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-083",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/utils/src/diff/cleanupSemantic.ts",
+      "symbol": "diff_cleanupSemanticLossless",
+      "signature": "function diff_cleanupSemanticLossless(diffs: Array<Diff>)",
+      "referenceDoc": "Look for single edits surrounded on both sides by equalities which can be shifted sideways to align the edit to a word boundary. e.g: The c<ins>at c</ins>ame. -> The <ins>cat </ins>came.",
+      "candidateDoc": "Look for single edits surrounded on both sides by equalities which can be shifted sideways to align the edit to a word boundary. e.g: The c<ins>at c</ins>ame. -> The <ins>cat </ins>came.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 5
+      }
+    },
+    {
+      "id": "P5-084",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/utils/src/helpers.ts",
+      "symbol": "getCallLastIndex",
+      "signature": "export function getCallLastIndex(code: string): number | null",
+      "referenceDoc": "If code starts with a function call, will return its last index, respecting arguments. This will return 25 - last ending character of toMatch \")\" Also works with callbacks ``` toMatch({ test: '123' }); toBeAliased('123') ```",
+      "candidateDoc": "If code starts with a function call, will return its last index, respecting arguments. This will return 25 - last ending character of toMatch \")\" Also works with callbacks ``` toMatch({ test: '123' }); toBeAliased('123') ```",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 5
+      }
+    },
+    {
+      "id": "P5-085",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/vitest/src/integrations/chai/poll.ts",
+      "symbol": "throwWithCause",
+      "signature": "function throwWithCause(error: any, source: Error)",
+      "referenceDoc": "Attaches a `cause` property to the error if missing, copies the stack trace from the source, and throws.",
+      "candidateDoc": "Handles throwWithCause using the supplied arguments and returns its result.",
+      "humanUseful": false,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Only paraphrases the symbol name and signature.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-086",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/vitest/src/integrations/snapshot/chai.ts",
+      "symbol": "toMatchFileSnapshot",
+      "signature": "toMatchFileSnapshot( this: MatcherState, received: unknown, filepath: string, hint?: string, ): AsyncExpectationResult",
+      "referenceDoc": "Composable for building custom file snapshot matchers via `expect.extend`. Call with `this` bound to the matcher state. Returns a `Promise<{ pass, message }>` compatible with the custom matcher return contract.",
+      "candidateDoc": "Composable for building custom file snapshot matchers via `expect.extend`. Call with `this` bound to the matcher state. Returns a `Promise<{ pass, message }>` compatible with the custom matcher return contract.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 5
+      }
+    },
+    {
+      "id": "P5-087",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/vitest/src/integrations/vi.ts",
+      "symbol": "doUnmock",
+      "signature": "doUnmock(path: string): void",
+      "referenceDoc": "Removes module from mocked registry. All subsequent calls to import will return original module. Unlike [`vi.unmock`](https://vitest.dev/api/vi#vi-unmock), this method is not hoisted to the top of the file.",
+      "candidateDoc": "Removes module from mocked registry. All subsequent calls to import will return original module. Unlike [`vi.unmock`](https://vitest.dev/api/vi#vi-unmock), this method is not hoisted to the top of the file.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 5
+      }
+    },
+    {
+      "id": "P5-088",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/vitest/src/node/core.ts",
+      "symbol": "createCoverageProvider",
+      "signature": "public async createCoverageProvider(): Promise<CoverageProvider | null>",
+      "referenceDoc": "Creates a coverage provider if `coverage` is enabled in the config.",
+      "candidateDoc": "Creates a coverage provider if `coverage` is enabled in the config.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-089",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/vitest/src/node/core.ts",
+      "symbol": "getSeed",
+      "signature": "public getSeed(): number | null",
+      "referenceDoc": "Returns the seed, if tests are running in a random order.",
+      "candidateDoc": "Handles getSeed using the supplied arguments and returns its result.",
+      "humanUseful": false,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Only paraphrases the symbol name and signature.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-090",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/vitest/src/node/core.ts",
+      "symbol": "waitForTestRunEnd",
+      "signature": "public async waitForTestRunEnd(): Promise<void>",
+      "referenceDoc": "If there is a test run happening, returns a promise that will resolve when the test run is finished.",
+      "candidateDoc": "If there is a test run happening, returns a promise that will resolve when the test run is finished.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-091",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/vitest/src/node/core.ts",
+      "symbol": "runTestFiles",
+      "signature": "public async runTestFiles(filepaths: string[], allTestsRun = false): Promise<TestRunResult>",
+      "referenceDoc": "Runs tests for the given file paths. This does not trigger `onWatcher*` events.",
+      "candidateDoc": "Runs tests for the given file paths. This does not trigger `onWatcher*` events.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 2,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-092",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/vitest/src/node/core.ts",
+      "symbol": "cancelCurrentRun",
+      "signature": "async cancelCurrentRun(reason: CancelReason): Promise<void>",
+      "referenceDoc": "Gracefully cancel the current test run. Vitest will wait until all running tests are finished before cancelling.",
+      "candidateDoc": "Gracefully cancel the current test run. Vitest will wait until all running tests are finished before cancelling.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-093",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/vitest/src/node/core.ts",
+      "symbol": "setGlobalTestNamePattern",
+      "signature": "public setGlobalTestNamePattern(pattern: string | RegExp): void",
+      "referenceDoc": "Set the global test name pattern to a regexp. This method doesn't run any tests.",
+      "candidateDoc": "Handles setGlobalTestNamePattern using the supplied arguments and returns its result.",
+      "humanUseful": false,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Only paraphrases the symbol name and signature.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-094",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/vitest/src/node/core.ts",
+      "symbol": "exit",
+      "signature": "public async exit(force = false): Promise<void>",
+      "referenceDoc": "Closes all projects and exit the process",
+      "candidateDoc": "Closes all projects and exit the process",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-095",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/vitest/src/node/core.ts",
+      "symbol": "onClose",
+      "signature": "onClose(fn: () => Awaitable<void>): void",
+      "referenceDoc": "Register a handler that will be called when the server is closed.",
+      "candidateDoc": "Register a handler that will be called when the server is closed.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-096",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/vitest/src/node/coverage.ts",
+      "symbol": "isIncluded",
+      "signature": "isIncluded(_filename: string, root?: string): boolean",
+      "referenceDoc": "Check if file matches `coverage.include` but not `coverage.exclude`",
+      "candidateDoc": "Check if file matches `coverage.include` but not `coverage.exclude`",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-097",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/vitest/src/node/coverage.ts",
+      "symbol": "resolveGlobThresholds",
+      "signature": "function resolveGlobThresholds( thresholds: unknown, ): ResolvedThreshold['thresholds']",
+      "referenceDoc": "Narrow down `unknown` glob thresholds to resolved ones",
+      "candidateDoc": "Handles resolveGlobThresholds using the supplied arguments and returns its result.",
+      "humanUseful": false,
+      "judgeVerdict": "REJECT",
+      "judgeReason": "Only paraphrases the symbol name and signature.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 3
+      }
+    },
+    {
+      "id": "P5-098",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/vitest/src/node/project.ts",
+      "symbol": "isRootProject",
+      "signature": "public isRootProject(): boolean",
+      "referenceDoc": "Check if this is the root project. The root project is the one that has the root config.",
+      "candidateDoc": "Check if this is the root project. The root project is the one that has the root config.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-099",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/vitest/src/node/project.ts",
+      "symbol": "matchesTestGlob",
+      "signature": "public matchesTestGlob(moduleId: string, source?: () => string): boolean",
+      "referenceDoc": "Test if a file matches the test globs. This does the actual glob matching if the test is not cached, unlike `isCachedTestFile`.",
+      "candidateDoc": "Test if a file matches the test globs. This does the actual glob matching if the test is not cached, unlike `isCachedTestFile`.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    },
+    {
+      "id": "P5-100",
+      "repository": "vitest-dev/vitest",
+      "commit": "9bd8d464e6328c567c2dbcd8fdd977d57a9425c2",
+      "path": "packages/vitest/src/node/reporters/json.ts",
+      "symbol": "writeReport",
+      "signature": "async writeReport(report: string): Promise<void>",
+      "referenceDoc": "Writes the report to an output file if specified in the config, or logs it to the console otherwise.",
+      "candidateDoc": "Writes the report to an output file if specified in the config, or logs it to the console otherwise.",
+      "humanUseful": true,
+      "judgeVerdict": "ACCEPT",
+      "judgeReason": "Adds concrete behavior or constraints supported by the reference.",
+      "ablation": {
+        "signatureOnlyScore": 1,
+        "fullContextScore": 4
+      }
+    }
+  ],
+  "commentPromotionCases": [
+    {
+      "id": "CP-01",
+      "sourceNote": "Uses cached directory entries when present.",
+      "generatedDoc": "Reuse cached directory entries before consulting the host.",
+      "kind": "intent",
+      "accepted": true,
+      "retainedUsefulIntent": true,
+      "safePublicClaim": true
+    },
+    {
+      "id": "CP-02",
+      "sourceNote": "Do not notify emit hooks for synthesized nodes.",
+      "generatedDoc": "Suppress emit notifications for synthesized nodes.",
+      "kind": "intent",
+      "accepted": true,
+      "retainedUsefulIntent": true,
+      "safePublicClaim": true
+    },
+    {
+      "id": "CP-03",
+      "sourceNote": "Returns zero when the retry option is absent.",
+      "generatedDoc": "Default a missing retry option to zero.",
+      "kind": "intent",
+      "accepted": true,
+      "retainedUsefulIntent": true,
+      "safePublicClaim": true
+    },
+    {
+      "id": "CP-04",
+      "sourceNote": "Wait for active tests before cancelling.",
+      "generatedDoc": "Finish active tests before cancellation completes.",
+      "kind": "intent",
+      "accepted": true,
+      "retainedUsefulIntent": true,
+      "safePublicClaim": true
+    },
+    {
+      "id": "CP-05",
+      "sourceNote": "Query strings do not identify distinct source files.",
+      "generatedDoc": "Remove query parameters before identifying a source file.",
+      "kind": "intent",
+      "accepted": true,
+      "retainedUsefulIntent": true,
+      "safePublicClaim": true
+    },
+    {
+      "id": "CP-06",
+      "sourceNote": "Create parent directories before writing.",
+      "generatedDoc": "Create missing parent directories before writing the image.",
+      "kind": "intent",
+      "accepted": true,
+      "retainedUsefulIntent": true,
+      "safePublicClaim": true
+    },
+    {
+      "id": "CP-07",
+      "sourceNote": "Only cache successful host reads.",
+      "generatedDoc": "Avoid caching failed host reads.",
+      "kind": "intent",
+      "accepted": true,
+      "retainedUsefulIntent": true,
+      "safePublicClaim": true
+    },
+    {
+      "id": "CP-08",
+      "sourceNote": "This deliberately differs from vi.unmock because it is not hoisted.",
+      "generatedDoc": "Remove the mock without hoisting the operation.",
+      "kind": "intent",
+      "accepted": true,
+      "retainedUsefulIntent": true,
+      "safePublicClaim": true
+    },
+    {
+      "id": "CP-09",
+      "sourceNote": "TODO: switch this to the native API.",
+      "generatedDoc": "Switches to the native API.",
+      "kind": "todo",
+      "accepted": false,
+      "retainedUsefulIntent": false,
+      "safePublicClaim": false
+    },
+    {
+      "id": "CP-10",
+      "sourceNote": "TODO remove after TypeScript 6.",
+      "generatedDoc": "Removes compatibility behavior after TypeScript 6.",
+      "kind": "todo",
+      "accepted": false,
+      "retainedUsefulIntent": false,
+      "safePublicClaim": false
+    },
+    {
+      "id": "CP-11",
+      "sourceNote": "FIXME this occasionally flakes on Windows.",
+      "generatedDoc": "May flake on Windows.",
+      "kind": "todo",
+      "accepted": false,
+      "retainedUsefulIntent": false,
+      "safePublicClaim": false
+    },
+    {
+      "id": "CP-12",
+      "sourceNote": "eslint-disable-next-line complexity",
+      "generatedDoc": "Disables the complexity lint rule.",
+      "kind": "directive",
+      "accepted": false,
+      "retainedUsefulIntent": false,
+      "safePublicClaim": false
+    },
+    {
+      "id": "CP-13",
+      "sourceNote": "@ts-expect-error upstream type mismatch",
+      "generatedDoc": "Suppresses an upstream type mismatch.",
+      "kind": "directive",
+      "accepted": false,
+      "retainedUsefulIntent": false,
+      "safePublicClaim": false
+    },
+    {
+      "id": "CP-14",
+      "sourceNote": "Increment i before reading the next token.",
+      "generatedDoc": "Increments the token cursor.",
+      "kind": "implementation",
+      "accepted": false,
+      "retainedUsefulIntent": false,
+      "safePublicClaim": false
+    },
+    {
+      "id": "CP-15",
+      "sourceNote": "Allocate the array here to avoid mutation.",
+      "generatedDoc": "Allocates an intermediate array.",
+      "kind": "implementation",
+      "accepted": false,
+      "retainedUsefulIntent": false,
+      "safePublicClaim": false
+    },
+    {
+      "id": "CP-16",
+      "sourceNote": "Keep this branch first for performance.",
+      "generatedDoc": "Evaluates the fast branch first.",
+      "kind": "implementation",
+      "accepted": false,
+      "retainedUsefulIntent": false,
+      "safePublicClaim": false
+    }
+  ]
+}

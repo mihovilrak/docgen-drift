@@ -21,6 +21,7 @@
     "dev": "tsx src/cli.ts",
     "test": "vitest run --passWithNoTests --maxWorkers=2 --testTimeout=30000",
     "test:watch": "vitest --maxWorkers=2 --testTimeout=30000",
+    "eval:phase5": "tsx scripts/evaluate-phase5.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write ."

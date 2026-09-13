@@ -30,6 +30,7 @@ describe("project generation", () => {
     );
 
     expect(first.generated).toHaveLength(4);
+    expect(first.rejected).toEqual([]);
     const orchestratePrompt = provider.requests.find((request) =>
       request.prompt.includes("#orchestrate"),
     )?.prompt;
@@ -75,9 +76,44 @@ describe("project generation", () => {
       )?.prompt,
     ).not.toContain(`CALLEE SUMMARY: ${leaf}`);
   });
+
+  it("judges leaves strictly and does not propagate rejected summaries", async () => {
+    const project = await loadProject({ tsconfigPath: fixtureRoot });
+    const symbols = extractSymbols(project);
+    const leaf = symbolId(symbols, "leaf");
+    const orchestrate = symbolId(symbols, "orchestrate");
+    const provider = recordingProvider(new Set(), new Set([leaf]));
+
+    const result = await generateProject(
+      project,
+      new Set([leaf, orchestrate]),
+      configSchema.parse({ symbols: { minBodyLines: 0 } }),
+      provider,
+      false,
+    );
+
+    expect(result.rejected).toEqual([
+      { id: leaf, reason: "Only restates the signature." },
+    ]);
+    expect(result.generated).toEqual([orchestrate]);
+    const leafJudge = provider.requests.find(
+      (request) =>
+        request.prompt.includes(`documentation for ${leaf}`) &&
+        request.prompt.includes("strict mode"),
+    );
+    expect(leafJudge?.prompt).toContain("strict mode is enabled");
+    expect(
+      provider.requests.find((request) =>
+        request.prompt.includes("Document src/service.ts#orchestrate"),
+      )?.prompt,
+    ).not.toContain(`CALLEE SUMMARY: ${leaf}`);
+  });
 });
 
-const recordingProvider = (skips: ReadonlySet<string> = new Set()) => {
+const recordingProvider = (
+  skips: ReadonlySet<string> = new Set(),
+  rejects: ReadonlySet<string> = new Set(),
+) => {
   const requests: ProviderRequest[] = [];
   const provider: LlmProvider & { readonly requests: ProviderRequest[] } = {
     id: "stub",
@@ -86,6 +122,18 @@ const recordingProvider = (skips: ReadonlySet<string> = new Set()) => {
     complete: async (request) => {
       requests.push(request);
       const id = idFromPrompt(request.prompt);
+      if (request.prompt.startsWith("Judge generated documentation")) {
+        return {
+          value: {
+            id,
+            verdict: rejects.has(id) ? "REJECT" : "ACCEPT",
+            reason: rejects.has(id)
+              ? "Only restates the signature."
+              : "Adds supported behavior.",
+          },
+          usage: { inputTokens: 2, outputTokens: 1, costUsd: 0.0001 },
+        };
+      }
       const params = paramsFromPrompt(request.prompt);
       await Promise.resolve();
       return {

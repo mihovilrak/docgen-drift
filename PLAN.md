@@ -106,15 +106,15 @@ Still no LLM. The output of this phase is inspectable text.
 
 The phase that determines whether the tool is worth running.
 
-- [ ] `llm/judge.ts` — post-hoc gate: does this docstring say anything the signature does not?
-- [ ] Strict mode for leaf symbols, whose summaries propagate upward
-- [ ] Report rejects with reasons; `--no-judge` escape hatch
-- [ ] Enable `docs.leadingComments.onGenerate: "replace"` — require the judge, reject `--no-judge`, atomically replace only eligible attached groups when accepted JSDoc backfills a missing doc, and preserve comments on `SKIP`, rejection, validation failure, concurrent change, or write failure
-- [ ] Recompute post-edit hashes before lockfile writes so comment replacement cannot cause immediate false drift
-- [ ] **Eval set:** 100 hand-labelled symbols from 3+ real repos, with human-written reference docstrings
-- [ ] Measure: keep rate, false-keep rate (useless docs that survived), false-reject rate
-- [ ] Ablation — quality with signature-only vs. full assembled context. If the difference is not visible, Phase 3 was wasted and needs rethinking, not more prompt tuning.
-- [ ] Comment-promotion eval: verify that generated JSDoc retains useful intent from source notes without turning TODOs, directives, or implementation narration into public API claims
+- [x] `llm/judge.ts` — post-hoc gate: does this docstring say anything the signature does not?
+- [x] Strict mode for leaf symbols, whose summaries propagate upward
+- [x] Report rejects with reasons; `--no-judge` escape hatch
+- [x] Enable `docs.leadingComments.onGenerate: "replace"` — require the judge, reject `--no-judge`, atomically replace only eligible attached groups when accepted JSDoc backfills a missing doc, and preserve comments on `SKIP`, rejection, validation failure, concurrent change, or write failure
+- [x] Recompute post-edit hashes before lockfile writes so comment replacement cannot cause immediate false drift
+- [x] **Eval set:** 100 hand-labelled symbols from 3+ real repos, with human-written reference docstrings
+- [x] Measure: keep rate, false-keep rate (useless docs that survived), false-reject rate
+- [x] Ablation — quality with signature-only vs. full assembled context. If the difference is not visible, Phase 3 was wasted and needs rethinking, not more prompt tuning.
+- [x] Comment-promotion eval: verify that generated JSDoc retains useful intent from source notes without turning TODOs, directives, or implementation narration into public API claims
 
 **Exit:** on the eval set, fewer than 10% of kept docstrings are judged useless by a human reviewer, and replacement tests prove no ineligible or rejected comment is removed.
 

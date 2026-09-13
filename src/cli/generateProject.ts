@@ -27,6 +27,7 @@ import {
   type LlmProvider,
   type ProviderUsage,
 } from "../llm/client.js";
+import { JudgeClient, type JudgeResult } from "../llm/judge.js";
 import {
   generationPrompt,
   generationSystemPrompt,
@@ -35,6 +36,10 @@ import {
 export interface ProjectGenerationResult {
   readonly generated: readonly SymbolId[];
   readonly skipped: readonly {
+    readonly id: SymbolId;
+    readonly reason: string;
+  }[];
+  readonly rejected: readonly {
     readonly id: SymbolId;
     readonly reason: string;
   }[];
@@ -52,6 +57,7 @@ export const generateProject = async (
   config: DocgenConfig,
   provider: LlmProvider,
   write: boolean,
+  judgeEnabled = config.judge.enabled,
 ): Promise<ProjectGenerationResult> => {
   const symbols = extractSymbols(handle, {
     includeNonFunctionVariables: config.symbols.kinds.includes("variable"),
@@ -76,6 +82,7 @@ export const generateProject = async (
   const summaries = new Map<SymbolId, string>();
   const generated: SymbolId[] = [];
   const skipped: { id: SymbolId; reason: string }[] = [];
+  const rejected: { id: SymbolId; reason: string }[] = [];
   const failed: { id: SymbolId; reason: string }[] = [];
   const plans: PlannedDocEdit[] = [];
   const fileHashes = await sourceFileHashes(handle, targets);
@@ -83,8 +90,13 @@ export const generateProject = async (
   const client = new LlmClient(provider, {
     concurrency: config.generate.concurrency,
   });
+  const judge = new JudgeClient(provider, {
+    concurrency: config.generate.concurrency,
+  });
 
-  for (const level of reverseTopologicalLevels(index.graph)) {
+  const levels = reverseTopologicalLevels(index.graph);
+  for (let levelIndex = 0; levelIndex < levels.length; levelIndex++) {
+    const level = levels[levelIndex] ?? [];
     const levelTargets = level
       .flatMap((component) => component.members)
       .filter((id) => targetIdSet.has(id))
@@ -121,14 +133,46 @@ export const generateProject = async (
       })),
     );
     usage = addUsage(usage, batch.usage);
+    const judgeById = new Map<SymbolId, JudgeResult>();
+    if (judgeEnabled) {
+      const contextById = new Map(
+        contexts.map(({ symbol, context }) => [symbol.id, context.text]),
+      );
+      const judged = await judge.judge(
+        batch.results.flatMap((result) => {
+          const symbol = byId.get(result.symbolId);
+          const context = contextById.get(result.symbolId);
+          return result.outcome?.verdict === "OK" &&
+            symbol !== undefined &&
+            context !== undefined
+            ? [
+                {
+                  symbol,
+                  doc: result.outcome.doc,
+                  context,
+                  model: config.judge.model,
+                  strict: config.judge.strictLeaves && levelIndex === 0,
+                },
+              ]
+            : [];
+        }),
+      );
+      usage = addUsage(usage, judged.usage);
+      for (const result of judged.results) {
+        judgeById.set(result.symbolId, result);
+      }
+    }
     for (const result of batch.results) {
       consumeResult(
         result,
+        judgeById.get(result.symbolId),
+        judgeEnabled,
         byId,
         fileHashes,
         summaries,
         generated,
         skipped,
+        rejected,
         failed,
         plans,
       );
@@ -143,6 +187,7 @@ export const generateProject = async (
   return {
     generated: generated.filter((id) => applied.has(id)),
     skipped,
+    rejected,
     failed,
     usage,
     edits,
@@ -151,11 +196,14 @@ export const generateProject = async (
 
 const consumeResult = (
   result: GenerationResult,
+  judgment: JudgeResult | undefined,
+  judgeEnabled: boolean,
   byId: ReadonlyMap<SymbolId, DocumentationSymbol>,
   fileHashes: ReadonlyMap<string, string>,
   summaries: Map<SymbolId, string>,
   generated: SymbolId[],
   skipped: { id: SymbolId; reason: string }[],
+  rejected: { id: SymbolId; reason: string }[],
   failed: { id: SymbolId; reason: string }[],
   plans: PlannedDocEdit[],
 ): void => {
@@ -167,6 +215,20 @@ const consumeResult = (
   }
   if (result.outcome?.verdict !== "OK") {
     failed.push({ id: symbol.id, reason: result.error ?? "Generation failed" });
+    return;
+  }
+  if (judgeEnabled && judgment?.error !== undefined) {
+    failed.push({
+      id: symbol.id,
+      reason: `Judge failed: ${judgment.error}`,
+    });
+    return;
+  }
+  if (judgeEnabled && judgment?.accepted !== true) {
+    rejected.push({
+      id: symbol.id,
+      reason: judgment?.reason ?? "Judge returned no decision",
+    });
     return;
   }
   summaries.set(symbol.id, result.outcome.doc.summary);
