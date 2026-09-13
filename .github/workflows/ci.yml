@@ -31,7 +31,6 @@ jobs:
           version: 12.4.1
           runtime: node@${{ matrix.node }}
           cache: true
-          require-lockfile: true
 
       - name: Build
         run: pnpm build
