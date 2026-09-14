@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { resolve } from "node:path";
+import { createInterface } from "node:readline/promises";
 
 import { cac } from "cac";
 
@@ -9,7 +10,10 @@ import { checkExitCode, errorExitCode } from "./cli/errors.js";
 import { filterByChanges, readChangedFiles } from "./cli/since.js";
 import { runBaseline, runCheck } from "./cli/run.js";
 import { scopeProjects } from "./cli/projectScope.js";
-import type { GenerationRunResult } from "./cli/generate.js";
+import type {
+  GenerationEstimate,
+  GenerationRunResult,
+} from "./cli/generate.js";
 import { VERSION } from "./index.js";
 import {
   renderHuman,
@@ -56,6 +60,27 @@ const commandRoot = (root: unknown): string =>
   resolve(typeof root === "string" ? root : ".");
 
 const cli = cac("docgen");
+
+cli
+  .command("init [root]", "Create an interactive .docgenrc.json")
+  .action(async (root: unknown) => {
+    const workspaceRoot = commandRoot(root);
+    const readline = createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+    try {
+      const { runInit } = await import("./cli/init.js");
+      const result = await runInit(workspaceRoot, {
+        ask: (question) => readline.question(question),
+      });
+      process.stdout.write(
+        `Created ${result.path} for ${String(result.projects.length)} project${result.projects.length === 1 ? "" : "s"}.\n`,
+      );
+    } finally {
+      readline.close();
+    }
+  });
 
 cli
   .command("extract [root]", "Dump the TypeScript symbol index")
@@ -157,6 +182,7 @@ cli
           ? {}
           : { allowDirty: options.allowDirty }),
         ...(options.noJudge === undefined ? {} : { noJudge: options.noJudge }),
+        onEstimate: printGenerationEstimate,
       });
       process.stdout.write(
         options.json === true
@@ -219,6 +245,7 @@ cli
         ? {}
         : { allowDirty: options.allowDirty }),
       ...(options.noJudge === undefined ? {} : { noJudge: options.noJudge }),
+      onEstimate: printGenerationEstimate,
     });
     process.stdout.write(
       options.json === true
@@ -242,6 +269,16 @@ const renderGeneration = (
     `${String(result.generated.length)} generated, ${String(result.skipped.length)} skipped, ${String(result.rejected.length)} rejected, ${String(result.failed.length)} failed in ${String(result.changedFiles)} files; ${String(result.usage.inputTokens)} input tokens, ${String(result.usage.outputTokens)} output tokens, $${result.usage.costUsd.toFixed(6)}.`,
   );
   return `${details.join("\n")}\n`;
+};
+
+const printGenerationEstimate = (estimate: GenerationEstimate): void => {
+  const price =
+    estimate.costUsd === undefined
+      ? "cost unavailable for the configured model"
+      : `approximately $${estimate.costUsd.toFixed(4)}`;
+  process.stderr.write(
+    `Estimated LLM use for ${String(estimate.symbols)} symbols: ${String(estimate.inputTokens)} input tokens, ${String(estimate.outputTokens)} output tokens, ${price}${estimate.includesJudge ? ", including the judge" : ""}; retries not included.\n`,
+  );
 };
 
 cli.help();

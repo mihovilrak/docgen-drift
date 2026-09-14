@@ -139,6 +139,7 @@ const checkSchema = z
 
 export const configSchema = z
   .object({
+    $schema: z.string().optional(),
     include: z.array(z.string()).default(["src/**/*.ts", "src/**/*.tsx"]),
     exclude: z
       .array(z.string())

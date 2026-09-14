@@ -7,6 +7,7 @@ import { unifiedDiff } from "../core/diff.js";
 import { isWorkingTreeDirty } from "../core/git.js";
 import type { SymbolId } from "../core/symbol.js";
 import type { LlmProvider, ProviderUsage } from "../llm/client.js";
+import { estimateUncachedCost } from "../llm/cost.js";
 import { createProvider } from "../llm/providers/index.js";
 import { refreshLocks, runCheck } from "./run.js";
 import { type ProjectIndex } from "./workspace.js";
@@ -23,6 +24,15 @@ export interface GenerationOptions {
   readonly dryRun?: boolean;
   readonly allowDirty?: boolean;
   readonly noJudge?: boolean;
+  readonly onEstimate?: (estimate: GenerationEstimate) => void;
+}
+
+export interface GenerationEstimate {
+  readonly symbols: number;
+  readonly inputTokens: number;
+  readonly outputTokens: number;
+  readonly costUsd?: number;
+  readonly includesJudge: boolean;
 }
 
 export interface GenerationRunResult {
@@ -76,10 +86,13 @@ export const runGeneration = async (
       `Generation selected ${String(targetIds.size)} symbols, exceeding generate.maxSymbolsPerRun (${String(config.generate.maxSymbolsPerRun)})`,
     );
   }
+  const judgeEnabled = config.judge.enabled && options.noJudge !== true;
+  options.onEstimate?.(
+    estimateGeneration(config, targetIds.size, judgeEnabled),
+  );
   if (targetIds.size === 0) return emptyResult();
 
   const provider = injectedProvider ?? createProvider(config.generate.provider);
-  const judgeEnabled = config.judge.enabled && options.noJudge !== true;
   const projectResults = await loadWorkspace(
     {
       root,
@@ -165,6 +178,38 @@ export const runGeneration = async (
       )
       .filter(Boolean)
       .join("\n"),
+  };
+};
+
+export const estimateGeneration = (
+  config: DocgenConfig,
+  symbols: number,
+  judgeEnabled: boolean,
+): GenerationEstimate => {
+  const generationInput = symbols * (config.context.budgetTokens + 300);
+  const generationOutput = symbols * 300;
+  const judgeInput = judgeEnabled
+    ? symbols * (config.context.budgetTokens + 800)
+    : 0;
+  const judgeOutput = judgeEnabled ? symbols * 80 : 0;
+  const generationCost = estimateUncachedCost(
+    config.generate.model,
+    generationInput,
+    generationOutput,
+  );
+  const judgeCost = judgeEnabled
+    ? estimateUncachedCost(config.judge.model, judgeInput, judgeOutput)
+    : 0;
+  const costUsd =
+    generationCost === undefined || judgeCost === undefined
+      ? undefined
+      : generationCost + judgeCost;
+  return {
+    symbols,
+    inputTokens: generationInput + judgeInput,
+    outputTokens: generationOutput + judgeOutput,
+    ...(costUsd === undefined ? {} : { costUsd }),
+    includesJudge: judgeEnabled,
   };
 };
 

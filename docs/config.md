@@ -2,6 +2,17 @@
 
 `.docgenrc.json` at the repo root. Every field is optional; the defaults below are what runs when the file is absent. Validated with zod at load — unknown keys are an error, not a warning, because a silently ignored typo in a doc policy is invisible for months.
 
+`docgen init` creates this file interactively and adds the published schema:
+
+```json
+{
+  "$schema": "https://unpkg.com/docgen-drift@1/schema/docgen.schema.json"
+}
+```
+
+The same schema is shipped in the npm package at
+`schema/docgen.schema.json` for editors that require a local schema path.
+
 ## Full default
 
 ```jsonc

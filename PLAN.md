@@ -122,14 +122,14 @@ The phase that determines whether the tool is worth running.
 
 ## Phase 6 — CI, DX, release
 
-- [ ] GitHub Action: `docgen check --since origin/main --sarif`
-- [ ] Pre-commit hook recipe
-- [ ] `docgen init` — interactive config bootstrap
-- [ ] Config schema published as JSON Schema for editor completion
-- [ ] Docs: README quickstart, config reference, CI recipes, honest limitations section
-- [ ] Monorepo recipes: shared vs. per-project lockfiles, project/path-scoped backfill, memory tuning, aggregate CI reporting, and lockfile merge handling
-- [ ] Cost estimation printed before any `--fix` run over N symbols
-- [ ] Telemetry: none. Do not add it.
+- [x] GitHub Action: `docgen check --since origin/main --sarif`
+- [x] Pre-commit hook recipe
+- [x] `docgen init` — interactive config bootstrap
+- [x] Config schema published as JSON Schema for editor completion
+- [x] Docs: README quickstart, config reference, CI recipes, honest limitations section
+- [x] Monorepo recipes: shared vs. per-project lockfiles, project/path-scoped backfill, memory tuning, aggregate CI reporting, and lockfile merge handling
+- [x] Cost estimation printed before any `--fix` run over N symbols
+- [x] Telemetry: none. Do not add it.
 - [ ] Release v1.0.0
 
 **Exit:** a stranger can adopt drift-checking on their repo from the README alone, without reading source.
@@ -157,4 +157,4 @@ Not before Phase 6. Adding a language to a mediocre TS implementation produces t
 - [ ] Does `check` need a "doc is stale relative to *its own claims*" mode — e.g. `@param` names that no longer match the signature? That is checkable with zero LLM involvement and might be the cheapest real feature in the whole project. Consider promoting it into Phase 2.
 - [ ] What happens when a symbol is renamed? Currently it reads as `orphaned` + `missing`. Rename detection via body hash matching is possible — is it worth it?
 - [ ] Should `baseline` optionally judge the docs it is accepting, and report the ones that are already useless?
-- [ ] **TypeScript 7 vs 5.** `typescript` latest is `7.0.2` (the native port); the scaffold pins `^5.9.3` because `ts-morph@28` (April 2026) vendors its own TS and the wider toolchain has not settled on 7. Revisit at Phase 6 — a native-speed compiler would materially change the Phase 1 benchmark numbers.
+- [x] **TypeScript 7 vs 5.** Reviewed in Phase 6: remain on `^5.9.3` because `ts-morph@28` and the surrounding toolchain have not settled on the TypeScript 7 native port. Revisit when the adapter can upgrade without changing extraction semantics.

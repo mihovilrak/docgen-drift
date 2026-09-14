@@ -1,56 +1,127 @@
 # docgen
 
-**Symbol-level documentation drift detection for TypeScript and JavaScript.** Catches docstrings that stopped being true. Regenerates them on demand.
+Symbol-level documentation drift detection for TypeScript and JavaScript.
+`docgen check` catches documented symbols whose implementation changed while
+their JSDoc did not. It is read-only, runs offline, and never calls an LLM.
+Generation is an explicit fix path.
 
-Not a "document my whole repo with AI" button. Those exist, several were well funded, and all of them are archived (see [DECISIONS.md](DECISIONS.md#adr-001)). The failure mode was never cost or quality — it was that a 2,500-docstring pull request is unreviewable, so it gets rubber-stamped or closed, and nothing brings the user back a second week.
+## Quickstart
 
-docgen inverts that. The default workflow produces **zero** docstrings on day one.
-
-## The workflow
-
-```bash
-docgen baseline          # record what exists today. writes no docs. no LLM calls.
-docgen check             # CI gate: fail when a documented symbol changed but its doc didn't
-docgen explain <symbol>  # inspect the exact context assembled for a symbol
-docgen check --fix       # regenerate only the docs that drifted
-```
-
-`baseline` is the adoption path. You accept the docs you have, and from that moment forward the build fails when someone changes `settleInvoice` without touching the comment that describes it. Drift arrives one or two symbols per PR — a reviewable amount — and each one lands in the PR that caused it, where the author still has the context in their head.
-
-Backfilling undocumented symbols is a separate, opt-in, deliberately noisy operation:
+Requirements: Node.js 20 or newer and a TypeScript project with a
+`tsconfig.json`.
 
 ```bash
-docgen fix --missing --path src/api    # bounded by path. review it like code.
+pnpm add -D docgen-drift
+pnpm exec docgen init
+pnpm exec docgen baseline
+git add .docgenrc.json .docgen/lock.json
+git commit -m "adopt docgen drift checks"
+pnpm exec docgen check
 ```
 
-For a large monorepo, configure package `tsconfig.json` files as separate projects and backfill one path at a time. Projects are processed sequentially by default so several compiler programs are not held in memory at once; lockfiles may be shared at the workspace root or kept per project.
+`init` asks for TypeScript project paths, lockfile placement, and project
+concurrency. The generated `.docgenrc.json` links to the published JSON Schema
+for editor completion. `baseline` records the documentation state without
+writing source files or calling an LLM.
 
-An ordinary leading `//` comment can be useful source material even though it is not JSDoc. Attached line-comment groups are included in LLM context by default. They are preserved unless `docs.leadingComments.onGenerate` is explicitly set to `"replace"`; in that mode, an eligible group is atomically replaced only after generated JSDoc passes validation and the judge. Directives, licenses, trailing comments, and comments inside a body are never replacement candidates.
+After the baseline is committed, run `check` in CI:
 
-## What makes the docstrings worth reading
+```bash
+pnpm exec docgen check --since origin/main
+```
 
-A docstring that restates the signature is worse than no docstring — it costs review attention and goes stale. Documentation quality tracks the context the model was given, and the published failure mode is minimal context: *"LLMs struggled with minimal code contexts. Short, simple methods with few dependencies produced lower-quality documentation."*
+Exit code `0` is clean, `1` means documentation drift was found, `2` is a
+configuration or usage error, and `3` is an internal failure. See
+[CI recipes](docs/ci.md) for SARIF upload and [the pre-commit recipe](docs/pre-commit.md)
+for a local check.
 
-So docgen is, structurally, a **context assembly engine** that happens to emit docstrings. For each symbol it assembles, in descending value-per-token:
+## Fixing drift
 
-1. **Attached leading comments** — often the closest thing an undocumented symbol has to an intent statement
-2. **Test names** that reference the symbol — `it("returns null when the user is soft-deleted")` is already the docstring
-3. The symbol's own body
-4. **Call sites** (the line ±2), not caller bodies — argument names and the variable the result lands in
-5. **Callee summaries**, generated first — docs are produced in reverse topological order, so every dependency already has an English one-liner
-6. Referenced type declarations, fields only
-7. The commit subject that introduced the symbol (`git log -L`)
+Generation uses Anthropic and requires `ANTHROPIC_API_KEY`. Preview changes
+before writing them:
 
-And it is allowed to say nothing. `SKIP` is a first-class model output, and a second cheap pass judges whether the produced docstring says anything the signature didn't. Silence beats filler.
+```bash
+pnpm exec docgen check --fix --dry-run
+pnpm exec docgen check --fix
+```
 
-## Status
+Backfilling undocumented symbols is separate, path-bounded, and deliberately
+opt-in:
 
-Version 0.1.0 implements extraction, `baseline`, the LLM-free `check` path with human, JSON, and SARIF reports, and inspectable graph-backed context assembly through `explain`. Generation remains unimplemented. See [PLAN.md](PLAN.md) for the build order and [ARCHITECTURE.md](ARCHITECTURE.md) for the design.
+```bash
+pnpm exec docgen fix --missing --path src/api --dry-run
+pnpm exec docgen fix --missing --path src/api
+```
 
-TypeScript and JavaScript first, via the TypeScript compiler API. Python and Go are planned behind a language adapter interface (see [ARCHITECTURE.md](ARCHITECTURE.md#language-adapters)) but no adapter beyond TS/JS will be written until the TS path is genuinely good.
+Every fix run reports its selected symbol count and estimated cost
+before the first model call. Source writes require a clean working tree unless
+`--allow-dirty` is passed. Generated output is schema-validated and judged for
+information beyond the signature; `SKIP` and judge rejection leave source
+unchanged.
 
-## Non-goals
+## How drift detection works
 
-- **Token efficiency as a headline.** 5,000 symbols is a few dollars. Optimizing that is optimizing the wrong axis; rich context is worth paying for. Cost is a constraint, not a feature.
-- **Generating prose documentation sites.** Docstrings live next to code. Markdown drift is a different, more crowded problem.
-- **Letting the model write JSDoc syntax.** The model returns semantic strings. The AST layer renders and inserts them. See [ADR-002](DECISIONS.md#adr-002).
+The lockfile stores a normalized implementation hash and documentation hash per
+stable symbol id. A symbol is drifted when its implementation hash changes but
+its documentation hash does not. Reformatting and line moves are normalized
+away; parameter renames and body changes are not.
+
+```text
+stored symbol hash != current symbol hash
+and
+stored doc hash == current doc hash
+```
+
+The unit is a symbol, not a file, so one implementation change produces one
+finding. `check` does not load an LLM provider and never writes source files.
+
+## Generation context
+
+For each selected symbol, docgen assembles attached source notes, referencing
+test names, the symbol body, diverse call sites, already-generated callee
+summaries, referenced type fields, and an optional `git log -L` subject. The
+model returns semantic JSON only; the TypeScript adapter owns JSDoc structure,
+tag names, placement, and validated source edits.
+
+Ordinary attached `//` groups are context by default and are preserved. Setting
+`docs.leadingComments.onGenerate` to `"replace"` allows only structurally
+eligible groups to be atomically replaced after generation and judging succeed.
+Directives, licenses, detached comments, and body comments are never candidates.
+
+Use `docgen explain <symbol-id>` to inspect the exact context without making a
+model call:
+
+```bash
+pnpm exec docgen explain 'src/billing/settle.ts#settleInvoice'
+```
+
+## Configuration and monorepos
+
+Configuration lives in `.docgenrc.json`. See the [config reference](docs/config.md)
+for every field and default. Large workspaces should also read the
+[monorepo recipes](docs/monorepos.md) before baselining.
+
+## Limitations
+
+- TypeScript and JavaScript are the only supported languages.
+- Drift means code changed while its doc text did not. docgen does not prove
+  that a changed doc is correct, nor detect a stale claim when code is unchanged.
+- A renamed symbol is currently reported as one orphaned id plus one missing id;
+  rename matching is not implemented.
+- Cross-project call-graph edges are not built. Each configured TypeScript
+  project is useful in isolation, but generation context can miss callers or
+  callees across project boundaries.
+- Generation quality depends on available source context and the configured
+  model. The judge reduces filler; it does not prove semantic correctness.
+- Prettier is applied only when a project configuration resolves. Otherwise
+  docgen preserves indentation and line endings but does not reformat a file.
+- TypeScript 5.9 remains pinned through ts-morph 28. The TypeScript 7 native
+  compiler is not adopted until ts-morph and the surrounding toolchain support
+  it without compromising extraction correctness.
+
+## Design
+
+Drift detection is the product; bulk generation is the `--fix` flag. The core
+invariant is that the AST owns structure and the LLM owns semantics. See
+[ARCHITECTURE.md](ARCHITECTURE.md), [DECISIONS.md](DECISIONS.md), and
+[PLAN.md](PLAN.md).

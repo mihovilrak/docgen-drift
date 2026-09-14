@@ -44,6 +44,35 @@ describe("generation commands", () => {
     expect(await readFile(sourcePath, "utf8")).toBe(original);
   });
 
+  it("emits a workspace estimate before the first model request", async () => {
+    const events: string[] = [];
+    const stub = provider();
+    const tracked: LlmProvider = {
+      id: stub.id,
+      isRetryable: (error) => stub.isRetryable(error),
+      complete: async (request) => {
+        events.push("request");
+        return stub.complete(request);
+      },
+    };
+
+    await runGeneration(
+      await copyFixture(),
+      config(),
+      {
+        mode: "missing",
+        path: "src",
+        dryRun: true,
+        onEstimate: (estimate) =>
+          events.push(`estimate:${String(estimate.symbols)}`),
+      },
+      tracked,
+    );
+
+    expect(events[0]).toBe("estimate:2");
+    expect(events).toContain("request");
+  });
+
   it("requires path-bounded missing backfill", async () => {
     await expect(
       runGeneration(

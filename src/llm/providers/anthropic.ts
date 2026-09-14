@@ -9,6 +9,7 @@ import type {
   ProviderRequest,
   ProviderResponse,
 } from "../client.js";
+import { priceForModel } from "../cost.js";
 
 export interface AnthropicProviderOptions {
   readonly apiKey?: string;
@@ -92,13 +93,7 @@ const costForModel = (
   model: string,
   usage: AnthropicTokenUsage,
 ): ProviderResponse["usage"] => {
-  const prices = model.includes("sonnet-5")
-    ? { input: 2, output: 10 }
-    : model.includes("haiku")
-      ? { input: 1, output: 5 }
-      : model.includes("opus")
-        ? { input: 5, output: 25 }
-        : undefined;
+  const price = priceForModel(model);
   return {
     inputTokens:
       usage.inputTokens +
@@ -107,13 +102,13 @@ const costForModel = (
       usage.cacheReadTokens,
     outputTokens: usage.outputTokens,
     costUsd:
-      prices === undefined
+      price === undefined
         ? 0
-        : (usage.inputTokens * prices.input +
-            usage.cacheCreation5m * prices.input * 1.25 +
-            usage.cacheCreation1h * prices.input * 2 +
-            usage.cacheReadTokens * prices.input * 0.1 +
-            usage.outputTokens * prices.output) /
+        : (usage.inputTokens * price.inputUsdPerMillion +
+            usage.cacheCreation5m * price.inputUsdPerMillion * 1.25 +
+            usage.cacheCreation1h * price.inputUsdPerMillion * 2 +
+            usage.cacheReadTokens * price.inputUsdPerMillion * 0.1 +
+            usage.outputTokens * price.outputUsdPerMillion) /
           1_000_000,
   };
 };
