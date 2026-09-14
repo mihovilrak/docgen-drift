@@ -120,7 +120,7 @@ The phase that determines whether the tool is worth running.
 
 ---
 
-## Phase 6 — CI, DX, release
+## Phase 6 — CI and DX
 
 - [x] GitHub Action: `docgen check --since origin/main --sarif`
 - [x] Pre-commit hook recipe
@@ -130,25 +130,120 @@ The phase that determines whether the tool is worth running.
 - [x] Monorepo recipes: shared vs. per-project lockfiles, project/path-scoped backfill, memory tuning, aggregate CI reporting, and lockfile merge handling
 - [x] Cost estimation printed before any `--fix` run over N symbols
 - [x] Telemetry: none. Do not add it.
-- [ ] Release v1.0.0
 
 **Exit:** a stranger can adopt drift-checking on their repo from the README alone, without reading source.
 
 ---
 
-## Phase 7 — Second language
+## Phase 6.5 — Pre-release portability and CLI hardening
 
-Not before Phase 6. Adding a language to a mediocre TS implementation produces two mediocre implementations.
+Finish the provider and command-line seams before adding another language. The deterministic pipeline remains in control: providers return semantic JSON, while docgen owns planning, batching, judging, rendering, and edits. Direct APIs remain the reliable CI path; subscription CLIs are optional local transports, not agent-driven replacements for the pipeline.
+
+### CLI ergonomics
+
+- [ ] Add short aliases for frequent, unambiguous options: `-p` / `--path`, `-P` / `--project`, `-c` / `--config`, `-j` / `--json`, `-s` / `--since`, `-f` / `--fix`, `-m` / `--missing`, `-n` / `--dry-run`, and `-a` / `--allow-dirty`
+- [ ] Keep safety-sensitive or uncommon flags long-only where an abbreviation would be unclear, including `--no-judge`, `--sarif`, and `--include-variables`
+- [ ] Test that every short form is identical to its long form, that collisions are rejected, and that command help shows both forms
+- [ ] Add provider/model inspection and authentication preflight commands without making `check` load a provider or require credentials
+- [ ] Keep configuration authoritative, with explicit per-run provider/model overrides only for generation commands
+
+### Provider abstraction
+
+- [ ] Make `LlmProvider` a supported runtime seam rather than a test-only injection point; keep provider code under `src/llm/providers/`
+- [ ] Replace the Anthropic-only config literal and factory with a discriminated provider configuration that validates provider-specific fields
+- [ ] Allow generation and judging to use different providers and models
+- [ ] Retain the direct Anthropic API provider and add direct OpenAI and Google Gemini API support
+- [ ] Add an OpenAI-compatible HTTP provider with configurable base URL and credential environment variable
+- [ ] Move retry classification, token usage, model capabilities, and price lookup behind the provider boundary
+- [ ] Report subscription allowance or unknown/local cost honestly; never render unavailable cost as `$0.00`
+- [ ] Use provider tokenizers where practical and a documented conservative fallback elsewhere
+- [ ] Add a provider conformance suite covering generation, `SKIP`, judging, schema failures, retries, timeouts, cancellation, and usage accounting; all normal tests remain stubbed and require no credentials
+
+### Local models
+
+- [ ] Support Ollama, LM Studio, llama.cpp, vLLM, and similar servers through the OpenAI-compatible provider
+- [ ] Require or probe JSON Schema constrained output and fail clearly when the selected server/model cannot satisfy the response contract
+- [ ] Validate context-window limits before a run and degrade the context budget explicitly rather than relying on server-side truncation
+- [ ] Run the Phase 5 generation and judge evals on at least one representative local model; document quality and hardware as measured, not equivalent by assumption
+- [ ] Permit separate local generation and judge models so a weak judge does not silently approve a weak generator
+
+### Subscription and agent CLI transports
+
+- [ ] Add opt-in transports for the official `claude -p`, `codex exec`, and Gemini CLI non-interactive interfaces, using their structured-output modes
+- [ ] Add optional OpenCode and Pi transports through their documented non-interactive, SDK, or RPC interfaces
+- [ ] Invoke only a user-installed executable and inherit its existing authentication; never read, copy, refresh, or expose CLI credential files
+- [ ] Run transports without source-write tools, with read-only/restricted permissions, no session persistence, bounded timeouts, cancellation, and captured stderr
+- [ ] Detect missing executables, interactive-login requirements, exhausted subscription limits, unsupported models, and malformed output with actionable errors
+- [ ] Document that upstream provider terms still govern subscription use, that accounts and allowances must not be shared or resold, and that direct API credentials are recommended for shared or unattended CI
+- [ ] Clarify ADR-011: CLI/SDK integrations are completion transports only; docgen still owns batching and no external agent chooses source spans or applies edits
+
+### Dogfooding and release gate
+
+- [ ] Add entry-point-aware public-surface filtering so `exportedOnly` can distinguish package API from implementation exports; retain syntactic-export mode as an explicit policy
+- [ ] Dogfood `fix --missing` on this repository in reviewable path-bounded batches, starting with the public modules; commit and validate the resulting lockfile
+- [ ] Run `baseline` then `check` on the dogfooded repository and verify that one symbol edit produces exactly one drift finding
+- [ ] Remove intermittent test timeouts and run build, test, lint, and typecheck successfully in the release environment
+- [ ] Reconcile the package version with release state, publish v1.0.0, and mark the release in the changelog
+
+**Exit:** the same fixture generation contract passes through Anthropic, OpenAI, OpenAI-compatible local, and stubbed CLI transports; `check` remains offline, LLM-free, and unchanged in performance; this repository has been dogfooded; and v1.0.0 is published.
+
+---
+
+## Phase 7 — PHP adapter
+
+Not before Phase 6.5. PHP is the second language because there is a concrete adopter and evaluation project. Add one complete adapter before broadening the language list.
 
 - [ ] Audit: nothing outside `adapters/typescript/` imports `ts-morph`
-- [ ] Choose the second language — Python is the largest market; Go has the strongest doc culture and the simplest convention
-- [ ] Adapter: symbol extraction, graph construction, doc render/parse
-- [ ] Python: docstring style setting (Google / NumPy / reST); type context from annotations where present, and honest degradation where absent
-- [ ] Go: identifier-prefixed comment convention, no tag vocabulary
-- [ ] Cross-language fixture and eval sets
-- [ ] Verify the `LanguageAdapter` interface did not need breaking changes; if it did, document why in DECISIONS
+- [ ] Turn the documented `LanguageAdapter` sketch into the runtime boundary used by discovery, indexing, explaining, generation, and edits; remove direct TypeScript adapter selection from shared CLI orchestration
+- [ ] Generalize language-neutral types only where PHP proves a concrete need, such as traits or properties; document every breaking interface or core change in DECISIONS
+- [ ] Define Composer-root discovery, autoload-aware project boundaries, include/exclude defaults, test discovery, project concurrency, and duplicate source ownership
+- [ ] Choose the PHP parsing foundation in an ADR after a focused spike: compare `nikic/php-parser` and Tree-sitter on exact offsets, namespace/name resolution, PHP version coverage, formatting preservation, performance, distribution, and runtime dependencies
+- [ ] Extract namespace functions, classes, interfaces, traits, enums, methods, constructors, properties, and closures assigned to stable names; define overload-like and magic-member behavior explicitly
+- [ ] Render and parse PHPDoc while preserving unknown tags, annotations, `@template`, `@phpstan-*`, and `@psalm-*`; the model still returns plain semantic strings and never emits PHPDoc markup or types
+- [ ] Build forward and reverse graph edges for statically resolvable function, method, constructor, and static calls in one forward pass
+- [ ] Degrade honestly for dynamic callables, variable method names, magic methods/properties, framework containers, facades, and runtime-generated APIs; unresolved edges must not become guessed edges
+- [ ] Apply PHP edits in reverse document order, preserve indentation and EOLs, reparse after edits, and use project formatting only when deterministically configured
+- [ ] Add PHP opt-out handling, visibility/export policy, stable ids, symbol hashes, comment eligibility, and project-bounded lockfile behavior
+- [ ] Add PHP fixtures covering modern syntax, namespaces/import aliases, traits, attributes, anonymous classes, promoted properties, enums, ordinary comments, PHPDoc annotations, dynamic calls, and malformed files
+- [ ] Build a hand-labelled PHP eval set from the adopter project and at least one independent repository; run the same generation, judge, comment-promotion, and drift checks used for TypeScript
+- [ ] Benchmark extraction, graph construction, and `check` on a representative Composer project
 
-**Exit:** the second adapter is under 1,500 lines and required no changes to `core/`.
+**Exit:** PHP `baseline`, `check`, `explain`, `check --fix`, and bounded missing-doc backfill satisfy the same safety and drift invariants as TypeScript; adapter-specific behavior stays outside `core/`, and any necessary shared-type changes have an ADR.
+
+---
+
+## Phase 8 — Additional language adapters
+
+Add languages one at a time. Each adapter must independently meet the Phase 7 quality, safety, performance, fixture, and eval bar before work starts on the next.
+
+### Phase 8A — Python
+
+- [ ] Python project/environment discovery without importing user code
+- [ ] Functions, async functions, classes, methods, properties, protocols, dataclasses, and typed assignments where policy includes them
+- [ ] Docstring style setting: Google, NumPy, and reStructuredText
+- [ ] Type context from annotations where present, with honest degradation where absent
+- [ ] Static import/call resolution where reliable; no guessed edges for dynamic dispatch
+
+### Phase 8B — Go
+
+- [ ] Module/package discovery through `go.mod` and project-bounded package loading
+- [ ] Functions, methods, types, interfaces, structs, fields, constants, and variables under Go export rules
+- [ ] Identifier-prefixed documentation convention with no invented tag vocabulary
+- [ ] Type-aware call graph and test-example context using the Go toolchain
+
+### Phase 8C — Rust
+
+- [ ] Cargo workspace and crate-bounded discovery honoring configured concurrency
+- [ ] Functions, structs, enums, traits, impl methods, modules, constants, and public re-exports
+- [ ] Rustdoc `///` / `//!` rendering and parsing while preserving attributes, intra-doc links, examples, and unknown sections
+- [ ] Resolve calls and referenced types where the Rust toolchain provides reliable semantics; document macro and generated-code limits
+
+### Shared requirements
+
+- [ ] Maintain shared cross-language adapter conformance fixtures without forcing language-specific concepts into `core/`
+- [ ] Publish a capability matrix covering symbol kinds, graph precision, documentation syntax, formatter integration, and known dynamic-language limitations
+
+**Exit:** Python, Go, and Rust adapters each ship only after their own fixture, real-repository drift validation, eval threshold, and performance benchmark pass.
 
 ---
 
