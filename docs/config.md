@@ -30,6 +30,8 @@ The same schema is shipped in the npm package at
   "symbols": {
     "kinds": ["function", "arrow", "method", "accessor", "class", "interface", "typeAlias", "enum"],
     "exportedOnly": true,
+    "publicSurface": "syntacticExports",
+    "entryPoints": ["src/index.ts"],
     "visibility": ["public"],
     "minBodyLines": 3,
     "ignorePragmas": ["@docgen-ignore", "@internal"]
@@ -64,7 +66,11 @@ The same schema is shipped in the npm package at
   },
 
   "generate": {
-    "provider": "anthropic",
+    "provider": {
+      "kind": "anthropic",
+      "apiKeyEnv": "ANTHROPIC_API_KEY",
+      "maxOutputTokens": 1200
+    },
     "model": "claude-sonnet-5",
     "concurrency": 8,
     "maxSymbolsPerRun": 500
@@ -95,6 +101,8 @@ The same schema is shipped in the npm package at
 
 **`symbols.minBodyLines`** — one-line delegating wrappers and pass-through getters almost never earn a docstring. Raising this is the cheapest way to cut noise.
 
+**`symbols.publicSurface`** — `syntacticExports` treats every exported declaration as public. `entryPoints` follows exports and re-exports from `symbols.entryPoints`, including public members of exported classes and interfaces. Use entry-point mode for libraries whose internal modules export symbols for package-internal reuse. An unmatched entry-point pattern is a configuration error.
+
 **`docs.emitTypes`** — off by default and should stay off in TypeScript ([ADR-009](../DECISIONS.md#adr-009)). Turn it on only for plain `.js` without `checkJs`, where the comment is the only carrier of type information.
 
 **`docs.leadingComments.includeInContext`** — includes an attached ordinary `//` group as labelled source-note context for generation. This does not make the comment JSDoc and does not permit its removal.
@@ -119,6 +127,8 @@ The same schema is shipped in the npm package at
 
 **`generate.maxSymbolsPerRun`** — a guard rail, not a performance setting. It exists so that an accidental `fix --missing` at the repo root cannot produce a two-thousand-file diff. Raise it deliberately.
 
+**`generate.provider` / `judge.provider`** — provider-specific objects described in the [provider guide](providers.md). When `judge.provider` is omitted, judging uses `generate.provider`. Setting it explicitly permits a different service or local model for the judge.
+
 **`judge.enabled`** — disabling this makes the tool cheaper and materially worse. If you turn it off, expect filler docstrings and expect to review every one by hand.
 
 **`--no-judge`** — per-run escape hatch for `fix` and `check --fix`. It cannot be used when `docs.leadingComments.onGenerate` is `replace`, because a rejected generation must never remove its source note.
@@ -129,7 +139,9 @@ The same schema is shipped in the npm package at
 
 | Variable | Purpose |
 | --- | --- |
-| `ANTHROPIC_API_KEY` | Required for `fix` and `check --fix`. Never needed for `check` or `baseline`. |
+| `ANTHROPIC_API_KEY` | Default Anthropic API credential for generation. |
+| `OPENAI_API_KEY` | Default OpenAI API credential. |
+| `GEMINI_API_KEY` | Default Google Gemini API credential. |
 | `DOCGEN_CACHE_DIR` | Defaults to `.docgen/cache`. |
 | `NO_COLOR` | Respected. |
 

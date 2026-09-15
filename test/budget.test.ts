@@ -7,9 +7,13 @@ import { buildGraph } from "../src/adapters/typescript/graph.js";
 import { loadProject } from "../src/adapters/typescript/loadProject.js";
 import {
   assembleContext,
+  conservativeTokenCount,
   createTokenCounter,
   sampleCallSites,
+  type AssembleContextOptions,
 } from "../src/core/budget.js";
+import type { LlmProvider } from "../src/llm/client.js";
+import { tokenCounter } from "../src/llm/tokenizer.js";
 
 const fixtureRoot = resolve("test/fixtures/graph");
 
@@ -103,4 +107,85 @@ const site = (filePath: string, modulePath: string) => ({
   modulePath,
   line: 1,
   text: "target()",
+});
+
+describe("provider tokenizers", () => {
+  const provider = (
+    countTokens?: (text: string, model: string) => number,
+  ): LlmProvider => ({
+    id: "stub",
+    complete: () => {
+      throw new Error("not called");
+    },
+    isRetryable: () => false,
+    ...(countTokens === undefined ? {} : { countTokens }),
+  });
+
+  it("falls back to the conservative estimate when a provider has no tokenizer", () => {
+    expect(tokenCounter(provider(), "any-model")("const a = 1;")).toBe(
+      conservativeTokenCount("const a = 1;"),
+    );
+  });
+
+  it("passes the target model to a provider tokenizer", () => {
+    const seen: string[] = [];
+    const count = tokenCounter(
+      provider((text, model) => {
+        seen.push(model);
+        return text.length;
+      }),
+      "local-model",
+    );
+    expect(count("abcd")).toBe(4);
+    expect(seen).toEqual(["local-model"]);
+  });
+
+  it("lets a provider tokenizer change what fits in the budget", async () => {
+    const project = await loadProject({ tsconfigPath: fixtureRoot });
+    const symbols = extractSymbols(project);
+    const symbol = symbols.find(
+      (candidate) => candidate.name === "orchestrate",
+    );
+    if (symbol === undefined) throw new Error("Expected orchestrate");
+    const index = buildGraph(project, symbols, {
+      testFilePaths: new Set([resolve(fixtureRoot, "src/service.test.ts")]),
+      referencedTypeSymbolIds: new Set([symbol.id]),
+    });
+    const options: AssembleContextOptions = {
+      symbol,
+      symbols,
+      graph: index.graph,
+      index: index.context,
+      budgetTokens: 400,
+      model: "local-model",
+      sources: {
+        testNames: true,
+        ownBody: true,
+        callSites: true,
+        calleeSummaries: true,
+        referencedTypes: true,
+        gitSubject: false,
+        calleeBodies: false,
+      },
+      includeSourceNotes: true,
+      bodyMaxLines: 120,
+      callSiteMax: 5,
+      callSiteSampling: "moduleDiversity",
+    };
+
+    const fallback = assembleContext(options);
+    const doubled = assembleContext({
+      ...options,
+      countTokens: (text) => conservativeTokenCount(text) * 2,
+    });
+
+    expect(doubled.included.length).toBeLessThan(fallback.included.length);
+    expect(doubled.tokenCount).toBeLessThanOrEqual(doubled.tokenBudget);
+    expect(
+      createTokenCounter(
+        doubled.model,
+        (text) => conservativeTokenCount(text) * 2,
+      ).count(doubled.text),
+    ).toBe(doubled.tokenCount);
+  });
 });

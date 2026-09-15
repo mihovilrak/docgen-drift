@@ -149,7 +149,7 @@ const provider = (
 
 const response = (value: unknown): ProviderResponse => ({
   value,
-  usage: { inputTokens: 3, outputTokens: 2, costUsd: 0.001 },
+  usage: { inputTokens: 3, outputTokens: 2, costUsd: 0.001, costBasis: "usd" },
 });
 
 const doc = () => ({

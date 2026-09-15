@@ -141,50 +141,50 @@ Finish the provider and command-line seams before adding another language. The d
 
 ### CLI ergonomics
 
-- [ ] Add short aliases for frequent, unambiguous options: `-p` / `--path`, `-P` / `--project`, `-c` / `--config`, `-j` / `--json`, `-s` / `--since`, `-f` / `--fix`, `-m` / `--missing`, `-n` / `--dry-run`, and `-a` / `--allow-dirty`
-- [ ] Keep safety-sensitive or uncommon flags long-only where an abbreviation would be unclear, including `--no-judge`, `--sarif`, and `--include-variables`
-- [ ] Test that every short form is identical to its long form, that collisions are rejected, and that command help shows both forms
-- [ ] Add provider/model inspection and authentication preflight commands without making `check` load a provider or require credentials
-- [ ] Keep configuration authoritative, with explicit per-run provider/model overrides only for generation commands
+- [x] Add short aliases for frequent, unambiguous options: `-p` / `--path`, `-P` / `--project`, `-c` / `--config`, `-j` / `--json`, `-s` / `--since`, `-f` / `--fix`, `-m` / `--missing`, `-n` / `--dry-run`, and `-a` / `--allow-dirty`
+- [x] Keep safety-sensitive or uncommon flags long-only where an abbreviation would be unclear, including `--no-judge`, `--sarif`, and `--include-variables`
+- [x] Test that every short form is identical to its long form, that collisions are rejected, and that command help shows both forms
+- [x] Add provider/model inspection and authentication preflight commands without making `check` load a provider or require credentials
+- [x] Keep configuration authoritative, with explicit per-run provider/model overrides only for generation commands
 
 ### Provider abstraction
 
-- [ ] Make `LlmProvider` a supported runtime seam rather than a test-only injection point; keep provider code under `src/llm/providers/`
-- [ ] Replace the Anthropic-only config literal and factory with a discriminated provider configuration that validates provider-specific fields
-- [ ] Allow generation and judging to use different providers and models
-- [ ] Retain the direct Anthropic API provider and add direct OpenAI and Google Gemini API support
-- [ ] Add an OpenAI-compatible HTTP provider with configurable base URL and credential environment variable
-- [ ] Move retry classification, token usage, model capabilities, and price lookup behind the provider boundary
-- [ ] Report subscription allowance or unknown/local cost honestly; never render unavailable cost as `$0.00`
-- [ ] Use provider tokenizers where practical and a documented conservative fallback elsewhere
-- [ ] Add a provider conformance suite covering generation, `SKIP`, judging, schema failures, retries, timeouts, cancellation, and usage accounting; all normal tests remain stubbed and require no credentials
+- [x] Make `LlmProvider` a supported runtime seam rather than a test-only injection point; keep provider code under `src/llm/providers/`
+- [x] Replace the Anthropic-only config literal and factory with a discriminated provider configuration that validates provider-specific fields
+- [x] Allow generation and judging to use different providers and models
+- [x] Retain the direct Anthropic API provider and add direct OpenAI and Google Gemini API support
+- [x] Add an OpenAI-compatible HTTP provider with configurable base URL and credential environment variable
+- [x] Move retry classification, token usage, model capabilities, and price lookup behind the provider boundary
+- [x] Report subscription allowance or unknown/local cost honestly; never render unavailable cost as `$0.00`
+- [x] Use provider tokenizers where practical and a documented conservative fallback elsewhere
+- [x] Add a provider conformance suite covering generation, `SKIP`, judging, schema failures, retries, timeouts, cancellation, and usage accounting; all normal tests remain stubbed and require no credentials
 
 ### Local models
 
-- [ ] Support Ollama, LM Studio, llama.cpp, vLLM, and similar servers through the OpenAI-compatible provider
-- [ ] Require or probe JSON Schema constrained output and fail clearly when the selected server/model cannot satisfy the response contract
-- [ ] Validate context-window limits before a run and degrade the context budget explicitly rather than relying on server-side truncation
+- [x] Support Ollama, LM Studio, llama.cpp, vLLM, and similar servers through the OpenAI-compatible provider
+- [x] Require or probe JSON Schema constrained output and fail clearly when the selected server/model cannot satisfy the response contract
+- [x] Validate context-window limits before a run and degrade the context budget explicitly rather than relying on server-side truncation
 - [ ] Run the Phase 5 generation and judge evals on at least one representative local model; document quality and hardware as measured, not equivalent by assumption
-- [ ] Permit separate local generation and judge models so a weak judge does not silently approve a weak generator
+- [x] Permit separate local generation and judge models so a weak judge does not silently approve a weak generator
 
 ### Subscription and agent CLI transports
 
-- [ ] Add opt-in transports for the official `claude -p`, `codex exec`, and Gemini CLI non-interactive interfaces, using their structured-output modes
-- [ ] Add optional OpenCode and Pi transports through their documented non-interactive, SDK, or RPC interfaces
-- [ ] Invoke only a user-installed executable and inherit its existing authentication; never read, copy, refresh, or expose CLI credential files
-- [ ] Run transports without source-write tools, with read-only/restricted permissions, no session persistence, bounded timeouts, cancellation, and captured stderr
-- [ ] Detect missing executables, interactive-login requirements, exhausted subscription limits, unsupported models, and malformed output with actionable errors
-- [ ] Document that upstream provider terms still govern subscription use, that accounts and allowances must not be shared or resold, and that direct API credentials are recommended for shared or unattended CI
-- [ ] Clarify ADR-011: CLI/SDK integrations are completion transports only; docgen still owns batching and no external agent chooses source spans or applies edits
+- [x] Add opt-in transports for the official `claude -p`, `codex exec`, and Gemini CLI non-interactive interfaces, using their structured-output modes
+- [x] Add optional OpenCode and Pi transports through their documented non-interactive, SDK, or RPC interfaces
+- [x] Invoke only a user-installed executable and inherit its existing authentication; never read, copy, refresh, or expose CLI credential files
+- [x] Run transports without source-write tools, with read-only/restricted permissions, no session persistence, bounded timeouts, cancellation, and captured stderr
+- [x] Detect missing executables, interactive-login requirements, exhausted subscription limits, unsupported models, and malformed output with actionable errors
+- [x] Document that upstream provider terms still govern subscription use, that accounts and allowances must not be shared or resold, and that direct API credentials are recommended for shared or unattended CI
+- [x] Clarify ADR-011: CLI/SDK integrations are completion transports only; docgen still owns batching and no external agent chooses source spans or applies edits
 
 ### Dogfooding and release gate
 
-- [ ] Update the README quickstart with the shortest API-backed setup, short-flag examples, a bounded dry run, and the first `baseline` / `check` workflow
-- [ ] Write a provider guide covering direct APIs, official subscription CLIs, OpenCode, Pi, local OpenAI-compatible servers, authentication and credential safety, provider/model selection, generation-versus-judge configuration, cost reporting, CI recommendations, troubleshooting, and terms caveats
-- [ ] Add entry-point-aware public-surface filtering so `exportedOnly` can distinguish package API from implementation exports; retain syntactic-export mode as an explicit policy
+- [x] Update the README quickstart with the shortest API-backed setup, short-flag examples, a bounded dry run, and the first `baseline` / `check` workflow
+- [x] Write a provider guide covering direct APIs, official subscription CLIs, OpenCode, Pi, local OpenAI-compatible servers, authentication and credential safety, provider/model selection, generation-versus-judge configuration, cost reporting, CI recommendations, troubleshooting, and terms caveats
+- [x] Add entry-point-aware public-surface filtering so `exportedOnly` can distinguish package API from implementation exports; retain syntactic-export mode as an explicit policy
 - [ ] Dogfood `fix --missing` on this repository in reviewable path-bounded batches, starting with the public modules; commit and validate the resulting lockfile
 - [ ] Run `baseline` then `check` on the dogfooded repository and verify that one symbol edit produces exactly one drift finding
-- [ ] Remove intermittent test timeouts and run build, test, lint, and typecheck successfully in the release environment
+- [x] Remove intermittent test timeouts and run build, test, lint, and typecheck successfully in the release environment
 - [ ] Reconcile the package version with release state, publish v1.0.0, and mark the release in the changelog
 
 **Exit:** the same fixture generation contract passes through Anthropic, OpenAI, OpenAI-compatible local, and stubbed CLI transports; `check` remains offline, LLM-free, and unchanged in performance; this repository has been dogfooded; and v1.0.0 is published.

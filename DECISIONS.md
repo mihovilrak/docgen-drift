@@ -149,11 +149,22 @@ Build the reverse index by inverting a single forward pass over call expressions
 
 **Context.** The originating design exposed generation through MCP `get_next_batch()` / `submit_batch()` so an agent could drive the loop.
 
-**Decision.** The tool owns its own batching and calls the API directly. MCP may be added later as a thin wrapper for interactive use.
+**Decision.** The tool owns its own batching. Direct providers call their APIs;
+optional CLI/SDK integrations are completion transports only. docgen still
+assembles every prompt, validates semantic JSON, schedules batches, judges
+results, chooses deterministic source spans, renders comments, and applies
+edits. No external agent controls the pipeline or receives authority to select
+or modify source spans. MCP may be added later as a thin wrapper for interactive
+use.
 
 **Rationale.** Putting an agent in the loop makes the run non-deterministic, unpriceable in advance, unrunnable in CI, and dependent on a client the CI runner does not have. The batching logic is not the hard part of this project and does not need delegating.
 
-**Consequences.** No interactive "document this file while I watch" experience in v1. That is a fine v2 feature and a bad v1 foundation.
+**Consequences.** Direct API providers remain the reliable unattended and CI
+path. Subscription CLIs are opt-in local transports that inherit a user's
+existing authentication, run ephemerally with tools disabled or read-only, and
+may have unobservable allowance limits. No interactive "document this file
+while I watch" experience in v1. That is a fine v2 feature and a bad v1
+foundation.
 
 ---
 

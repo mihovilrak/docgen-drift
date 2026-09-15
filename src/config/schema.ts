@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { providerSchema } from "./provider.js";
+
 const workspaceSchema = z
   .object({
     projects: z.array(z.string()).min(1).default(["tsconfig.json"]),
@@ -35,6 +37,10 @@ const symbolsSchema = z
         "enum",
       ]),
     exportedOnly: z.boolean().default(true),
+    publicSurface: z
+      .enum(["syntacticExports", "entryPoints"])
+      .default("syntacticExports"),
+    entryPoints: z.array(z.string()).default(["src/index.ts"]),
     visibility: z
       .array(z.enum(["public", "protected", "private", "package"]))
       .default(["public"]),
@@ -115,7 +121,7 @@ const contextSchema = z
 
 const generateSchema = z
   .object({
-    provider: z.literal("anthropic").default("anthropic"),
+    provider: providerSchema.prefault({ kind: "anthropic" }),
     model: z.string().default("claude-sonnet-5"),
     concurrency: z.number().int().positive().default(8),
     maxSymbolsPerRun: z.number().int().positive().default(500),
@@ -125,6 +131,8 @@ const generateSchema = z
 const judgeSchema = z
   .object({
     enabled: z.boolean().default(true),
+    /** Defaults to generate.provider so a single-provider config stays short. */
+    provider: providerSchema.optional(),
     model: z.string().default("claude-haiku-4-5-20251001"),
     strictLeaves: z.boolean().default(true),
   })
@@ -179,6 +187,22 @@ export const configSchema = z
         message: "must be true when docs.leadingComments.onGenerate is replace",
       });
     }
+    if (
+      config.symbols.publicSurface === "entryPoints" &&
+      config.symbols.entryPoints.length === 0
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["symbols", "entryPoints"],
+        message:
+          "must list at least one entry point when publicSurface is entryPoints",
+      });
+    }
   });
+
+export type ProviderConfig = z.infer<typeof providerSchema>;
+
+export const judgeProviderConfig = (config: DocgenConfig): ProviderConfig =>
+  config.judge.provider ?? config.generate.provider;
 
 export type DocgenConfig = z.infer<typeof configSchema>;

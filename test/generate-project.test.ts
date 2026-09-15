@@ -25,7 +25,7 @@ describe("project generation", () => {
       project,
       targets,
       configSchema.parse({ symbols: { minBodyLines: 0 } }),
-      provider,
+      { generation: provider },
       false,
     );
 
@@ -45,7 +45,7 @@ describe("project generation", () => {
       project,
       targets,
       configSchema.parse({ symbols: { minBodyLines: 0 } }),
-      recordingProvider(),
+      { generation: recordingProvider() },
       false,
     );
     expect(second.edits.files).toEqual(first.edits.files);
@@ -62,7 +62,7 @@ describe("project generation", () => {
       project,
       new Set([leaf, orchestrate]),
       configSchema.parse({ symbols: { minBodyLines: 0 } }),
-      provider,
+      { generation: provider },
       false,
     );
 
@@ -88,7 +88,7 @@ describe("project generation", () => {
       project,
       new Set([leaf, orchestrate]),
       configSchema.parse({ symbols: { minBodyLines: 0 } }),
-      provider,
+      { generation: provider },
       false,
     );
 
@@ -131,7 +131,12 @@ const recordingProvider = (
               ? "Only restates the signature."
               : "Adds supported behavior.",
           },
-          usage: { inputTokens: 2, outputTokens: 1, costUsd: 0.0001 },
+          usage: {
+            inputTokens: 2,
+            outputTokens: 1,
+            costUsd: 0.0001,
+            costBasis: "usd",
+          },
         };
       }
       const params = paramsFromPrompt(request.prompt);
@@ -158,7 +163,12 @@ const recordingProvider = (
               verdict: "OK",
               reason: null,
             },
-        usage: { inputTokens: 10, outputTokens: 5, costUsd: 0.001 },
+        usage: {
+          inputTokens: 10,
+          outputTokens: 5,
+          costUsd: 0.001,
+          costBasis: "usd",
+        },
       };
     },
   };

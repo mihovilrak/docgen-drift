@@ -323,7 +323,12 @@ const provider = (
       if (invalid.has(id)) {
         return {
           value: { verdict: "OK" },
-          usage: { inputTokens: 2, outputTokens: 1, costUsd: 0.0001 },
+          usage: {
+            inputTokens: 2,
+            outputTokens: 1,
+            costUsd: 0.0001,
+            costBasis: "usd",
+          },
         };
       }
       if (request.prompt.startsWith("Judge generated documentation")) {
@@ -335,7 +340,12 @@ const provider = (
               ? "Only restates the signature."
               : "Adds supported behavior.",
           },
-          usage: { inputTokens: 2, outputTokens: 1, costUsd: 0.0001 },
+          usage: {
+            inputTokens: 2,
+            outputTokens: 1,
+            costUsd: 0.0001,
+            costBasis: "usd",
+          },
         };
       }
       const params = paramsFromPrompt(request);
@@ -362,7 +372,12 @@ const provider = (
               verdict: "OK",
               reason: null,
             },
-        usage: { inputTokens: 10, outputTokens: 5, costUsd: 0.001 },
+        usage: {
+          inputTokens: 10,
+          outputTokens: 5,
+          costUsd: 0.001,
+          costBasis: "usd",
+        },
       };
     },
   };

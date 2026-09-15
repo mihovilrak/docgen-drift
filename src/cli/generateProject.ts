@@ -25,13 +25,21 @@ import {
   LlmClient,
   type GenerationResult,
   type LlmProvider,
-  type ProviderUsage,
 } from "../llm/client.js";
 import { JudgeClient, type JudgeResult } from "../llm/judge.js";
+import { contextBudgetFor } from "../llm/capabilities.js";
 import {
   generationPrompt,
   generationSystemPrompt,
 } from "../llm/prompt/index.js";
+import { tokenCounter } from "../llm/tokenizer.js";
+import { addUsage, EMPTY_USAGE, type ProviderUsage } from "../llm/usage.js";
+
+export interface GenerationProviders {
+  readonly generation: LlmProvider;
+  /** Defaults to `generation`; a separate judge provider is supported. */
+  readonly judge?: LlmProvider;
+}
 
 export interface ProjectGenerationResult {
   readonly generated: readonly SymbolId[];
@@ -55,7 +63,7 @@ export const generateProject = async (
   handle: TypeScriptProjectHandle,
   targetIds: ReadonlySet<SymbolId>,
   config: DocgenConfig,
-  provider: LlmProvider,
+  providers: GenerationProviders,
   write: boolean,
   judgeEnabled = config.judge.enabled,
 ): Promise<ProjectGenerationResult> => {
@@ -86,14 +94,16 @@ export const generateProject = async (
   const failed: { id: SymbolId; reason: string }[] = [];
   const plans: PlannedDocEdit[] = [];
   const fileHashes = await sourceFileHashes(handle, targets);
-  let usage = emptyUsage();
-  const client = new LlmClient(provider, {
+  let usage = EMPTY_USAGE;
+  const client = new LlmClient(providers.generation, {
     concurrency: config.generate.concurrency,
   });
-  const judge = new JudgeClient(provider, {
+  const judge = new JudgeClient(providers.judge ?? providers.generation, {
     concurrency: config.generate.concurrency,
   });
 
+  const countTokens = tokenCounter(providers.generation, config.generate.model);
+  const contextBudget = effectiveContextBudget(config, providers, judgeEnabled);
   const levels = reverseTopologicalLevels(index.graph);
   for (let levelIndex = 0; levelIndex < levels.length; levelIndex++) {
     const level = levels[levelIndex] ?? [];
@@ -112,8 +122,9 @@ export const generateProject = async (
           symbols,
           graph: index.graph,
           index: index.context,
-          budgetTokens: config.context.budgetTokens,
+          budgetTokens: contextBudget,
           model: config.generate.model,
+          countTokens,
           sources: config.context.sources,
           includeSourceNotes: config.docs.leadingComments.includeInContext,
           bodyMaxLines: config.context.bodyMaxLines,
@@ -274,19 +285,25 @@ const gitSubject = async (
   return subject === undefined ? {} : { gitSubject: subject };
 };
 
-const emptyUsage = (): ProviderUsage => ({
-  inputTokens: 0,
-  outputTokens: 0,
-  costUsd: 0,
-});
-
-const addUsage = (
-  left: ProviderUsage,
-  right: ProviderUsage,
-): ProviderUsage => ({
-  inputTokens: left.inputTokens + right.inputTokens,
-  outputTokens: left.outputTokens + right.outputTokens,
-  costUsd: left.costUsd + right.costUsd,
-});
+const effectiveContextBudget = (
+  config: DocgenConfig,
+  providers: GenerationProviders,
+  judgeEnabled: boolean,
+): number => {
+  const limits = [
+    providers.generation.describe?.(config.generate.model),
+    ...(judgeEnabled
+      ? [
+          (providers.judge ?? providers.generation).describe?.(
+            config.judge.model,
+          ),
+        ]
+      : []),
+  ].filter(isDefined);
+  return limits.reduce(
+    (budget, capabilities) => contextBudgetFor(budget, capabilities).effective,
+    config.context.budgetTokens,
+  );
+};
 
 const isDefined = <T>(value: T | undefined): value is T => value !== undefined;

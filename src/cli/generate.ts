@@ -2,17 +2,32 @@ import { relative, resolve } from "node:path";
 
 import { loadWorkspace } from "../adapters/typescript/loadWorkspace.js";
 import { ConfigError } from "../config/load.js";
-import type { DocgenConfig } from "../config/schema.js";
+import { judgeProviderConfig, type DocgenConfig } from "../config/schema.js";
 import { unifiedDiff } from "../core/diff.js";
 import { isWorkingTreeDirty } from "../core/git.js";
 import type { SymbolId } from "../core/symbol.js";
-import type { LlmProvider, ProviderUsage } from "../llm/client.js";
-import { estimateUncachedCost } from "../llm/cost.js";
-import { createProvider } from "../llm/providers/index.js";
+import {
+  contextBudgetFor,
+  costFromPrice,
+  type ModelCapabilities,
+} from "../llm/capabilities.js";
+import type { LlmProvider } from "../llm/client.js";
+import {
+  createProvider,
+  providerCapabilities,
+} from "../llm/providers/index.js";
+import {
+  addUsage,
+  EMPTY_USAGE,
+  usdUsage,
+  type CostBasis,
+  type ProviderUsage,
+} from "../llm/usage.js";
 import { refreshLocks, runCheck } from "./run.js";
 import { type ProjectIndex } from "./workspace.js";
 import {
   generateProject,
+  type GenerationProviders,
   type ProjectGenerationResult,
 } from "./generateProject.js";
 
@@ -32,7 +47,10 @@ export interface GenerationEstimate {
   readonly inputTokens: number;
   readonly outputTokens: number;
   readonly costUsd?: number;
+  readonly costBasis: CostBasis;
   readonly includesJudge: boolean;
+  readonly contextBudgetTokens: number;
+  readonly contextBudgetReduced: boolean;
 }
 
 export interface GenerationRunResult {
@@ -92,7 +110,7 @@ export const runGeneration = async (
   );
   if (targetIds.size === 0) return emptyResult();
 
-  const provider = injectedProvider ?? createProvider(config.generate.provider);
+  const providers = resolveProviders(config, judgeEnabled, injectedProvider);
   const projectResults = await loadWorkspace(
     {
       root,
@@ -122,7 +140,7 @@ export const runGeneration = async (
           project,
           localTargets,
           config,
-          provider,
+          providers,
           options.dryRun !== true,
           judgeEnabled,
         ),
@@ -166,7 +184,7 @@ export const runGeneration = async (
     changedFiles: files.length,
     usage: projectResults.reduce(
       (usage, project) => addUsage(usage, project.result.usage),
-      emptyUsage(),
+      EMPTY_USAGE,
     ),
     diff: files
       .map((file) =>
@@ -186,31 +204,94 @@ export const estimateGeneration = (
   symbols: number,
   judgeEnabled: boolean,
 ): GenerationEstimate => {
-  const generationInput = symbols * (config.context.budgetTokens + 300);
-  const generationOutput = symbols * 300;
-  const judgeInput = judgeEnabled
-    ? symbols * (config.context.budgetTokens + 800)
-    : 0;
-  const judgeOutput = judgeEnabled ? symbols * 80 : 0;
-  const generationCost = estimateUncachedCost(
+  const generationCapabilities = providerCapabilities(
+    config.generate.provider,
     config.generate.model,
-    generationInput,
-    generationOutput,
   );
-  const judgeCost = judgeEnabled
-    ? estimateUncachedCost(config.judge.model, judgeInput, judgeOutput)
-    : 0;
-  const costUsd =
-    generationCost === undefined || judgeCost === undefined
-      ? undefined
-      : generationCost + judgeCost;
+  const generationBudget = configuredContextBudget(
+    config.context.budgetTokens,
+    generationCapabilities,
+  );
+  const judgeCapabilities = judgeEnabled
+    ? providerCapabilities(judgeProviderConfig(config), config.judge.model)
+    : undefined;
+  const judgeBudget =
+    judgeCapabilities === undefined
+      ? generationBudget
+      : configuredContextBudget(generationBudget.effective, judgeCapabilities);
+  const contextBudget = {
+    effective: judgeBudget.effective,
+    reduced: judgeBudget.effective < config.context.budgetTokens,
+  };
+  const generationUsage = estimatedUsage(
+    generationCapabilities,
+    symbols * (contextBudget.effective + 300),
+    symbols * 300,
+  );
+  const judgeUsage =
+    judgeCapabilities === undefined
+      ? EMPTY_USAGE
+      : estimatedUsage(
+          judgeCapabilities,
+          symbols * (contextBudget.effective + 800),
+          symbols * 80,
+        );
+  const total = addUsage(generationUsage, judgeUsage);
   return {
     symbols,
-    inputTokens: generationInput + judgeInput,
-    outputTokens: generationOutput + judgeOutput,
-    ...(costUsd === undefined ? {} : { costUsd }),
+    inputTokens: total.inputTokens,
+    outputTokens: total.outputTokens,
+    ...(total.costUsd === undefined ? {} : { costUsd: total.costUsd }),
+    costBasis: total.costBasis,
     includesJudge: judgeEnabled,
+    contextBudgetTokens: contextBudget.effective,
+    contextBudgetReduced: contextBudget.reduced,
   };
+};
+
+/** Uncached list prices; a provider without a price yields no monetary total. */
+const estimatedUsage = (
+  capabilities: ModelCapabilities,
+  inputTokens: number,
+  outputTokens: number,
+): ProviderUsage => {
+  const cost = costFromPrice(capabilities.price, inputTokens, outputTokens);
+  return cost === undefined
+    ? {
+        inputTokens,
+        outputTokens,
+        costBasis:
+          capabilities.costBasis === "usd" ? "unknown" : capabilities.costBasis,
+      }
+    : usdUsage(inputTokens, outputTokens, cost);
+};
+
+const configuredContextBudget = (
+  requested: number,
+  capabilities: ModelCapabilities,
+) => {
+  try {
+    return contextBudgetFor(requested, capabilities);
+  } catch (error) {
+    throw new ConfigError(
+      error instanceof Error ? error.message : "Invalid model context window",
+    );
+  }
+};
+
+/** The judge provider is only constructed when judging runs, so a disabled
+ * judge never demands a second set of credentials. */
+const resolveProviders = (
+  config: DocgenConfig,
+  judgeEnabled: boolean,
+  injected: LlmProvider | undefined,
+): GenerationProviders => {
+  if (injected !== undefined) return { generation: injected };
+  const generation = createProvider(config.generate.provider);
+  if (!judgeEnabled || config.judge.provider === undefined) {
+    return { generation };
+  }
+  return { generation, judge: createProvider(config.judge.provider) };
 };
 
 const validateGenerationOptions = (
@@ -256,21 +337,6 @@ const withinPath = (filePath: string, scope: string): boolean => {
   );
 };
 
-const emptyUsage = (): ProviderUsage => ({
-  inputTokens: 0,
-  outputTokens: 0,
-  costUsd: 0,
-});
-
-const addUsage = (
-  left: ProviderUsage,
-  right: ProviderUsage,
-): ProviderUsage => ({
-  inputTokens: left.inputTokens + right.inputTokens,
-  outputTokens: left.outputTokens + right.outputTokens,
-  costUsd: left.costUsd + right.costUsd,
-});
-
 const emptyResult = (): GenerationRunResult => ({
   requested: 0,
   generated: [],
@@ -278,7 +344,7 @@ const emptyResult = (): GenerationRunResult => ({
   rejected: [],
   failed: [],
   changedFiles: 0,
-  usage: emptyUsage(),
+  usage: EMPTY_USAGE,
   diff: "",
 });
 

@@ -1,21 +1,22 @@
 import type { Symbol as DocumentationSymbol } from "../core/symbol.js";
+import type { ModelCapabilities } from "./capabilities.js";
 import {
-  generationResponseJsonSchema,
+  generationResponseJsonSchemaFor,
   parseGenerationResponse,
   type GenerationOutcome,
 } from "./schema.js";
+import { addUsage, EMPTY_USAGE, type ProviderUsage } from "./usage.js";
 
-export interface ProviderUsage {
-  readonly inputTokens: number;
-  readonly outputTokens: number;
-  readonly costUsd: number;
-}
+export type { CostBasis, ProviderUsage } from "./usage.js";
+export { addUsage, EMPTY_USAGE, formatCost, usdUsage } from "./usage.js";
 
 export interface ProviderRequest {
   readonly model: string;
   readonly system: string;
   readonly prompt: string;
   readonly responseSchema: Readonly<Record<string, unknown>>;
+  readonly maxOutputTokens?: number;
+  readonly signal?: AbortSignal;
 }
 
 export interface ProviderResponse {
@@ -27,6 +28,10 @@ export interface LlmProvider {
   readonly id: string;
   complete(request: ProviderRequest): Promise<ProviderResponse>;
   isRetryable(error: unknown): boolean;
+  /** Model limits, structured-output support, and price. Optional: callers fall back to conservative defaults. */
+  describe?(model: string): ModelCapabilities;
+  /** Local tokenizer. Optional: callers fall back to `conservativeTokenCount`. */
+  countTokens?(text: string, model: string): number;
 }
 
 export interface GenerationRequest {
@@ -54,22 +59,19 @@ export interface LlmClientOptions {
   readonly retryCount?: number;
   readonly baseDelayMs?: number;
   readonly sleep?: (milliseconds: number) => Promise<void>;
+  readonly maxOutputTokens?: number;
+  readonly signal?: AbortSignal;
 }
-
-const EMPTY_USAGE: ProviderUsage = {
-  inputTokens: 0,
-  outputTokens: 0,
-  costUsd: 0,
-};
 
 export class LlmClient {
   readonly #provider: LlmProvider;
-  readonly #options: Required<LlmClientOptions>;
+  readonly #options: LlmClientOptions &
+    Required<Pick<LlmClientOptions, "retryCount" | "baseDelayMs" | "sleep">>;
 
   constructor(provider: LlmProvider, options: LlmClientOptions) {
     this.#provider = provider;
     this.#options = {
-      concurrency: options.concurrency,
+      ...options,
       retryCount: options.retryCount ?? 2,
       baseDelayMs: options.baseDelayMs ?? 250,
       sleep:
@@ -113,7 +115,8 @@ export class LlmClient {
             validationAttempt === 0
               ? request.prompt
               : `${request.prompt}\n\nYour previous response was invalid: ${validationError}. Return a corrected JSON object.`,
-          responseSchema: generationResponseJsonSchema,
+          responseSchema: generationResponseJsonSchemaFor(request.symbol),
+          ...optionalRequestFields(this.#options),
         });
         attempts += response.attempts;
         usage = addUsage(usage, response.response.usage);
@@ -153,12 +156,14 @@ export class LlmClient {
   }> {
     for (let attempt = 0; ; attempt++) {
       try {
+        this.#options.signal?.throwIfAborted();
         return {
           response: await this.#provider.complete(request),
           attempts: attempt + 1,
         };
       } catch (error) {
         if (
+          this.#options.signal?.aborted === true ||
           attempt >= this.#options.retryCount ||
           !this.#provider.isRetryable(error)
         ) {
@@ -202,13 +207,14 @@ const mapConcurrent = async <T, R>(
   return results;
 };
 
-const addUsage = (
-  left: ProviderUsage,
-  right: ProviderUsage,
-): ProviderUsage => ({
-  inputTokens: left.inputTokens + right.inputTokens,
-  outputTokens: left.outputTokens + right.outputTokens,
-  costUsd: left.costUsd + right.costUsd,
+export const optionalRequestFields = (options: {
+  readonly maxOutputTokens?: number;
+  readonly signal?: AbortSignal;
+}): Pick<ProviderRequest, "maxOutputTokens" | "signal"> => ({
+  ...(options.maxOutputTokens === undefined
+    ? {}
+    : { maxOutputTokens: options.maxOutputTokens }),
+  ...(options.signal === undefined ? {} : { signal: options.signal }),
 });
 
 const errorMessage = (error: unknown): string =>

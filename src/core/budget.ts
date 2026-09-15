@@ -41,6 +41,7 @@ export interface AssembleContextOptions {
   readonly index: ContextIndex;
   readonly budgetTokens: number;
   readonly model: string;
+  readonly countTokens?: TokenCount;
   readonly sources: ContextSources;
   readonly includeSourceNotes: boolean;
   readonly bodyMaxLines: number;
@@ -66,16 +67,31 @@ export interface TokenCounter {
   truncate(text: string, maxTokens: number): string;
 }
 
-export const createTokenCounter = (model: string): TokenCounter => ({
-  model,
-  count: estimatedTokenCount,
-  truncate: (value, maxTokens) => truncateToTokens(value, maxTokens),
-});
+/** A provider tokenizer, passed in rather than imported: `core/` never depends on `llm/`. */
+export type TokenCount = (text: string) => number;
+
+/**
+ * Uses the provider tokenizer when one is supplied. The fallback is a lexical
+ * estimate of one token per 4 bytes of each word or punctuation run, which
+ * over-counts for most natural-language and code input and so degrades to a
+ * smaller context rather than an over-budget request.
+ */
+export const createTokenCounter = (
+  model: string,
+  countTokens?: TokenCount,
+): TokenCounter => {
+  const count = countTokens ?? conservativeTokenCount;
+  return {
+    model,
+    count,
+    truncate: (value, maxTokens) => truncateToTokens(value, maxTokens, count),
+  };
+};
 
 export const assembleContext = (
   options: AssembleContextOptions,
 ): AssembledContext => {
-  const counter = createTokenCounter(options.model);
+  const counter = createTokenCounter(options.model, options.countTokens);
   const header = `SYMBOL: ${options.symbol.id}\nSIGNATURE: ${options.symbol.signature}`;
   if (counter.count(header) > options.budgetTokens) {
     const text = counter.truncate(header, options.budgetTokens);
@@ -147,7 +163,13 @@ export const rankedKnapsack = (
   return { items, omitted, truncated };
 };
 
-const estimatedTokenCount = (text: string): number => {
+/**
+ * The documented fallback for providers that expose no tokenizer: one token per
+ * word or punctuation run, and an extra token per 4 bytes of a long run. It
+ * over-counts real BPE tokenizers on both prose and code, so an unknown model
+ * loses context rather than overflowing its window.
+ */
+export const conservativeTokenCount = (text: string): number => {
   if (text === "") return 0;
   const lexical = text.match(/[\p{L}\p{N}_]+|[^\s\p{L}\p{N}_]/gu) ?? [];
   return lexical.reduce(
@@ -157,21 +179,22 @@ const estimatedTokenCount = (text: string): number => {
   );
 };
 
-const truncateToTokens = (text: string, maxTokens: number): string => {
+const truncateToTokens = (
+  text: string,
+  maxTokens: number,
+  count: TokenCount,
+): string => {
   if (maxTokens <= 0) return "";
-  if (estimatedTokenCount(text) <= maxTokens) return text;
+  if (count(text) <= maxTokens) return text;
   const marker = "\n… [elided]";
-  const markerTokens = estimatedTokenCount(marker);
+  const markerTokens = count(marker);
   if (markerTokens >= maxTokens) return "";
 
   let low = 0;
   let high = text.length;
   while (low < high) {
     const middle = Math.ceil((low + high) / 2);
-    if (
-      estimatedTokenCount(text.slice(0, middle)) <=
-      maxTokens - markerTokens
-    ) {
+    if (count(text.slice(0, middle)) <= maxTokens - markerTokens) {
       low = middle;
     } else {
       high = middle - 1;

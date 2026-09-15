@@ -27,7 +27,7 @@ writing source files or calling an LLM.
 After the baseline is committed, run `check` in CI:
 
 ```bash
-pnpm exec docgen check --since origin/main
+pnpm exec docgen check -s origin/main
 ```
 
 Exit code `0` is clean, `1` means documentation drift was found, `2` is a
@@ -37,20 +37,27 @@ for a local check.
 
 ## Fixing drift
 
-Generation uses Anthropic and requires `ANTHROPIC_API_KEY`. Preview changes
-before writing them:
+The shortest API-backed setup uses Anthropic. Set `ANTHROPIC_API_KEY`; the
+default config already selects the Anthropic provider. Inspect the effective
+generation and judge models without making a model call:
 
 ```bash
-pnpm exec docgen check --fix --dry-run
-pnpm exec docgen check --fix
+pnpm exec docgen providers
+pnpm exec docgen auth
 ```
 
-Backfilling undocumented symbols is separate, path-bounded, and deliberately
-opt-in:
+Preview a bounded missing-doc run before writing anything:
 
 ```bash
-pnpm exec docgen fix --missing --path src/api --dry-run
-pnpm exec docgen fix --missing --path src/api
+pnpm exec docgen fix -m -p src/api -n
+pnpm exec docgen fix -m -p src/api
+```
+
+Fixing existing drift is separate:
+
+```bash
+pnpm exec docgen check -f -n
+pnpm exec docgen check -f
 ```
 
 Every fix run reports its selected symbol count and estimated cost
@@ -58,6 +65,11 @@ before the first model call. Source writes require a clean working tree unless
 `--allow-dirty` is passed. Generated output is schema-validated and judged for
 information beyond the signature; `SKIP` and judge rejection leave source
 unchanged.
+
+Direct OpenAI and Google APIs, OpenAI-compatible local servers, and opt-in
+Claude, Codex, Gemini, OpenCode, and Pi CLI transports are also supported. See
+the [provider guide](docs/providers.md) for configuration, credential safety,
+CI guidance, and local-server requirements.
 
 ## How drift detection works
 
@@ -100,6 +112,11 @@ pnpm exec docgen explain 'src/billing/settle.ts#settleInvoice'
 Configuration lives in `.docgenrc.json`. See the [config reference](docs/config.md)
 for every field and default. Large workspaces should also read the
 [monorepo recipes](docs/monorepos.md) before baselining.
+
+With `symbols.exportedOnly: true`, `symbols.publicSurface` defaults to
+`"syntacticExports"`. Published libraries can set it to `"entryPoints"` and
+list their package entry modules so exported implementation helpers are not
+treated as public API.
 
 ## Limitations
 

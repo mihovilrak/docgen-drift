@@ -4,8 +4,15 @@ import type {
   GeneratedDoc,
   Symbol as DocumentationSymbol,
 } from "../core/symbol.js";
-import type { LlmProvider, ProviderUsage } from "./client.js";
+import {
+  optionalRequestFields,
+  type LlmProvider,
+  type ProviderRequest,
+  type ProviderResponse,
+} from "./client.js";
 import { judgePrompt, judgeSystemPrompt } from "./prompt/index.js";
+import { portableJsonSchema } from "./schema.js";
+import { addUsage, EMPTY_USAGE, type ProviderUsage } from "./usage.js";
 
 const judgeResponseSchema = z
   .object({
@@ -15,7 +22,9 @@ const judgeResponseSchema = z
   })
   .strict();
 
-export const judgeResponseJsonSchema = z.toJSONSchema(judgeResponseSchema);
+export const judgeResponseJsonSchema = portableJsonSchema(
+  z.toJSONSchema(judgeResponseSchema),
+) as Readonly<Record<string, unknown>>;
 
 export interface JudgeRequest {
   readonly symbol: DocumentationSymbol;
@@ -44,22 +53,19 @@ export interface JudgeClientOptions {
   readonly retryCount?: number;
   readonly baseDelayMs?: number;
   readonly sleep?: (milliseconds: number) => Promise<void>;
+  readonly maxOutputTokens?: number;
+  readonly signal?: AbortSignal;
 }
-
-const EMPTY_USAGE: ProviderUsage = {
-  inputTokens: 0,
-  outputTokens: 0,
-  costUsd: 0,
-};
 
 export class JudgeClient {
   readonly #provider: LlmProvider;
-  readonly #options: Required<JudgeClientOptions>;
+  readonly #options: JudgeClientOptions &
+    Required<Pick<JudgeClientOptions, "retryCount" | "baseDelayMs" | "sleep">>;
 
   constructor(provider: LlmProvider, options: JudgeClientOptions) {
     this.#provider = provider;
     this.#options = {
-      concurrency: options.concurrency,
+      ...options,
       retryCount: options.retryCount ?? 2,
       baseDelayMs: options.baseDelayMs ?? 250,
       sleep:
@@ -108,6 +114,7 @@ export class JudgeClient {
             validationError,
           ),
           responseSchema: judgeResponseJsonSchema,
+          ...optionalRequestFields(this.#options),
         });
         attempts += completed.attempts;
         const response = completed.response;
@@ -157,23 +164,20 @@ export class JudgeClient {
     throw new Error("Unreachable judge state");
   }
 
-  async #completeWithRetry(request: {
-    readonly model: string;
-    readonly system: string;
-    readonly prompt: string;
-    readonly responseSchema: Readonly<Record<string, unknown>>;
-  }): Promise<{
-    readonly response: Awaited<ReturnType<LlmProvider["complete"]>>;
+  async #completeWithRetry(request: ProviderRequest): Promise<{
+    readonly response: ProviderResponse;
     readonly attempts: number;
   }> {
     for (let attempt = 0; ; attempt++) {
       try {
+        this.#options.signal?.throwIfAborted();
         return {
           response: await this.#provider.complete(request),
           attempts: attempt + 1,
         };
       } catch (error) {
         if (
+          this.#options.signal?.aborted === true ||
           attempt >= this.#options.retryCount ||
           !this.#provider.isRetryable(error)
         ) {
@@ -225,15 +229,6 @@ const mapConcurrent = async <T, R>(
   await Promise.all(workers);
   return results;
 };
-
-const addUsage = (
-  left: ProviderUsage,
-  right: ProviderUsage,
-): ProviderUsage => ({
-  inputTokens: left.inputTokens + right.inputTokens,
-  outputTokens: left.outputTokens + right.outputTokens,
-  costUsd: left.costUsd + right.costUsd,
-});
 
 const errorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : "Unknown judge error";

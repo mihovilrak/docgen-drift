@@ -59,5 +59,8 @@ pnpm exec docgen check --since origin/main
 Omit `--since` for a full-repository check. Use `--json` when another tool will
 consume the report. `--json` and `--sarif` are mutually exclusive.
 
-Do not put `ANTHROPIC_API_KEY` in the drift-check job. It is not needed, and its
-absence protects the LLM-free CI path from accidental generation.
+Do not put provider credentials in the drift-check job. They are not needed,
+and their absence protects the LLM-free CI path from accidental generation.
+For unattended generation jobs, use a direct API credential scoped to that CI
+environment. Subscription CLI transports depend on an interactive user's login
+and allowance and are intended for local runs.

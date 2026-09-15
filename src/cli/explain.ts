@@ -76,6 +76,8 @@ export const runExplain = async (
               : undefined;
             return {
               label: canonicalId(projectIndex, symbol.id, true),
+              // No provider is constructed here: `explain` stays offline and
+              // credential-free, so it reports the conservative token estimate.
               context: assembleContext({
                 symbol,
                 symbols,

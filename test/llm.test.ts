@@ -16,7 +16,10 @@ import {
   generationPrompt,
   generationSystemPrompt,
 } from "../src/llm/prompt/index.js";
-import { parseGenerationResponse } from "../src/llm/schema.js";
+import {
+  generationResponseJsonSchemaFor,
+  parseGenerationResponse,
+} from "../src/llm/schema.js";
 
 describe("LLM generation", () => {
   it("limits concurrency, retries transient failures, and totals usage", async () => {
@@ -58,6 +61,7 @@ describe("LLM generation", () => {
       inputTokens: 9,
       outputTokens: 6,
       costUsd: 0.03,
+      costBasis: "usd",
     });
   });
 
@@ -157,6 +161,24 @@ describe("LLM generation", () => {
     ).toThrow(/markup/u);
   });
 
+  it("constrains parameter keys in the portable generation schema", () => {
+    const schema = generationResponseJsonSchemaFor(
+      symbol("schema", ["value", "options"]),
+    );
+    const params = (
+      schema["properties"] as Record<string, Record<string, unknown>>
+    )["params"];
+
+    expect(params).toMatchObject({
+      properties: { value: { type: "string" }, options: { type: "string" } },
+      required: ["value", "options"],
+      additionalProperties: false,
+    });
+    expect(JSON.stringify(schema)).not.toMatch(
+      /\$schema|minLength|propertyNames/u,
+    );
+  });
+
   it("uses Anthropic structured output and accounts for token cost", async () => {
     const create = vi.fn().mockResolvedValue({
       content: [
@@ -187,11 +209,13 @@ describe("LLM generation", () => {
           format: { type: "json_schema", schema: request.responseSchema },
         },
       }),
+      undefined,
     );
     expect(result.usage).toEqual({
       inputTokens: 115,
       outputTokens: 20,
       costUsd: 0.0004145,
+      costBasis: "usd",
     });
   });
 });
@@ -203,7 +227,7 @@ const response = (
   costUsd = 0,
 ): ProviderResponse => ({
   value,
-  usage: { inputTokens, outputTokens, costUsd },
+  usage: { inputTokens, outputTokens, costUsd, costBasis: "usd" },
 });
 
 const okPayload = (

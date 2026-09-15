@@ -26,6 +26,46 @@ export const generationResponseJsonSchema = z.toJSONSchema(
   generatedResponseSchema,
 );
 
+export const generationResponseJsonSchemaFor = (
+  symbol: DocumentationSymbol,
+): Readonly<Record<string, unknown>> => {
+  const properties = generationResponseJsonSchema["properties"] as Record<
+    string,
+    unknown
+  >;
+  const parameterNames = symbol.parameters.map((parameter) => parameter.name);
+  return portableJsonSchema({
+    ...generationResponseJsonSchema,
+    properties: {
+      ...properties,
+      params: {
+        type: "object",
+        properties: Object.fromEntries(
+          parameterNames.map((name) => [name, { type: "string" }]),
+        ),
+        required: parameterNames,
+        additionalProperties: false,
+      },
+    },
+  }) as Readonly<Record<string, unknown>>;
+};
+
+const PORTABLE_SCHEMA_OMISSIONS = new Set([
+  "$schema",
+  "minLength",
+  "propertyNames",
+]);
+
+export const portableJsonSchema = (value: unknown): unknown => {
+  if (Array.isArray(value)) return value.map(portableJsonSchema);
+  if (typeof value !== "object" || value === null) return value;
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([key]) => !PORTABLE_SCHEMA_OMISSIONS.has(key))
+      .map(([key, nested]) => [key, portableJsonSchema(nested)]),
+  );
+};
+
 export type GenerationOutcome =
   | { readonly verdict: "OK"; readonly id: string; readonly doc: GeneratedDoc }
   | { readonly verdict: "SKIP"; readonly id: string; readonly reason: string };

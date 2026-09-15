@@ -2,6 +2,7 @@ import { relative, resolve } from "node:path";
 
 import { glob } from "tinyglobby";
 
+import { ConfigError } from "../config/load.js";
 import type { DocgenConfig } from "../config/schema.js";
 import { hashSymbol, hashText, type HashRecipe } from "../core/hash.js";
 import { workspaceSymbolId } from "../core/id.js";
@@ -23,10 +24,12 @@ export const indexWorkspace = async (
   root: string,
   config: DocgenConfig,
 ): Promise<readonly ProjectIndex[]> => {
-  const [{ extractSymbols }, { loadWorkspace }] = await Promise.all([
-    import("../adapters/typescript/extract/index.js"),
-    import("../adapters/typescript/loadWorkspace.js"),
-  ]);
+  const [{ extractSymbols }, { loadWorkspace }, { publicSurfaceSymbolIds }] =
+    await Promise.all([
+      import("../adapters/typescript/extract/index.js"),
+      import("../adapters/typescript/loadWorkspace.js"),
+      import("../adapters/typescript/publicSurface.js"),
+    ]);
   const includes = [...config.include, ...config.tests];
   return loadWorkspace(
     {
@@ -58,6 +61,19 @@ export const indexWorkspace = async (
           })
         ).map((path) => resolve(path)),
       );
+      const entryPointSymbols =
+        config.symbols.exportedOnly &&
+        config.symbols.publicSurface === "entryPoints"
+          ? await configuredPublicSurface(
+              () =>
+                publicSurfaceSymbolIds(
+                  project,
+                  symbols,
+                  config.symbols.entryPoints,
+                ),
+              project.tsconfigPath,
+            )
+          : undefined;
       return {
         root: project.root,
         workspacePath: toPosix(relative(root, project.root)),
@@ -65,7 +81,7 @@ export const indexWorkspace = async (
         eligible: symbols.filter(
           (symbol) =>
             !testFiles.has(resolve(project.root, symbol.filePath)) &&
-            isEligible(symbol, ignoredContainers, config),
+            isEligible(symbol, ignoredContainers, config, entryPointSymbols),
         ),
       };
     },
@@ -115,9 +131,13 @@ const isEligible = (
   symbol: DocumentationSymbol,
   ignoredContainers: ReadonlySet<string>,
   config: DocgenConfig,
+  entryPointSymbols: ReadonlySet<SymbolId> | undefined,
 ): boolean =>
   matchesKind(symbol, config.symbols.kinds) &&
-  (!config.symbols.exportedOnly || symbol.exported) &&
+  (!config.symbols.exportedOnly ||
+    (entryPointSymbols === undefined
+      ? symbol.exported
+      : entryPointSymbols.has(symbol.id))) &&
   config.symbols.visibility.includes(symbol.visibility) &&
   bodyLines(symbol.body) >= config.symbols.minBodyLines &&
   !config.symbols.ignorePragmas.some((pragma) => hasPragma(symbol, pragma)) &&
@@ -158,3 +178,16 @@ const containerIsIgnored = (
 
 const toPosix = (path: string): string =>
   path === "" ? "." : path.replaceAll("\\", "/");
+
+const configuredPublicSurface = async (
+  load: () => Promise<ReadonlySet<SymbolId>>,
+  tsconfigPath: string,
+): Promise<ReadonlySet<SymbolId>> => {
+  try {
+    return await load();
+  } catch (error) {
+    throw new ConfigError(
+      `Cannot resolve symbols.entryPoints for ${tsconfigPath}: ${error instanceof Error ? error.message : "unknown error"}`,
+    );
+  }
+};
