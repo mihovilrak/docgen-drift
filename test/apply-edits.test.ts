@@ -54,6 +54,65 @@ describe("TypeScript edit application", () => {
     ).toEqual([]);
   });
 
+  it("honors standard granularity when rendering model output", async () => {
+    const root = await copyFixture();
+    const sourcePath = join(root, "src/api.ts");
+    const source = await readFile(sourcePath, "utf8");
+    const project = await loadProject({ tsconfigPath: root });
+    const leaf = findSymbol(extractSymbols(project), "leaf");
+    const doc: GeneratedDoc = {
+      ...generatedDoc(leaf),
+      detail: "Internal calculation detail.",
+      throws: [{ type: "RangeError", when: "The value is negative." }],
+    };
+
+    await applyEdits(
+      project,
+      [plan(leaf, source, doc)],
+      configSchema.parse({
+        symbols: { minBodyLines: 0 },
+        docs: { granularity: "standard" },
+      }),
+      true,
+    );
+
+    const written = await readFile(sourcePath, "utf8");
+    expect(written).toContain("@param value Input value.");
+    expect(written).toContain("@returns The computed value.");
+    expect(written).not.toContain("Internal calculation detail.");
+    expect(written).not.toContain("@throws");
+  });
+
+  it("renders only the summary at minimal granularity", async () => {
+    const root = await copyFixture();
+    const sourcePath = join(root, "src/api.ts");
+    const source = await readFile(sourcePath, "utf8");
+    const project = await loadProject({ tsconfigPath: root });
+    const leaf = findSymbol(extractSymbols(project), "leaf");
+    const doc: GeneratedDoc = {
+      ...generatedDoc(leaf),
+      detail: "Internal calculation detail.",
+      throws: [{ type: "RangeError", when: "The value is negative." }],
+    };
+
+    await applyEdits(
+      project,
+      [plan(leaf, source, doc)],
+      configSchema.parse({
+        symbols: { minBodyLines: 0 },
+        docs: { granularity: "minimal" },
+      }),
+      true,
+    );
+
+    const written = await readFile(sourcePath, "utf8");
+    expect(written).toContain("Document leaf behavior.");
+    expect(written).not.toContain("Internal calculation detail.");
+    expect(written).not.toContain("@param");
+    expect(written).not.toContain("@returns");
+    expect(written).not.toContain("@throws");
+  });
+
   it("reparses a changed file and rejects a symbol changed after generation", async () => {
     const root = await copyFixture();
     const sourcePath = join(root, "src/api.ts");
@@ -219,9 +278,13 @@ const copyFixture = async (): Promise<string> => {
   return root;
 };
 
-const plan = (symbol: DocumentationSymbol, source: string): PlannedDocEdit => ({
+const plan = (
+  symbol: DocumentationSymbol,
+  source: string,
+  doc: GeneratedDoc = generatedDoc(symbol),
+): PlannedDocEdit => ({
   symbol,
-  doc: generatedDoc(symbol),
+  doc,
   expectedFileHash: hashText(source),
   expectedAnchorHash: symbolAnchorHash(symbol),
 });

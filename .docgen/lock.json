@@ -1,0 +1,257 @@
+{
+  "schemaVersion": 1,
+  "symbols": {
+    "src/core/diff.ts#unifiedDiff": {
+      "symbolHash": "a76eb2c13fdfb469208f575ab77458e3a888e3a06bc714f048f96c3eeed218d0",
+      "docHash": "8d48059604a4d40af93f1a1c0f4a6072a523a8043566526c28bead8479b18897",
+      "filePath": "src/core/diff.ts",
+      "startLine": 10
+    },
+    "src/cli/errors.ts#errorExitCode": {
+      "symbolHash": "82805ebdfd43f565bd416ba94d921940eb24e68e2928f93216a380996b0f7bc1",
+      "docHash": "174fb5278550d6d07ed7301a7f38a44532f356efee4c22fa59f9de0f28046566",
+      "filePath": "src/cli/errors.ts",
+      "startLine": 13
+    },
+    "src/cli/explain.ts#runExplain": {
+      "symbolHash": "a8532d985a7a02f4defaa5942e6d2721150cf4059ded32b0478d8b23bcfa0cfa",
+      "docHash": "a92c8049ef7e29daa724b680adc0cc7f30b22d60eab0af71878a5e538faedd3c",
+      "filePath": "src/cli/explain.ts",
+      "startLine": 26
+    },
+    "src/cli/generate.ts#runGeneration": {
+      "symbolHash": "4034240d2889d37bb6c839e4cf9dc6dd335d274ef9b76efdedc26e8ffd5d7234",
+      "docHash": "6a7dc9f36041f03c3066815c0791cac6754d646336c09db08b2789cd24c467ac",
+      "filePath": "src/cli/generate.ts",
+      "startLine": 88
+    },
+    "src/cli/generate.ts#estimateGeneration": {
+      "symbolHash": "6358dd696ce4e04701182449687642678e77bb3cb26613e5eb2f073781188e4c",
+      "docHash": "b971b9f2e91b38a5fbabe81efb4c3715183a7f0ed4601459167b616eb3d5abc4",
+      "filePath": "src/cli/generate.ts",
+      "startLine": 231
+    },
+    "src/cli/generateProject.ts#generateProject": {
+      "symbolHash": "6d379a5de7bd9b93cde3940981dcaa2b3426793cef2447ca5dbc38d10fe19b3a",
+      "docHash": "9466bc6b20b7e2d1c32b50c8d33ebcdf87deb000ea7c45ceaa84e079cbf89b6c",
+      "filePath": "src/cli/generateProject.ts",
+      "startLine": 83
+    },
+    "src/cli/inspect.ts#ProviderInspection": {
+      "symbolHash": "d167fa788787655168926516cf4ff3b8ffc9362dc6d540c9a813b34f2e7b3796",
+      "docHash": "f74383b5583efa6086eb70058d2ae35895efc11deb96080ed908e298f9c2ad53",
+      "filePath": "src/cli/inspect.ts",
+      "startLine": 19
+    },
+    "src/cli/inspect.ts#renderPreflight": {
+      "symbolHash": "5338653874f69fd32d1ac7b0437ae6c042d7282394f1633f1257e46537254a26",
+      "docHash": "382cee1ed3172ff900e3e4f639d1d10b8f9e526d1d3c29758199a6aebe7d7d60",
+      "filePath": "src/cli/inspect.ts",
+      "startLine": 132
+    },
+    "src/cli/options.ts#assertCompatibleLoggingOptions": {
+      "symbolHash": "5ed73218ed1534e4c1cdb1ac7c1bce28fcfab74cb2ff41812d9fdd92f0eb68b1",
+      "docHash": "5f1628da23dc89a960fdc864aebfcd739e22c185105a562563ee25cddd73beda",
+      "filePath": "src/cli/options.ts",
+      "startLine": 73
+    },
+    "src/cli/options.ts#withOptions": {
+      "symbolHash": "80f41e5729ef50d6dded1789cbca1cd5bce3d098b950ca55e342115627ace15d",
+      "docHash": "ac751b0bed382f2eed9d44932821850beead82f84d338093e0725df20d33d611",
+      "filePath": "src/cli/options.ts",
+      "startLine": 87
+    },
+    "src/cli/program.ts#createProgram": {
+      "symbolHash": "a2de4ddc6604547d16600c2bf81a0a659ac670b326013fca32f3acc5a78388d9",
+      "docHash": "fbef332f556309bbe9370f26eba635183c1fdd077f6a428980c4babf379e185c",
+      "filePath": "src/cli/program.ts",
+      "startLine": 166
+    },
+    "src/cli/progress.ts#createGenerationProgressReporter": {
+      "symbolHash": "799d60c8a9845ee270154eb649a42b328c07aa497bf0145495d8e585054ba14e",
+      "docHash": "d26212743e4e08038f2b1e1f6219222829080daae4f7021d115ec807dcf7003d",
+      "filePath": "src/cli/progress.ts",
+      "startLine": 20
+    },
+    "src/cli/projectScope.ts#scopeProjects": {
+      "symbolHash": "934a97330484c7c5265eb800964d19888c607a1b141b181e9eeda511809075a5",
+      "docHash": "67bee095d70a151264b0eb211a2ad95221a2063715ce06e22b612fb7e0500854",
+      "filePath": "src/cli/projectScope.ts",
+      "startLine": 8
+    },
+    "src/cli/render.ts#renderGeneration": {
+      "symbolHash": "0b16d186610bd020912ac4b5c5d310c7ed9948c36d61239068f21c8b81f2cf1c",
+      "docHash": "aba8fb969998182da6e9b041e933b8faa4bfdfd1320eb63a0ff98a6b3da17c43",
+      "filePath": "src/cli/render.ts",
+      "startLine": 10
+    },
+    "src/cli/render.ts#renderEstimate": {
+      "symbolHash": "80f52887523d4d388238e9c49c889c4056eb20a8681ade3ec62c2cb29097c78d",
+      "docHash": "bb4765ba0d88ad428b61012507ffedb8174ad1faebd35d7d4b6d2e7c6cf65821",
+      "filePath": "src/cli/render.ts",
+      "startLine": 31
+    },
+    "src/cli/run.ts#runBaseline": {
+      "symbolHash": "b5d931690e03ec737fc2596146ce81fcd04635f2b5fb944a9dbbdac80a313aad",
+      "docHash": "60310128c97ad1420bee05b0a50dd233518372bdb5e82e60d8561459234a1b53",
+      "filePath": "src/cli/run.ts",
+      "startLine": 37
+    },
+    "src/cli/run.ts#runCheck": {
+      "symbolHash": "827da9676af87dbbe63c7e62fd9b36d6b62946356f8a002809e6f98d8fc374fa",
+      "docHash": "f7a9603b4cf47fde5af5ef008aa6172bff83b275075c852bff94456cdb6bcf03",
+      "filePath": "src/cli/run.ts",
+      "startLine": 74
+    },
+    "src/cli/run.ts#refreshLocks": {
+      "symbolHash": "fd7f8b46aee3933da3a515b266d73038d157b191e1e33c2c61b7e874a081d396",
+      "docHash": "9477cb8d3f7d1ceb8b9b066b0d6cf94882a677b97f3af4a5951b7a560cb47685",
+      "filePath": "src/cli/run.ts",
+      "startLine": 109
+    },
+    "src/cli/since.ts#readChangedFiles": {
+      "symbolHash": "4bac65c3e64868ac29340fc235041bb1dcd6f1dd62d578cab07404b7c43420fb",
+      "docHash": "52a6b93c9fbd61b6543d9b3f84ed8114cd3f3062fffadd629feecb52004e51a9",
+      "filePath": "src/cli/since.ts",
+      "startLine": 29
+    },
+    "src/cli/since.ts#filterByChanges": {
+      "symbolHash": "d7ca5a6413af71b1c4a8fb98a4ccc248d9ceb2c9029f37cb6ff4e87857e96ef8",
+      "docHash": "a9ce4067cd01de80d0c1743810f0e66346987c338745e07b5339ef14fb45c5ed",
+      "filePath": "src/cli/since.ts",
+      "startLine": 52
+    },
+    "src/cli/workspace.ts#indexWorkspace": {
+      "symbolHash": "e3c77cd8ee4b4ca14ed8920b5bcc586d384286eee975cd5260943de04cf5ed5e",
+      "docHash": "c9e1b4834104afc561244c208883e2f75fdc71d6d6c33e65ecbd9c14a1114ef3",
+      "filePath": "src/cli/workspace.ts",
+      "startLine": 29
+    },
+    "src/cli/workspace.ts#currentSymbols": {
+      "symbolHash": "6719b54e56b3ab949c3f2782ea4ce15a924a003b24e3d58db2be42a57bd08aeb",
+      "docHash": "dfe2df13513546e46e7a225c32e10bf13c5d491cb0add5ab7003cf1ad75b70e7",
+      "filePath": "src/cli/workspace.ts",
+      "startLine": 104
+    },
+    "src/cli/workspace.ts#knownSymbolIds": {
+      "symbolHash": "4715a5ad452eae0a3efd8ea45fb86ccf50819443dea2164cd1e2d33a7cae47a3",
+      "docHash": "e06eb84495dafb5ea37fd19f4efc817b783e3fee53ecc0b5f24ca8842fad6004",
+      "filePath": "src/cli/workspace.ts",
+      "startLine": 122
+    },
+    "src/cli/workspace.ts#hashRecipe": {
+      "symbolHash": "837f3e182f6b740f03454e94b1e8b05b2a4f6bd4b98e38c21a2a2f451591a974",
+      "docHash": "ed92af88857bb281bb424f128cd54131b638444ce34c84fc5c9de18aed6ad8ad",
+      "filePath": "src/cli/workspace.ts",
+      "startLine": 140
+    },
+    "src/core/budget.ts#rankedKnapsack": {
+      "symbolHash": "2161384a0c35f1350d71b980b57043457ea48fc0a14f47314625116c03a912d8",
+      "docHash": "00bfeb57c357d885152bbf77515c4f69b98c47e4fd968d343e17753cb28c243a",
+      "filePath": "src/core/budget.ts",
+      "startLine": 135
+    },
+    "src/core/contextCandidates.ts#contextCandidates": {
+      "symbolHash": "bf3b58918e32a3d07b83ebb72e32daa65bd15748de47d8566e02045555d76f17",
+      "docHash": "8ca7c45d7e5a16592a7b76b0398c376fdef2fcaccc3970b741d5af271e7fee40",
+      "filePath": "src/core/contextCandidates.ts",
+      "startLine": 8
+    },
+    "src/core/contextCandidates.ts#sampleCallSites": {
+      "symbolHash": "ca81d41a76daf3b4c6c8f4b998aeb98ff5e2d08419407b08f1bb3509b7300df3",
+      "docHash": "f2b367cf1243a6ae13fb56d7a106bc7aa1e15c753ef9ddad468f83465b7968cb",
+      "filePath": "src/core/contextCandidates.ts",
+      "startLine": 101
+    },
+    "src/core/git.ts#findGitSubject": {
+      "symbolHash": "e668306071aa6ee96f755693480cda0409e5db0169dda779021df4111c7c4b0a",
+      "docHash": "f6ec19e243a832103b17d8247c84fc309e01e254abf5db49954e5d64fa938067",
+      "filePath": "src/core/git.ts",
+      "startLine": 20
+    },
+    "src/core/git.ts#isWorkingTreeDirty": {
+      "symbolHash": "6fb4c2113369be84b0be3a4d0c2fcd6b9468416e53a448bad5fa046fac8a2725",
+      "docHash": "36324a8d580d11beb96cee3017bc8c4331562068d00fba1a6c0c194f7423635e",
+      "filePath": "src/core/git.ts",
+      "startLine": 46
+    },
+    "src/core/graph.ts#stronglyConnectedComponents": {
+      "symbolHash": "eda27fd7a84d647a971598736a386d9c3082df5e55d4f18f6d724379d77db83e",
+      "docHash": "9ad7cc7d008ec8cb2b0657c763555d6e2a1a5e8333622e418cdc1cc7ceb8970e",
+      "filePath": "src/core/graph.ts",
+      "startLine": 11
+    },
+    "src/core/graph.ts#reverseTopologicalOrder": {
+      "symbolHash": "d19c1331eda6d80c362a64b8b17b81101775bd5de4fd1e272b5783079a7f9202",
+      "docHash": "c325d6e5d8f6cda11b49802072d9f69423f53bf8d3231dc85b268f0d80559c7b",
+      "filePath": "src/core/graph.ts",
+      "startLine": 69
+    },
+    "src/core/graph.ts#reverseTopologicalLevels": {
+      "symbolHash": "f3bdb4e98b85a88c277b63bfe7f35be051930897576d408885cc40e74f93867c",
+      "docHash": "825d04684621eca295787a1f4d28144e355843b5ed4501f3faa1f29e7c3883cd",
+      "filePath": "src/core/graph.ts",
+      "startLine": 128
+    },
+    "src/core/hash.ts#hashSymbol": {
+      "symbolHash": "54f07acaebcba6a11e0f0be703c653cbd927453102e6cb651d9d4df64fa173f1",
+      "docHash": "7a49c0618ad6f1198cbd724f2cd69faf44d8d3356989ccc726ad034c68c30655",
+      "filePath": "src/core/hash.ts",
+      "startLine": 111
+    },
+    "src/core/id.ts#makeSymbolId": {
+      "symbolHash": "43d70fe8b963849beb207aaa24a278836eafe61ec9e9c1170c4e871a827d1d2b",
+      "docHash": "b9a4c0aab4baf97bdc156f78bd9880d67ae4e7237f5b072a818ea704cc420543",
+      "filePath": "src/core/id.ts",
+      "startLine": 13
+    },
+    "src/core/id.ts#workspaceSymbolId": {
+      "symbolHash": "c06a4c8089037295b7160c532b643d873ecea5082fe84e40c9185d82ad28d427",
+      "docHash": "9335c877e9d88f569958a16604eca83316bb1b2f553b14263cbb72ade9d8e760",
+      "filePath": "src/core/id.ts",
+      "startLine": 31
+    },
+    "src/core/lock.ts#emptyLock": {
+      "symbolHash": "6d7f6ba70066b700a2a4f41c1d3c6b4fc742795ba00087a7b09a751c1d989e75",
+      "docHash": "783d7533bf6ec65390701f966bc2d864df7aa5ad3ce2d65f3429009650b0c02a",
+      "filePath": "src/core/lock.ts",
+      "startLine": 32
+    },
+    "src/core/lock.ts#readLock": {
+      "symbolHash": "f5ff9af71af8f2098991a1784a458e261534faa08001b7cfc7a054b3d8a2e183",
+      "docHash": "ca72c5496b709316e9a648050e27cb86499f6c2fc8ef400ce18a5498c1effe39",
+      "filePath": "src/core/lock.ts",
+      "startLine": 41
+    },
+    "src/core/lock.ts#writeLock": {
+      "symbolHash": "cf45072523126520b9037f72b4412d71fd57e59ed3726cdb174e3a208c5cc5a7",
+      "docHash": "397ec36faf2620371d0a750761f2983d1aa9e0704608d27de869eb481ddccfae",
+      "filePath": "src/core/lock.ts",
+      "startLine": 66
+    },
+    "src/core/plan.ts#CurrentSymbol": {
+      "symbolHash": "a15e80de9313153365846b13f7b8c9ba6c93c292204a0bdb34ff03dc33607818",
+      "docHash": "973995b69f51c74c6a990c51b1fe82202000277d898e7e5ead40694c563ee443",
+      "filePath": "src/core/plan.ts",
+      "startLine": 10
+    },
+    "src/core/plan.ts#classifySymbols": {
+      "symbolHash": "0256b85c632e913d8ddfbe3d5e08369a0f8fb962c7efafd9f82d7e9d2a829d9b",
+      "docHash": "e3c533f282f172952101b05b1ac541bd9905e8d5620af6422113c6f9bd874245",
+      "filePath": "src/core/plan.ts",
+      "startLine": 31
+    },
+    "src/core/plan.ts#lockEntries": {
+      "symbolHash": "e71de87273c1708adbbf1d33c4bdd2eaa724077c51bf9286fa6c446afb0cf907",
+      "docHash": "b04cdba32b85236e505442e60fe26b4f6a502e892197465336cfafad26f8e6ea",
+      "filePath": "src/core/plan.ts",
+      "startLine": 80
+    },
+    "src/core/symbol.ts#CallSite": {
+      "symbolHash": "b45feeae48273f4ad0be0523f297e53f742aba78848656fc5097fb57fe27088e",
+      "docHash": "1144e12e772f05800f400250ed2c982685c97743db985636712eb8039e51cc5d",
+      "filePath": "src/core/symbol.ts",
+      "startLine": 91
+    }
+  }
+}

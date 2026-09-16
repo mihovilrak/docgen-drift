@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { estimateGeneration } from "../src/cli/generate.js";
-import { renderEstimate } from "../src/cli/render.js";
+import { renderEstimate, renderGeneration } from "../src/cli/render.js";
 import { configSchema } from "../src/config/schema.js";
 import { costFromPrice } from "../src/llm/capabilities.js";
 import { anthropicPrice } from "../src/llm/providers/anthropic.js";
@@ -51,6 +51,38 @@ describe("generation cost estimation", () => {
     expect(estimate.costUsd).toBeUndefined();
     expect(renderEstimate(estimate)).toContain("subscription allowance");
     expect(renderEstimate(estimate)).not.toContain("$");
+  });
+
+  it("does not render unavailable CLI token counts as measured zeroes", () => {
+    const output = renderGeneration(
+      {
+        requested: 1,
+        generated: ["src/api.ts#leaf"],
+        skipped: [],
+        rejected: [],
+        failed: [],
+        changedFiles: 1,
+        usage: {
+          inputTokens: 0,
+          outputTokens: 0,
+          tokenCountsAvailable: false,
+          costBasis: "subscription",
+        },
+        diff: "",
+      },
+      true,
+    );
+
+    expect(output).toContain(
+      "1 generated, 0 skipped, 0 rejected, 0 failed in 1 file; token counts unavailable, subscription allowance",
+    );
+    expect(output).not.toContain("0 input tokens");
+  });
+
+  it("uses singular wording for a one-symbol estimate", () => {
+    const estimate = estimateGeneration(configSchema.parse({}), 1, false);
+
+    expect(renderEstimate(estimate)).toContain("for 1 symbol:");
   });
 
   it("reduces an oversized context budget to the configured model window", () => {

@@ -188,12 +188,15 @@ const buildEdit = (
   const start = editStart(symbol, config);
   const indentation = indentationAt(source, symbol.declaration.start);
   const eol = eolOf(source);
+  const includeStandardSections = config.docs.granularity !== "minimal";
+  const includeDetailedSections = config.docs.granularity === "detailed";
   const rendered = renderDoc(plan.doc, symbol, {
     indentation,
     eol,
-    emitParams: config.docs.tags.params,
-    emitReturns: config.docs.tags.returns,
-    emitThrows: config.docs.tags.throws,
+    emitDetail: includeDetailedSections,
+    emitParams: includeStandardSections && config.docs.tags.params,
+    emitReturns: includeStandardSections && config.docs.tags.returns,
+    emitThrows: includeDetailedSections && config.docs.tags.throws,
     preserveTags: config.docs.preserveTags,
   });
   return {

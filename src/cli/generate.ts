@@ -77,6 +77,14 @@ export interface GenerationRunResult {
   readonly diff: string;
 }
 
+/**
+ * Select missing or drifted symbols, reject unsafe dirty or oversized runs, generate by project, and refresh locks after successful writes.
+ * @param root Workspace root used for checks, project loading, dirty-tree detection, and lock refresh.
+ * @param config Generation, workspace, inclusion, exclusion, and judging configuration.
+ * @param options Controls the target mode, optional path bound, dry-run and dirty-tree behavior, judge bypass, and estimate/progress callbacks.
+ * @param injectedProvider Optional LLM provider used to override provider resolution for generation.
+ * @returns A result containing the requested symbol count, generated/skipped/rejected/failed symbol IDs, changed-file count, usage totals, and generated diff information.
+ */
 export const runGeneration = async (
   root: string,
   config: DocgenConfig,
@@ -213,6 +221,13 @@ export const runGeneration = async (
   };
 };
 
+/**
+ * Estimate generation and optional judge usage after constraining the context budget to both models' windows.
+ * @param config Generation, judge, context-budget, and provider pricing configuration.
+ * @param symbols Number of symbols to include in the estimate.
+ * @param judgeEnabled Whether to include judge usage.
+ * @returns Estimated token usage, cost basis, judge inclusion, and effective context budget.
+ */
 export const estimateGeneration = (
   config: DocgenConfig,
   symbols: number,

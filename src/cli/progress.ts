@@ -10,6 +10,13 @@ export interface GenerationProgressReporter {
   finish(): void;
 }
 
+/**
+ * Track generation and judge outcomes, rendering verbose events or aggregate TTY progress to the configured stream.
+ * @param total Total number of symbols to generate.
+ * @param verbose Whether to render per-symbol provider details instead of aggregate counters.
+ * @param stream Output stream for progress rendering; defaults to process.stderr.
+ * @returns A reporter exposing update and finish operations for generation progress output.
+ */
 export const createGenerationProgressReporter = (
   total: number,
   verbose: boolean,

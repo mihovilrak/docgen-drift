@@ -13,6 +13,9 @@ import {
 
 export type ProviderRole = "generate" | "judge";
 
+/**
+ * Describe an effective provider role, its credential preflight status, and its model limits, schema support, and pricing basis.
+ */
 export interface ProviderInspection {
   readonly role: ProviderRole;
   readonly enabled: boolean;
@@ -121,6 +124,11 @@ const preflight = async (
   };
 };
 
+/**
+ * Format one newline-terminated status line per provider, or a plain message when no providers require checks.
+ * @param results Preflight results to render, each containing a provider role, identifier, success status, and detail message.
+ * @returns A newline-terminated preflight report.
+ */
 export const renderPreflight = (results: readonly PreflightResult[]): string =>
   results.length === 0
     ? "No providers to check.\n"

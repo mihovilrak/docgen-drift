@@ -6,6 +6,10 @@ export type ExitCode = 0 | 1 | 2 | 3;
 export const checkExitCode = (issueCount: number): ExitCode =>
   issueCount === 0 ? 0 : 1;
 
+/**
+ * Map recognized configuration and usage errors to exit code 2 and all other errors to exit code 3.
+ * @param error The unknown error value to classify.
+ */
 export const errorExitCode = (error: unknown): ExitCode =>
   error instanceof ConfigError ||
   error instanceof SinceError ||

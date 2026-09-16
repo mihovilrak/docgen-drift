@@ -10,6 +10,8 @@ export type CostBasis = "none" | "usd" | "subscription" | "unknown";
 export interface ProviderUsage {
   readonly inputTokens: number;
   readonly outputTokens: number;
+  /** False when a transport reports allowance use but exposes no token counts. */
+  readonly tokenCountsAvailable?: boolean;
   readonly costUsd?: number;
   readonly costBasis: CostBasis;
 }
@@ -38,6 +40,10 @@ export const addUsage = (
   return {
     inputTokens: left.inputTokens + right.inputTokens,
     outputTokens: left.outputTokens + right.outputTokens,
+    ...((left.tokenCountsAvailable ?? true) &&
+    (right.tokenCountsAvailable ?? true)
+      ? {}
+      : { tokenCountsAvailable: false }),
     ...(costUsd === undefined ? {} : { costUsd }),
     costBasis,
   };

@@ -4,6 +4,10 @@ export interface StronglyConnectedComponent {
   readonly members: readonly SymbolId[];
 }
 
+/**
+ * Partition the call graph with Tarjan's algorithm, sorting visits and members for deterministic output.
+ * @param graph Call graph whose symbols and forward edges define the components to compute.
+ */
 export const stronglyConnectedComponents = (
   graph: Graph,
 ): readonly StronglyConnectedComponent[] => {
@@ -58,6 +62,10 @@ export const stronglyConnectedComponents = (
   return components;
 };
 
+/**
+ * Order strongly connected components with callees before callers and deterministic keys breaking ready-component ties.
+ * @param graph The call graph whose symbols and edges determine the component ordering.
+ */
 export const reverseTopologicalOrder = (
   graph: Graph,
 ): readonly StronglyConnectedComponent[] => {
@@ -113,6 +121,10 @@ export const reverseTopologicalOrder = (
     .filter(isDefined);
 };
 
+/**
+ * Group components into stable dependency levels whose members are mutually independent and depend only on lower levels.
+ * @param graph The symbol graph whose components are leveled by dependency depth.
+ */
 export const reverseTopologicalLevels = (
   graph: Graph,
 ): readonly (readonly StronglyConnectedComponent[])[] => {

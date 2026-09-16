@@ -209,6 +209,7 @@ export const CLI_CONTEXT_WINDOW_TOKENS = FALLBACK_CONTEXT_WINDOW_TOKENS * 16;
 const SUBSCRIPTION_USAGE: ProviderUsage = {
   inputTokens: 0,
   outputTokens: 0,
+  tokenCountsAvailable: false,
   costBasis: "subscription",
 };
 

@@ -85,6 +85,9 @@ export interface Graph {
   readonly reverse: readonly GraphEdge[];
 }
 
+/**
+ * Record a call for impact analysis; top-level calls omit caller and enclosing-function identifiers.
+ */
 export interface CallSite {
   readonly callee: SymbolId;
   readonly caller?: SymbolId;

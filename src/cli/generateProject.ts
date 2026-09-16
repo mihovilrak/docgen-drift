@@ -18,6 +18,7 @@ import { findGitSubject } from "../core/git.js";
 import { reverseTopologicalLevels } from "../core/graph.js";
 import { hashText } from "../core/hash.js";
 import type {
+  GeneratedDoc,
   Symbol as DocumentationSymbol,
   SymbolId,
 } from "../core/symbol.js";
@@ -69,6 +70,16 @@ export interface ProjectGenerationResult {
   readonly edits: ApplyEditsResult;
 }
 
+/**
+ * Generate in dependency order, propagate only accepted callee summaries, and optionally write accepted documentation.
+ * @param handle TypeScript project handle supplying the project root and source files to analyze.
+ * @param targetIds Stable symbol identifiers restricting generation to the selected symbols.
+ * @param config Documentation-generation configuration controlling extraction, context, models, concurrency, tests, and output behavior.
+ * @param providers Generation provider configuration, including the optional judge provider.
+ * @param write Whether accepted documentation edits should be written to source files.
+ * @param judgeEnabled Whether generated documentation should be evaluated by the judge; defaults to config.judge.enabled.
+ * @param onProgress Optional callback receiving generation and judging progress events.
+ */
 export const generateProject = async (
   handle: TypeScriptProjectHandle,
   targetIds: ReadonlySet<SymbolId>,
@@ -184,7 +195,7 @@ export const generateProject = async (
             ? [
                 {
                   symbol,
-                  doc: result.outcome.doc,
+                  doc: docForOutput(result.outcome.doc, config),
                   context,
                   model: config.judge.model,
                   strict: config.judge.strictLeaves && levelIndex === 0,
@@ -211,6 +222,7 @@ export const generateProject = async (
         rejected,
         failed,
         plans,
+        config,
       );
     }
   }
@@ -288,6 +300,7 @@ const consumeResult = (
   rejected: { id: SymbolId; reason: string }[],
   failed: { id: SymbolId; reason: string }[],
   plans: PlannedDocEdit[],
+  config: DocgenConfig,
 ): void => {
   const symbol = byId.get(result.symbolId);
   if (symbol === undefined) return;
@@ -313,14 +326,32 @@ const consumeResult = (
     });
     return;
   }
-  summaries.set(symbol.id, result.outcome.doc.summary);
+  const doc = docForOutput(result.outcome.doc, config);
+  summaries.set(symbol.id, doc.summary);
   generated.push(symbol.id);
   plans.push({
     symbol,
-    doc: result.outcome.doc,
+    doc,
     expectedFileHash: fileHashes.get(symbol.filePath) ?? "",
     expectedAnchorHash: symbolAnchorHash(symbol),
   });
+};
+
+const docForOutput = (
+  doc: GeneratedDoc,
+  config: DocgenConfig,
+): GeneratedDoc => {
+  const standard = config.docs.granularity !== "minimal";
+  const detailed = config.docs.granularity === "detailed";
+  return {
+    summary: doc.summary,
+    params: standard && config.docs.tags.params ? doc.params : {},
+    throws: detailed && config.docs.tags.throws ? doc.throws : [],
+    ...(detailed && doc.detail !== undefined ? { detail: doc.detail } : {}),
+    ...(standard && config.docs.tags.returns && doc.returns !== undefined
+      ? { returns: doc.returns }
+      : {}),
+  };
 };
 
 const sourceFileHashes = async (

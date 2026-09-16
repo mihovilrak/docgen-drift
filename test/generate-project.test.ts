@@ -6,6 +6,7 @@ import { extractSymbols } from "../src/adapters/typescript/extract/index.js";
 import { loadProject } from "../src/adapters/typescript/loadProject.js";
 import { generateProject } from "../src/cli/generateProject.js";
 import { configSchema } from "../src/config/schema.js";
+import type { GeneratedDoc } from "../src/core/symbol.js";
 import type { LlmProvider, ProviderRequest } from "../src/llm/client.js";
 
 const fixtureRoot = resolve("test/fixtures/graph");
@@ -108,11 +109,41 @@ describe("project generation", () => {
       )?.prompt,
     ).not.toContain(`CALLEE SUMMARY: ${leaf}`);
   });
+
+  it("judges only documentation fields enabled for output", async () => {
+    const project = await loadProject({ tsconfigPath: fixtureRoot });
+    const symbols = extractSymbols(project);
+    const leaf = symbolId(symbols, "leaf");
+    const provider = recordingProvider(new Set(), new Set(), {
+      detail: "Detailed-only behavior.",
+      returns: "A useful result.",
+      throws: [{ type: "Error", when: "Detailed-only failure." }],
+    });
+
+    await generateProject(
+      project,
+      new Set([leaf]),
+      configSchema.parse({
+        symbols: { minBodyLines: 0 },
+        docs: { granularity: "standard" },
+      }),
+      { generation: provider },
+      false,
+    );
+
+    const judgeRequest = provider.requests.find((request) =>
+      request.prompt.startsWith("Judge generated documentation"),
+    );
+    expect(judgeRequest?.prompt).toContain("A useful result.");
+    expect(judgeRequest?.prompt).not.toContain("Detailed-only behavior.");
+    expect(judgeRequest?.prompt).not.toContain("Detailed-only failure.");
+  });
 });
 
 const recordingProvider = (
   skips: ReadonlySet<string> = new Set(),
   rejects: ReadonlySet<string> = new Set(),
+  generatedDoc: Partial<GeneratedDoc> = {},
 ) => {
   const requests: ProviderRequest[] = [];
   const provider: LlmProvider & { readonly requests: ProviderRequest[] } = {
@@ -160,6 +191,7 @@ const recordingProvider = (
               params,
               returns: null,
               throws: [],
+              ...generatedDoc,
               verdict: "OK",
               reason: null,
             },

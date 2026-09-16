@@ -102,6 +102,12 @@ export const hashText = (text: string): string =>
 
 export const EMPTY_DOC_HASH = hashText("");
 
+/**
+ * Combine a symbol's normalized signature, body, optional source note, and recipe versions into a content hash separate from its existing-doc hash.
+ * @param symbol Documentation symbol whose signature, body, source note, and existing doc feed the two hashes.
+ * @param recipe Versioning and inclusion flags (source-note toggle, context recipe version, prompt version, config fingerprint) mixed into the content hash so recipe changes invalidate it.
+ * @returns symbolHash covers the normalized signature, body, source note, and recipe versions; docHash covers only the normalized existing documentation, so code drift and doc drift can be detected independently.
+ */
 export const hashSymbol = (
   symbol: DocumentationSymbol,
   recipe: HashRecipe,

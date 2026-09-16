@@ -29,6 +29,11 @@ export interface WorkspaceCheckResult {
   readonly results: readonly CheckResult[];
 }
 
+/**
+ * Create documentation baselines for all configured workspace projects.
+ * @param root Workspace root to index and, when using a shared lockfile, the base path for the lockfile.
+ * @param config Configuration defining the workspace projects, lockfile strategy, and symbol eligibility.
+ */
 export const runBaseline = async (
   root: string,
   config: DocgenConfig,
@@ -61,6 +66,11 @@ export const runBaseline = async (
   return { symbols, lockfiles };
 };
 
+/**
+ * Classify documentation status for every eligible symbol in the configured workspace.
+ * @param root Workspace root to index.
+ * @param config Configuration controlling project scope, symbol eligibility, and lockfile mode.
+ */
 export const runCheck = async (
   root: string,
   config: DocgenConfig,
@@ -90,6 +100,12 @@ export const runCheck = async (
   return { results: results.sort(compareResults) };
 };
 
+/**
+ * Refresh persisted documentation locks for the symbols generated in the configured workspace.
+ * @param root Workspace root used to index projects and resolve lockfile paths.
+ * @param config Workspace and documentation configuration controlling indexing and lockfile scope.
+ * @param generatedIds Stable identifiers of symbols whose lock entries should be refreshed.
+ */
 export const refreshLocks = async (
   root: string,
   config: DocgenConfig,

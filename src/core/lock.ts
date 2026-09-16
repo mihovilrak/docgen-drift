@@ -26,11 +26,18 @@ export interface LockError {
   readonly message: string;
 }
 
+/**
+ * Produce the versioned empty lock used when no lockfile exists, so callers need no missing-file special case.
+ */
 export const emptyLock = (): LockFile => ({
   schemaVersion: LOCK_SCHEMA_VERSION,
   symbols: {},
 });
 
+/**
+ * Load and validate a lockfile, returning an empty lock for a missing file and typed failures instead of throwing.
+ * @param path Filesystem path to the lock file to read.
+ */
 export const readLock = async (
   path: string,
 ): Promise<Result<LockFile, LockError>> => {
@@ -51,6 +58,11 @@ export const readLock = async (
   }
 };
 
+/**
+ * Persist the lock file to disk atomically by writing to a temporary file and renaming it into place.
+ * @param path Filesystem path to write the lock file to.
+ * @param lock Lock file contents to serialize as JSON.
+ */
 export const writeLock = async (
   path: string,
   lock: LockFile,

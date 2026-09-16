@@ -126,6 +126,12 @@ export const assembleContext = (
   };
 };
 
+/**
+ * Greedily pack candidates in list order into the token budget, truncating at most one candidate to fill remaining space.
+ * @param candidates Ordered list of context candidates to consider for inclusion; order determines priority when budget is limited.
+ * @param budgetTokens Maximum combined token budget for selected candidate text plus separators; negative values are clamped to zero.
+ * @param counter Token counter used to measure candidate text length and to truncate a candidate's text to fit the remaining budget.
+ */
 export const rankedKnapsack = (
   candidates: readonly ContextCandidate[],
   budgetTokens: number,

@@ -20,6 +20,12 @@ export interface ProjectIndex {
   readonly eligible: readonly DocumentationSymbol[];
 }
 
+/**
+ * Index configured workspace projects and classify extracted symbols for documentation checks.
+ * @param root Workspace root used to resolve project paths and workspace-relative project paths.
+ * @param config Configuration controlling projects, file selection, exclusions, symbol extraction, opt-outs, and public-surface eligibility.
+ * @returns Resolve to one ProjectIndex per loaded project, containing its root, workspace-relative path, all extracted symbols, and eligible symbols.
+ */
 export const indexWorkspace = async (
   root: string,
   config: DocgenConfig,
@@ -88,6 +94,13 @@ export const indexWorkspace = async (
   );
 };
 
+/**
+ * Build records for every eligible symbol with its canonical identifier and documentation hashes.
+ * @param project Project index whose eligible symbols are converted into current records.
+ * @param config Documentation configuration used to construct the hashing recipe.
+ * @param shared Whether to generate identifiers for the shared workspace lock namespace.
+ * @returns A readonly list containing each eligible symbol, its canonical identifier, and hashes computed from the active recipe.
+ */
 export const currentSymbols = (
   project: ProjectIndex,
   config: DocgenConfig,
@@ -101,6 +114,11 @@ export const currentSymbols = (
   }));
 };
 
+/**
+ * Build the canonical symbol ID set used for workspace or local classification.
+ * @param project Provide the project index whose symbols should be collected.
+ * @param shared Use shared workspace ID canonicalization when true; use project-local canonicalization when false.
+ */
 export const knownSymbolIds = (
   project: ProjectIndex,
   shared: boolean,
@@ -115,6 +133,10 @@ export const canonicalId = (
   shared: boolean,
 ): SymbolId => (shared ? workspaceSymbolId(project.workspacePath, id) : id);
 
+/**
+ * Build the workspace hashing recipe from documentation settings and the active prompt version.
+ * @param config Configuration whose symbol and documentation settings determine the hashing recipe.
+ */
 export const hashRecipe = (config: DocgenConfig): HashRecipe => ({
   includeSourceNotes: config.docs.leadingComments.includeInContext,
   contextRecipeVersion: "1",

@@ -7,6 +7,7 @@ import type {
 export interface RenderDocOptions {
   readonly indentation?: string;
   readonly eol?: "\n" | "\r\n";
+  readonly emitDetail?: boolean;
   readonly emitParams?: boolean;
   readonly emitReturns?: boolean;
   readonly emitThrows?: boolean;
@@ -22,7 +23,7 @@ export const renderDoc = (
   const eol = options.eol ?? "\n";
   const lines = ["/**", ...docLines(doc.summary)];
 
-  if (doc.detail !== undefined) {
+  if (options.emitDetail !== false && doc.detail !== undefined) {
     lines.push(" *", ...docLines(doc.detail));
   }
   if (options.emitParams !== false) {

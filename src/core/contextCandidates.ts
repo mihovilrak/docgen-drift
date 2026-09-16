@@ -1,6 +1,10 @@
 import type { AssembleContextOptions, ContextCandidate } from "./budget.js";
 import type { CallSite } from "./symbol.js";
 
+/**
+ * Collect the enabled evidence sources for a symbol into an unranked list of context candidates for budget selection.
+ * @param options Context assembly configuration specifying the target symbol, index data, enabled sources, and per-source limits.
+ */
 export const contextCandidates = (
   options: AssembleContextOptions,
 ): readonly ContextCandidate[] => {
@@ -88,6 +92,12 @@ export const contextCandidates = (
   return result;
 };
 
+/**
+ * Cap the call sites returned for context, preferring one representative per module before including further duplicates from the same module.
+ * @param callSites Candidate call sites to select from, in their original order.
+ * @param maximum Upper bound on the number of call sites returned; 0 returns an empty array.
+ * @param sampling Selection strategy: "moduleDiversity" favors distinct modules before repeats from the same module; "first" takes the leading call sites unchanged.
+ */
 export const sampleCallSites = (
   callSites: readonly CallSite[],
   maximum: number,

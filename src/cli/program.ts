@@ -159,6 +159,10 @@ const runFix = async (
   process.exitCode = result.failed.length === 0 ? 0 : 1;
 };
 
+/**
+ * Assemble the docgen command-line interface with its commands and options.
+ * @returns The configured CAC command-line program.
+ */
 export const createProgram = (): CAC => {
   const cli = cac("docgen");
 

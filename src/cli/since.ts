@@ -21,6 +21,11 @@ export class SinceError extends Error {
   }
 }
 
+/**
+ * Read zero-context changed line ranges from Git without allowing external diff drivers.
+ * @param root Workspace directory in which to run Git.
+ * @param reference Git revision or comparison reference passed to git diff.
+ */
 export const readChangedFiles = async (
   root: string,
   reference: string,
@@ -39,6 +44,11 @@ export const readChangedFiles = async (
   }
 };
 
+/**
+ * Keep results from changed files whose declarations overlap a changed line range.
+ * @param results Check results to filter.
+ * @param changed Map of file paths to their changed line ranges.
+ */
 export const filterByChanges = (
   results: readonly CheckResult[],
   changed: ReadonlyMap<string, ChangedFile>,

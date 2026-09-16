@@ -4,6 +4,9 @@ import type { Symbol as DocumentationSymbol, SymbolId } from "./symbol.js";
 
 export type CheckStatus = "unchanged" | "drifted" | "missing" | "orphaned";
 
+/**
+ * Bundle a symbol's freshly extracted data with its current hashes for comparison against a stored baseline.
+ */
 export interface CurrentSymbol {
   readonly id: SymbolId;
   readonly symbol: DocumentationSymbol;
@@ -18,6 +21,13 @@ export interface CheckResult {
   readonly symbol?: DocumentationSymbol;
 }
 
+/**
+ * Classify each current symbol against the lock file, then flag stale lock entries as orphaned.
+ * @param current Symbols extracted from the project's current source to classify against the lock file.
+ * @param knownIds Symbol ids to exclude from orphan detection even though they are absent from current.
+ * @param lock Previously recorded symbol state used to detect drift, missing docs, and orphans.
+ * @returns Check results sorted by file path, then start line, then symbol id.
+ */
 export const classifySymbols = (
   current: readonly CurrentSymbol[],
   knownIds: ReadonlySet<SymbolId>,
@@ -63,6 +73,10 @@ export const classifySymbols = (
   );
 };
 
+/**
+ * Build a lock-file snapshot keyed by symbol id, deriving each entry's file path from the id prefix rather than the symbol's own location data.
+ * @param current Symbols captured from the current source tree, each with its id, declaration, and computed hashes.
+ */
 export const lockEntries = (
   current: readonly CurrentSymbol[],
 ): Readonly<Record<SymbolId, LockEntry>> =>

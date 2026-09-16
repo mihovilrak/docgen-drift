@@ -160,8 +160,8 @@ CLI's credential files.
     "model": "sonnet"
   },
   "judge": {
-    "provider": { "kind": "cli", "tool": "codex" },
-    "model": "gpt-5"
+    "provider": { "kind": "cli", "tool": "claude" },
+    "model": "sonnet"
   }
 }
 ```
@@ -169,6 +169,39 @@ CLI's credential files.
 Supported `tool` values are `claude`, `codex`, `gemini`, `opencode`, and `pi`.
 `command` may name a non-default executable, `args` prepends wrapper-specific
 arguments, and `timeoutMs` bounds each completion.
+
+For Codex and other CLIs without a stable account-wide model alias, set
+`generate.model` and `judge.model` to an identifier confirmed by the installed
+CLI and the signed-in account. API model availability does not imply that the
+same identifier is enabled through a subscription login. Run a one-symbol dry
+run after `docgen auth`; the preflight checks executable presence only and does
+not validate remote login, model entitlement, schema support, or allowance.
+
+For example, this bounded configuration used the current fast Codex model in
+September 2026:
+
+```json
+{
+  "generate": {
+    "provider": { "kind": "cli", "tool": "codex" },
+    "model": "gpt-5.6-luna",
+    "concurrency": 1
+  },
+  "judge": {
+    "enabled": true,
+    "provider": { "kind": "cli", "tool": "codex" },
+    "model": "gpt-5.6-luna"
+  }
+}
+```
+
+OpenAI's [Codex model page](https://developers.openai.com/codex/models) is the
+source of truth for ChatGPT-sign-in models. `gpt-5.3-codex` is deprecated for
+that sign-in method even though it remains listed in the API model catalog.
+Availability can still vary by plan, rollout, sign-in method, and client.
+See the [subscription CLI dogfooding report](cli-dogfooding-report.md) for a
+measured Claude run, the stale-model failures, and a successful Codex run on the
+same bounded target.
 
 These integrations are completion transports, not autonomous docgen drivers.
 docgen still selects symbols, assembles context, batches requests, validates

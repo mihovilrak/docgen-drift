@@ -17,6 +17,12 @@ interface ExplainCandidate {
   readonly context: AssembledContext;
 }
 
+/**
+ * Assemble offline context for the uniquely matched workspace symbol.
+ * @param root Workspace root used to load projects and compute project-relative symbol labels.
+ * @param query Symbol query used to select candidate symbols.
+ * @param config Configuration controlling workspace discovery, symbol extraction, context sources, limits, and formatting.
+ */
 export const runExplain = async (
   root: string,
   query: string,

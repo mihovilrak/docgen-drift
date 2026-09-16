@@ -66,6 +66,10 @@ export const GENERATION: readonly OptionSpec[] = [
   QUIET,
 ];
 
+/**
+ * Validate that the logging mode flags are not enabled simultaneously.
+ * @param options Logging options containing optional verbose and quiet flags.
+ */
 export const assertCompatibleLoggingOptions = (options: {
   readonly verbose?: boolean;
   readonly quiet?: boolean;
@@ -75,6 +79,11 @@ export const assertCompatibleLoggingOptions = (options: {
   }
 };
 
+/**
+ * Register each supplied option specification on the command in declaration order.
+ * @param command The command to configure.
+ * @param specs The option name-and-description pairs to register.
+ */
 export const withOptions = (
   command: Command,
   ...specs: readonly OptionSpec[]

@@ -24,6 +24,10 @@ concurrency. The generated `.docgenrc.json` links to the published JSON Schema
 for editor completion. `baseline` records the documentation state without
 writing source files or calling an LLM.
 
+For a shorter annotated walkthrough, see the [quick guide](docs/quick-guide.md).
+The [full tutorial](docs/tutorial/index.md) covers scoping, provider choices,
+reviewable generation, baselining, CI, and troubleshooting.
+
 After the baseline is committed, run `check` in CI:
 
 ```bash
