@@ -6,6 +6,8 @@
   provider transports with separate generation and judge selection.
 - Add provider inspection, authentication preflight, short CLI flags, honest
   cost bases, context-window enforcement, and credential-free conformance tests.
+- Add live generation and judge progress with detailed `--verbose` output and a
+  `--quiet` mode that preserves final stdout.
 - Add entry-point-aware package public-surface filtering while retaining
   syntactic-export policy.
 

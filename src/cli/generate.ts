@@ -28,6 +28,7 @@ import { type ProjectIndex } from "./workspace.js";
 import {
   generateProject,
   type GenerationProviders,
+  type ProjectGenerationProgress,
   type ProjectGenerationResult,
 } from "./generateProject.js";
 
@@ -40,7 +41,10 @@ export interface GenerationOptions {
   readonly allowDirty?: boolean;
   readonly noJudge?: boolean;
   readonly onEstimate?: (estimate: GenerationEstimate) => void;
+  readonly onProgress?: (event: GenerationProgressEvent) => void;
 }
+
+export type GenerationProgressEvent = ProjectGenerationProgress;
 
 export interface GenerationEstimate {
   readonly symbols: number;
@@ -143,6 +147,16 @@ export const runGeneration = async (
           providers,
           options.dryRun !== true,
           judgeEnabled,
+          options.onProgress === undefined
+            ? undefined
+            : (event) =>
+                options.onProgress?.({
+                  ...event,
+                  symbolId: canonicalResultId(
+                    projectIndex.workspacePath,
+                    event.symbolId,
+                  ),
+                }),
         ),
       };
     },

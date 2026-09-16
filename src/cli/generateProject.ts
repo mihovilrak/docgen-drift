@@ -41,6 +41,16 @@ export interface GenerationProviders {
   readonly judge?: LlmProvider;
 }
 
+export interface ProjectGenerationProgress {
+  readonly stage: "generation" | "judge";
+  readonly symbolId: SymbolId;
+  readonly provider: string;
+  readonly model: string;
+  readonly outcome: "OK" | "SKIP" | "ACCEPT" | "REJECT" | "FAILED";
+  readonly attempts: number;
+  readonly reason?: string;
+}
+
 export interface ProjectGenerationResult {
   readonly generated: readonly SymbolId[];
   readonly skipped: readonly {
@@ -66,6 +76,7 @@ export const generateProject = async (
   providers: GenerationProviders,
   write: boolean,
   judgeEnabled = config.judge.enabled,
+  onProgress?: (event: ProjectGenerationProgress) => void,
 ): Promise<ProjectGenerationResult> => {
   const symbols = extractSymbols(handle, {
     includeNonFunctionVariables: config.symbols.kinds.includes("variable"),
@@ -97,9 +108,23 @@ export const generateProject = async (
   let usage = EMPTY_USAGE;
   const client = new LlmClient(providers.generation, {
     concurrency: config.generate.concurrency,
+    ...(onProgress === undefined
+      ? {}
+      : {
+          onResult: (result: GenerationResult) => {
+            onProgress(generationProgress(result, providers, config));
+          },
+        }),
   });
   const judge = new JudgeClient(providers.judge ?? providers.generation, {
     concurrency: config.generate.concurrency,
+    ...(onProgress === undefined
+      ? {}
+      : {
+          onResult: (result: JudgeResult) => {
+            onProgress(judgeProgress(result, providers, config));
+          },
+        }),
   });
 
   const countTokens = tokenCounter(providers.generation, config.generate.model);
@@ -204,6 +229,52 @@ export const generateProject = async (
     edits,
   };
 };
+
+const generationProgress = (
+  result: GenerationResult,
+  providers: GenerationProviders,
+  config: DocgenConfig,
+): ProjectGenerationProgress => ({
+  stage: "generation",
+  symbolId: result.symbolId,
+  provider: providers.generation.id,
+  model: config.generate.model,
+  outcome:
+    result.outcome?.verdict === "OK"
+      ? "OK"
+      : result.outcome?.verdict === "SKIP"
+        ? "SKIP"
+        : "FAILED",
+  attempts: result.attempts,
+  ...(result.outcome?.verdict === "SKIP"
+    ? { reason: result.outcome.reason }
+    : result.error === undefined
+      ? {}
+      : { reason: result.error }),
+});
+
+const judgeProgress = (
+  result: JudgeResult,
+  providers: GenerationProviders,
+  config: DocgenConfig,
+): ProjectGenerationProgress => ({
+  stage: "judge",
+  symbolId: result.symbolId,
+  provider: (providers.judge ?? providers.generation).id,
+  model: config.judge.model,
+  outcome:
+    result.error !== undefined
+      ? "FAILED"
+      : result.accepted
+        ? "ACCEPT"
+        : "REJECT",
+  attempts: result.attempts,
+  ...(result.error !== undefined
+    ? { reason: result.error }
+    : result.reason === ""
+      ? {}
+      : { reason: result.reason }),
+});
 
 const consumeResult = (
   result: GenerationResult,

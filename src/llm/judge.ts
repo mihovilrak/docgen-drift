@@ -55,6 +55,7 @@ export interface JudgeClientOptions {
   readonly sleep?: (milliseconds: number) => Promise<void>;
   readonly maxOutputTokens?: number;
   readonly signal?: AbortSignal;
+  readonly onResult?: (result: JudgeResult) => void;
 }
 
 export class JudgeClient {
@@ -79,7 +80,11 @@ export class JudgeClient {
     const results = await mapConcurrent(
       requests,
       this.#options.concurrency,
-      (request) => this.#judgeOne(request),
+      async (request) => {
+        const result = await this.#judgeOne(request);
+        this.#options.onResult?.(result);
+        return result;
+      },
     );
     return {
       results,

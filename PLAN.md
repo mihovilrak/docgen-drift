@@ -146,6 +146,7 @@ Finish the provider and command-line seams before adding another language. The d
 - [x] Test that every short form is identical to its long form, that collisions are rejected, and that command help shows both forms
 - [x] Add provider/model inspection and authentication preflight commands without making `check` load a provider or require credentials
 - [x] Keep configuration authoritative, with explicit per-run provider/model overrides only for generation commands
+- [x] Add live generation progress and structured operational logging; provide `--verbose` for per-symbol/provider detail and `--quiet` for errors and final machine-relevant output only
 
 ### Provider abstraction
 
@@ -181,6 +182,8 @@ Finish the provider and command-line seams before adding another language. The d
 
 - [x] Update the README quickstart with the shortest API-backed setup, short-flag examples, a bounded dry run, and the first `baseline` / `check` workflow
 - [x] Write a provider guide covering direct APIs, official subscription CLIs, OpenCode, Pi, local OpenAI-compatible servers, authentication and credential safety, provider/model selection, generation-versus-judge configuration, cost reporting, CI recommendations, troubleshooting, and terms caveats
+- [ ] Write a concise Markdown quick guide for later web publication, covering installation, first configuration, subscription and API authentication, dry runs, applying changes, baselining, and CI checks
+- [ ] Write a complete Markdown tutorial for later web publication, organized into reusable pages with examples, expected output, safety notes, provider choices, troubleshooting, and an end-to-end adoption workflow
 - [x] Add entry-point-aware public-surface filtering so `exportedOnly` can distinguish package API from implementation exports; retain syntactic-export mode as an explicit policy
 - [ ] Dogfood `fix --missing` on this repository in reviewable path-bounded batches, starting with the public modules; commit and validate the resulting lockfile
 - [ ] Run `baseline` then `check` on the dogfooded repository and verify that one symbol edit produces exactly one drift finding

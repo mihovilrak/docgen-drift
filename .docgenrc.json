@@ -17,6 +17,10 @@
     }
   },
   "context": { "budgetTokens": 2000 },
-  "generate": { "model": "claude-sonnet-5" },
-  "judge": { "enabled": true }
+  "generate": {
+    "provider": { "kind": "cli", "tool": "claude" },
+    "model": "sonnet",
+    "concurrency": 1
+  },
+  "judge": { "enabled": true, "model": "sonnet" }
 }

@@ -47,6 +47,14 @@ export const NO_JUDGE: OptionSpec = [
   "--no-judge",
   "Apply generated documentation without judging it",
 ];
+export const VERBOSE: OptionSpec = [
+  "--verbose",
+  "Print per-symbol provider and model progress",
+];
+export const QUIET: OptionSpec = [
+  "--quiet",
+  "Suppress estimates and progress output",
+];
 
 export const GENERATION: readonly OptionSpec[] = [
   ["-n, --dry-run", "Print the source diff without writing"],
@@ -54,7 +62,18 @@ export const GENERATION: readonly OptionSpec[] = [
   NO_JUDGE,
   ["--provider <id>", "Override the generation provider for this run"],
   ["--model <name>", "Override the generation model for this run"],
+  VERBOSE,
+  QUIET,
 ];
+
+export const assertCompatibleLoggingOptions = (options: {
+  readonly verbose?: boolean;
+  readonly quiet?: boolean;
+}): void => {
+  if (options.verbose === true && options.quiet === true) {
+    throw new ConfigError("--verbose and --quiet cannot be used together");
+  }
+};
 
 export const withOptions = (
   command: Command,

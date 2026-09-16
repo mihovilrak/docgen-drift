@@ -65,12 +65,18 @@ describe("generation commands", () => {
         dryRun: true,
         onEstimate: (estimate) =>
           events.push(`estimate:${String(estimate.symbols)}`),
+        onProgress: (event) =>
+          events.push(
+            `${event.stage}:${event.symbolId}:${event.outcome}:${event.provider}`,
+          ),
       },
       tracked,
     );
 
     expect(events[0]).toBe("estimate:2");
     expect(events).toContain("request");
+    expect(events).toContain("generation:src/api.ts#leaf:OK:stub");
+    expect(events).toContain("judge:src/api.ts#leaf:ACCEPT:stub");
   });
 
   it("requires path-bounded missing backfill", async () => {

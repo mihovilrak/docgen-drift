@@ -185,6 +185,12 @@ claim unused allowance is free. Missing executables, login requirements,
 exhausted limits, unsupported models, malformed output, cancellation, and
 timeouts fail without applying a partial response.
 
+Generation writes concise progress counters to stderr. Pass `--verbose` for a
+line per generation and judge result, including the symbol, provider, model,
+outcome, and attempt count. Pass `--quiet` to suppress the estimate and progress;
+the final human or JSON result remains on stdout. The flags are mutually
+exclusive.
+
 Subscription access remains governed by each upstream provider's current terms
 and plan limits. Do not share or resell accounts or allowances. Use direct API
 credentials for shared runners, services, and unattended CI unless the

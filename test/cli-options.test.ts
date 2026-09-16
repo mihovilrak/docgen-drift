@@ -1,7 +1,10 @@
 import { cac } from "cac";
 import { describe, expect, it, vi } from "vitest";
 
-import { assertNoShortFlagCollisions } from "../src/cli/options.js";
+import {
+  assertCompatibleLoggingOptions,
+  assertNoShortFlagCollisions,
+} from "../src/cli/options.js";
 import { createProgram } from "../src/cli/program.js";
 import { ConfigError } from "../src/config/load.js";
 
@@ -132,13 +135,23 @@ describe("cli option aliases", () => {
     expect(check).toContain("--sarif");
     expect(check).toContain("--provider <id>");
     expect(check).toContain("--model <name>");
+    expect(check).toContain("--verbose");
+    expect(check).toContain("--quiet");
     expect(extract).toContain("--include-variables");
-    expect(check).not.toMatch(/-\w, --(no-judge|sarif|provider|model)/u);
+    expect(check).not.toMatch(
+      /-\w, --(no-judge|sarif|provider|model|verbose|quiet)/u,
+    );
     expect(extract).not.toMatch(/-\w, --include-variables/u);
   });
 
   it("names the negated judge flag after its positive form", () => {
     expect(parse("check", "--no-judge")["judge"]).toBe(false);
     expect(parse("check")["judge"]).toBe(true);
+  });
+
+  it("rejects verbose and quiet together", () => {
+    expect(() => {
+      assertCompatibleLoggingOptions({ verbose: true, quiet: true });
+    }).toThrow(/cannot be used together/u);
   });
 });

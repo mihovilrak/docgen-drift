@@ -66,6 +66,10 @@ before the first model call. Source writes require a clean working tree unless
 information beyond the signature; `SKIP` and judge rejection leave source
 unchanged.
 
+Generation progress is written to stderr, leaving diffs and `--json` output on
+stdout. Use `--verbose` for per-symbol provider/model results or `--quiet` to
+suppress the estimate and live progress while retaining final output.
+
 Direct OpenAI and Google APIs, OpenAI-compatible local servers, and opt-in
 Claude, Codex, Gemini, OpenCode, and Pi CLI transports are also supported. See
 the [provider guide](docs/providers.md) for configuration, credential safety,

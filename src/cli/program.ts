@@ -8,6 +8,7 @@ import { filterByChanges, readChangedFiles } from "./since.js";
 import { runBaseline, runCheck } from "./run.js";
 import { checkExitCode } from "./errors.js";
 import {
+  assertCompatibleLoggingOptions,
   CONFIG,
   FIX,
   GENERATION,
@@ -23,7 +24,12 @@ import {
 import { applyGenerationOverrides } from "./overrides.js";
 import { scopeProjects } from "./projectScope.js";
 import { renderEstimate, renderGeneration } from "./render.js";
-import type { GenerationEstimate } from "./generate.js";
+import { createGenerationProgressReporter } from "./progress.js";
+import type {
+  GenerationEstimate,
+  GenerationProgressEvent,
+  GenerationRunResult,
+} from "./generate.js";
 import { VERSION } from "../index.js";
 import {
   renderHuman,
@@ -52,6 +58,8 @@ interface GenerationCommandOptions extends JsonOptions {
   readonly judge?: boolean;
   readonly provider?: string;
   readonly model?: string;
+  readonly verbose?: boolean;
+  readonly quiet?: boolean;
 }
 
 interface CheckCommandOptions extends GenerationCommandOptions {
@@ -93,19 +101,17 @@ const requireFix = (options: CheckCommandOptions): void => {
   if (
     options.dryRun === true ||
     options.allowDirty === true ||
-    options.judge === false
+    options.judge === false ||
+    options.verbose === true ||
+    options.quiet === true
   ) {
     throw new ConfigError(
-      "--dry-run, --allow-dirty, and --no-judge require --fix",
+      "--dry-run, --allow-dirty, --no-judge, --verbose, and --quiet require --fix",
     );
   }
   if (options.provider !== undefined || options.model !== undefined) {
     throw new ConfigError("--provider and --model require --fix");
   }
-};
-
-const printEstimate = (estimate: GenerationEstimate): void => {
-  process.stderr.write(renderEstimate(estimate));
 };
 
 const runFix = async (
@@ -114,20 +120,37 @@ const runFix = async (
   mode: "drifted" | "missing",
   path: string | undefined,
 ): Promise<void> => {
+  assertCompatibleLoggingOptions(options);
   const workspaceRoot = commandRoot(root);
   const loaded = await loadConfig(workspaceRoot, options.config);
   const config = scopeProjects(loaded, options.project);
   const { runGeneration } = await import("./generate.js");
-  const result = await runGeneration(
-    workspaceRoot,
-    applyGenerationOverrides(config, overrides(options)),
-    {
-      mode,
-      ...(path === undefined ? {} : { path }),
-      ...generationOptions(options),
-      onEstimate: printEstimate,
-    },
-  );
+  let reporter: ReturnType<typeof createGenerationProgressReporter> | undefined;
+  const onEstimate = (estimate: GenerationEstimate): void => {
+    process.stderr.write(renderEstimate(estimate));
+    reporter = createGenerationProgressReporter(
+      estimate.symbols,
+      options.verbose === true,
+    );
+  };
+  const onProgress = (event: GenerationProgressEvent): void => {
+    reporter?.update(event);
+  };
+  let result: GenerationRunResult;
+  try {
+    result = await runGeneration(
+      workspaceRoot,
+      applyGenerationOverrides(config, overrides(options)),
+      {
+        mode,
+        ...(path === undefined ? {} : { path }),
+        ...generationOptions(options),
+        ...(options.quiet === true ? {} : { onEstimate, onProgress }),
+      },
+    );
+  } finally {
+    reporter?.finish();
+  }
   process.stdout.write(
     options.json === true
       ? `${JSON.stringify(result, null, 2)}\n`

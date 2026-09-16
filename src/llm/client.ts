@@ -61,6 +61,7 @@ export interface LlmClientOptions {
   readonly sleep?: (milliseconds: number) => Promise<void>;
   readonly maxOutputTokens?: number;
   readonly signal?: AbortSignal;
+  readonly onResult?: (result: GenerationResult) => void;
 }
 
 export class LlmClient {
@@ -87,7 +88,11 @@ export class LlmClient {
     const results = await mapConcurrent(
       requests,
       this.#options.concurrency,
-      (request) => this.#generateOne(request),
+      async (request) => {
+        const result = await this.#generateOne(request);
+        this.#options.onResult?.(result);
+        return result;
+      },
     );
     return {
       results,
