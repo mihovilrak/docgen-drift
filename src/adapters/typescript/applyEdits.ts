@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 import { format, resolveConfig } from "prettier";
 import { ts } from "ts-morph";
 
-import type { DocgenConfig } from "../../config/schema.js";
+import { type DocgenConfig, replacesSourceNote } from "../../config/schema.js";
 import { hashText, normalizeCode } from "../../core/hash.js";
 import type {
   GeneratedDoc,
@@ -196,7 +196,7 @@ const buildEdit = (
   config: DocgenConfig,
 ): { readonly start: number; readonly end: number; readonly text: string } => {
   const symbol = plan.symbol;
-  const replaceSourceNote = shouldReplaceSourceNote(symbol, config);
+  const replaceSourceNote = replacesSourceNote(config, symbol);
   const start = editStart(symbol, config);
   const indentation = indentationAt(source, symbol.declaration.start);
   const eol = eolOf(source);
@@ -221,17 +221,9 @@ const editStart = (
   symbol: DocumentationSymbol,
   config: DocgenConfig,
 ): number =>
-  shouldReplaceSourceNote(symbol, config)
+  replacesSourceNote(config, symbol)
     ? (symbol.sourceNote?.range.start ?? symbol.declaration.start)
     : (symbol.existingDoc?.range.start ?? symbol.declaration.start);
-
-const shouldReplaceSourceNote = (
-  symbol: DocumentationSymbol,
-  config: DocgenConfig,
-): boolean =>
-  config.docs.leadingComments.onGenerate === "replace" &&
-  symbol.existingDoc === null &&
-  symbol.sourceNote?.replacementEligible === true;
 
 const indentationAt = (source: string, position: number): string => {
   const lineStart = Math.max(

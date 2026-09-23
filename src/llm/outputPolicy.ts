@@ -1,4 +1,4 @@
-import type { DocgenConfig } from "../config/schema.js";
+import { type DocgenConfig, replacesSourceNote } from "../config/schema.js";
 import type {
   GeneratedDoc,
   Symbol as DocumentationSymbol,
@@ -10,6 +10,8 @@ export interface GenerationOutputPolicy {
   readonly params: boolean;
   readonly returns: boolean;
   readonly throws: boolean;
+  /** Source note text that the accepted doc will delete, so its rationale must survive. */
+  readonly replacedNote: string | null;
 }
 
 export const DEFAULT_OUTPUT_POLICY: GenerationOutputPolicy = {
@@ -18,6 +20,7 @@ export const DEFAULT_OUTPUT_POLICY: GenerationOutputPolicy = {
   params: true,
   returns: true,
   throws: true,
+  replacedNote: null,
 };
 
 /**
@@ -31,15 +34,20 @@ export const generationOutputPolicy = (
 ): GenerationOutputPolicy => {
   const standard = config.docs.granularity !== "minimal";
   const detailed = config.docs.granularity === "detailed";
+  const replacedNote =
+    symbol !== undefined && replacesSourceNote(config, symbol)
+      ? (symbol.sourceNote?.text ?? null)
+      : null;
   return {
     granularity: config.docs.granularity,
-    detail: detailed,
+    detail: detailed || replacedNote !== null,
     params: standard && config.docs.tags.params,
     returns:
       standard &&
       config.docs.tags.returns &&
       (symbol === undefined || symbol.returnsValue === true),
     throws: detailed && config.docs.tags.throws,
+    replacedNote,
   };
 };
 

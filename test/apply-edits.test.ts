@@ -185,6 +185,40 @@ describe("TypeScript edit application", () => {
     expect(written).toContain("/**\n * Document leaf behavior.");
   });
 
+  it("renders detail for a replaced note even at standard granularity", async () => {
+    const root = await copyFixture();
+    const sourcePath = join(root, "src/api.ts");
+    const source = (await readFile(sourcePath, "utf8")).replace(
+      "export const leaf",
+      "// Adds one so callers can reserve zero.\nexport const leaf",
+    );
+    await writeFile(sourcePath, source, "utf8");
+    const project = await loadProject({ tsconfigPath: root });
+    const leaf = findSymbol(extractSymbols(project), "leaf");
+    const doc = {
+      ...generatedDoc(leaf),
+      detail: "Adds one so callers can reserve zero.",
+    };
+
+    const result = await applyEdits(
+      project,
+      [plan(leaf, source, doc)],
+      configSchema.parse({
+        symbols: { minBodyLines: 0 },
+        docs: {
+          granularity: "standard",
+          leadingComments: { onGenerate: "replace" },
+        },
+      }),
+      true,
+    );
+
+    expect(result.failed).toEqual([]);
+    const written = await readFile(sourcePath, "utf8");
+    expect(written).not.toContain("// Adds one");
+    expect(written).toContain(" * Adds one so callers can reserve zero.");
+  });
+
   it("never replaces a directive source-note group", async () => {
     const root = await copyFixture();
     const sourcePath = join(root, "src/api.ts");

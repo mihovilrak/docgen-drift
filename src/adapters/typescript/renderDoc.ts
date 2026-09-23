@@ -3,7 +3,7 @@ import type {
   GeneratedDoc,
   Symbol as DocumentationSymbol,
 } from "../../core/symbol.js";
-import type { DocgenConfig } from "../../config/schema.js";
+import { type DocgenConfig, replacesSourceNote } from "../../config/schema.js";
 
 export interface RenderDocOptions {
   readonly indentation?: string;
@@ -77,7 +77,7 @@ export const renderConfiguredDoc = (
   const detailed = config.docs.granularity === "detailed";
   return renderDoc(doc, symbol, {
     ...formatting,
-    emitDetail: detailed,
+    emitDetail: detailed || replacesSourceNote(config, symbol),
     emitParams: standard && config.docs.tags.params,
     emitReturns: standard && config.docs.tags.returns,
     emitThrows: detailed && config.docs.tags.throws,

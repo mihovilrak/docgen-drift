@@ -23,6 +23,7 @@ describe("generation evaluation artifact", () => {
         params: true,
         returns: true,
         throws: false,
+        replacedNote: null,
       },
       providers: {
         generation: { id: "stub", model: "stub-model" },

@@ -149,6 +149,7 @@ describe("documentation judge", () => {
       params: true,
       returns: true,
       throws: false,
+      replacedNote: null,
     });
     expect(prompt).toContain(
       'judge only these sections: ["summary","params","returns"]',

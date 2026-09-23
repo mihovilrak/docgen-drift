@@ -214,3 +214,16 @@ export const judgeProviderConfig = (config: DocgenConfig): ProviderConfig =>
   config.judge.provider ?? config.generate.provider;
 
 export type DocgenConfig = z.infer<typeof configSchema>;
+
+interface SourceNoteOwner {
+  readonly existingDoc: unknown;
+  readonly sourceNote: { readonly replacementEligible: boolean } | null;
+}
+
+export const replacesSourceNote = (
+  config: DocgenConfig,
+  symbol: SourceNoteOwner,
+): boolean =>
+  config.docs.leadingComments.onGenerate === "replace" &&
+  symbol.existingDoc === null &&
+  symbol.sourceNote?.replacementEligible === true;
