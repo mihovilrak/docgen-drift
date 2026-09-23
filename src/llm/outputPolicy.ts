@@ -1,0 +1,63 @@
+import type { DocgenConfig } from "../config/schema.js";
+import type {
+  GeneratedDoc,
+  Symbol as DocumentationSymbol,
+} from "../core/symbol.js";
+
+export interface GenerationOutputPolicy {
+  readonly granularity: "minimal" | "standard" | "detailed";
+  readonly detail: boolean;
+  readonly params: boolean;
+  readonly returns: boolean;
+  readonly throws: boolean;
+}
+
+export const DEFAULT_OUTPUT_POLICY: GenerationOutputPolicy = {
+  granularity: "detailed",
+  detail: true,
+  params: true,
+  returns: true,
+  throws: true,
+};
+
+/**
+ * Select documentation sections from the configured granularity and tags, suppressing return output when the symbol has no renderable value.
+ * @param config Configuration controlling documentation granularity and tag output.
+ * @param symbol Optional symbol metadata used to determine whether return output is renderable.
+ */
+export const generationOutputPolicy = (
+  config: DocgenConfig,
+  symbol?: DocumentationSymbol,
+): GenerationOutputPolicy => {
+  const standard = config.docs.granularity !== "minimal";
+  const detailed = config.docs.granularity === "detailed";
+  return {
+    granularity: config.docs.granularity,
+    detail: detailed,
+    params: standard && config.docs.tags.params,
+    returns:
+      standard &&
+      config.docs.tags.returns &&
+      (symbol === undefined || symbol.returnsValue === true),
+    throws: detailed && config.docs.tags.throws,
+  };
+};
+
+/**
+ * Strip a generated doc's params, throws, detail, and returns fields down to only those enabled by the output policy.
+ * @param doc The generated documentation whose optional fields are filtered.
+ * @param output The policy flags controlling which of params, throws, detail, and returns are kept.
+ * @returns A new GeneratedDoc containing only the fields permitted by the output policy; disabled fields are omitted or emptied.
+ */
+export const projectGeneratedDoc = (
+  doc: GeneratedDoc,
+  output: GenerationOutputPolicy,
+): GeneratedDoc => ({
+  summary: doc.summary,
+  params: output.params ? doc.params : {},
+  throws: output.throws ? doc.throws : [],
+  ...(output.detail && doc.detail !== undefined ? { detail: doc.detail } : {}),
+  ...(output.returns && doc.returns !== undefined
+    ? { returns: doc.returns }
+    : {}),
+});

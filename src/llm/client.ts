@@ -1,5 +1,7 @@
 import type { Symbol as DocumentationSymbol } from "../core/symbol.js";
 import type { ModelCapabilities } from "./capabilities.js";
+import { errorDiagnostic, errorMessage } from "./errors.js";
+import type { GenerationOutputPolicy } from "./outputPolicy.js";
 import {
   generationResponseJsonSchemaFor,
   parseGenerationResponse,
@@ -13,6 +15,8 @@ export { addUsage, EMPTY_USAGE, formatCost, usdUsage } from "./usage.js";
 export interface ProviderRequest {
   readonly model: string;
   readonly system: string;
+  /** Content shared by a batch of requests, sent ahead of the prompt so providers can cache it. */
+  readonly prefix?: string;
   readonly prompt: string;
   readonly responseSchema: Readonly<Record<string, unknown>>;
   readonly maxOutputTokens?: number;
@@ -38,13 +42,16 @@ export interface GenerationRequest {
   readonly symbol: DocumentationSymbol;
   readonly model: string;
   readonly system: string;
+  readonly prefix?: string;
   readonly prompt: string;
+  readonly outputPolicy?: GenerationOutputPolicy;
 }
 
 export interface GenerationResult {
   readonly symbolId: string;
   readonly outcome?: GenerationOutcome;
   readonly error?: string;
+  readonly diagnostic?: string;
   readonly usage: ProviderUsage;
   readonly attempts: number;
 }
@@ -64,6 +71,9 @@ export interface LlmClientOptions {
   readonly onResult?: (result: GenerationResult) => void;
 }
 
+/**
+ * Coordinate concurrent LLM generation with retries, validation, usage aggregation, and result reporting.
+ */
 export class LlmClient {
   readonly #provider: LlmProvider;
   readonly #options: LlmClientOptions &
@@ -82,6 +92,11 @@ export class LlmClient {
     };
   }
 
+  /**
+   * Generate documentation results concurrently for the supplied requests and aggregate their provider usage.
+   * @param requests Requests containing the symbols, model settings, prompts, and output policies to process.
+   * @returns A batch containing each generation result and the combined provider usage for completed results.
+   */
   async generate(
     requests: readonly GenerationRequest[],
   ): Promise<GenerationBatchResult> {
@@ -116,11 +131,15 @@ export class LlmClient {
         const response = await this.#completeWithRetry({
           model: request.model,
           system: request.system,
+          ...(request.prefix === undefined ? {} : { prefix: request.prefix }),
           prompt:
             validationAttempt === 0
               ? request.prompt
               : `${request.prompt}\n\nYour previous response was invalid: ${validationError}. Return a corrected JSON object.`,
-          responseSchema: generationResponseJsonSchemaFor(request.symbol),
+          responseSchema: generationResponseJsonSchemaFor(
+            request.symbol,
+            request.outputPolicy,
+          ),
           ...optionalRequestFields(this.#options),
         });
         attempts += response.attempts;
@@ -130,6 +149,7 @@ export class LlmClient {
           outcome: parseGenerationResponse(
             response.response.value,
             request.symbol,
+            request.outputPolicy,
           ),
           usage,
           attempts,
@@ -140,6 +160,9 @@ export class LlmClient {
           return {
             symbolId: request.symbol.id,
             error: error.message,
+            ...(error.diagnostic === undefined
+              ? {}
+              : { diagnostic: error.diagnostic }),
             usage,
             attempts,
           };
@@ -172,7 +195,11 @@ export class LlmClient {
           attempt >= this.#options.retryCount ||
           !this.#provider.isRetryable(error)
         ) {
-          throw new ProviderFailure(errorMessage(error), attempt + 1);
+          throw new ProviderFailure(
+            errorMessage(error),
+            attempt + 1,
+            errorDiagnostic(error),
+          );
         }
         await this.#options.sleep(
           this.#options.baseDelayMs * Math.pow(2, attempt),
@@ -184,10 +211,12 @@ export class LlmClient {
 
 class ProviderFailure extends Error {
   readonly attempts: number;
+  readonly diagnostic?: string;
 
-  constructor(message: string, attempts: number) {
+  constructor(message: string, attempts: number, diagnostic?: string) {
     super(message);
     this.attempts = attempts;
+    if (diagnostic !== undefined) this.diagnostic = diagnostic;
   }
 }
 
@@ -212,6 +241,21 @@ const mapConcurrent = async <T, R>(
   return results;
 };
 
+/**
+ * Inline a shared prefix for providers without a cache-control mechanism of their own.
+ * @param request Request whose prompt is returned, preceded by its prefix when one is set.
+ */
+export const promptWithPrefix = (
+  request: Pick<ProviderRequest, "prefix" | "prompt">,
+): string =>
+  request.prefix === undefined || request.prefix === ""
+    ? request.prompt
+    : `${request.prefix}\n\n${request.prompt}`;
+
+/**
+ * Forward defined request controls without adding unset fields.
+ * @param options Optional maximum output token and cancellation-signal settings to include in the provider request when defined.
+ */
 export const optionalRequestFields = (options: {
   readonly maxOutputTokens?: number;
   readonly signal?: AbortSignal;
@@ -221,6 +265,3 @@ export const optionalRequestFields = (options: {
     : { maxOutputTokens: options.maxOutputTokens }),
   ...(options.signal === undefined ? {} : { signal: options.signal }),
 });
-
-const errorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : "Unknown provider error";

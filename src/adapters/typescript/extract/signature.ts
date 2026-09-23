@@ -13,6 +13,12 @@ export type NonArrowCallable = Exclude<
   ArrowFunction | FunctionExpression
 >;
 
+/**
+ * Format a callable declaration as a source-like signature, preserving accessor, async, generator, type-parameter, parameter, and return-type syntax.
+ * @param declaration The callable declaration to render.
+ * @param name The callable's name.
+ * @param kind The symbol kind that determines whether to render an accessor or function form.
+ */
 export const renderCallableSignature = (
   declaration: NonArrowCallable,
   name: string,
@@ -44,6 +50,10 @@ export const renderCallableSignature = (
   return `${asyncPrefix}${functionPrefix}${generatorMarker}${functionPrefix === "" ? "" : " "}${name}${typeParameters}(${parameters})${returnSuffix}`;
 };
 
+/**
+ * Format type parameters as a comma-separated angle-bracketed list, or return an empty string when none are provided.
+ * @param parameters Type-parameter nodes whose text is used in the rendered list.
+ */
 export const renderTypeParameters = (
   parameters: readonly { getText(): string }[],
 ): string =>
@@ -61,12 +71,22 @@ export const getParameters = (
     rest: parameter.isRestParameter(),
   }));
 
+/**
+ * Extract the callable's source body text, returning an empty string when no body exists.
+ * @param declaration Callable declaration whose body text should be extracted.
+ */
 export const getCallableBody = (declaration: CallableDeclaration): string => {
   if (Node.isMethodSignature(declaration)) return "";
   const body = declaration.getBody();
   return body?.getText() ?? "";
 };
 
+/**
+ * Determine whether the callable produces a non-void result, unwrapping asynchronous return types first.
+ * @param declaration Callable declaration whose return type is inspected.
+ * @param asynchronous Whether to inspect the awaited return type for an asynchronous callable.
+ * @returns True when the callable returns a non-void value; otherwise false.
+ */
 export const callableReturnsValue = (
   declaration: CallableDeclaration,
   asynchronous: boolean,

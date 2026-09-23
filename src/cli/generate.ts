@@ -31,6 +31,15 @@ import {
   type ProjectGenerationProgress,
   type ProjectGenerationResult,
 } from "./generateProject.js";
+import {
+  addGenerationStages,
+  addJudgeStages,
+  elapsedMilliseconds,
+  EMPTY_GENERATION_STAGE,
+  EMPTY_JUDGE_STAGE,
+  type GenerationRunMetrics,
+} from "./generationMetrics.js";
+import type { GenerationEvaluationRecord } from "./evaluation.js";
 
 export type FixMode = "drifted" | "missing";
 
@@ -40,6 +49,7 @@ export interface GenerationOptions {
   readonly dryRun?: boolean;
   readonly allowDirty?: boolean;
   readonly noJudge?: boolean;
+  readonly captureEvaluation?: boolean;
   readonly onEstimate?: (estimate: GenerationEstimate) => void;
   readonly onProgress?: (event: GenerationProgressEvent) => void;
 }
@@ -71,19 +81,21 @@ export interface GenerationRunResult {
   readonly failed: readonly {
     readonly id: SymbolId;
     readonly reason: string;
+    readonly diagnostic?: string;
   }[];
   readonly changedFiles: number;
   readonly usage: ProviderUsage;
   readonly diff: string;
+  readonly metrics: GenerationRunMetrics;
+  readonly evaluation?: readonly GenerationEvaluationRecord[];
 }
 
 /**
- * Select missing or drifted symbols, reject unsafe dirty or oversized runs, generate by project, and refresh locks after successful writes.
- * @param root Workspace root used for checks, project loading, dirty-tree detection, and lock refresh.
+ * Generate documentation for selected workspace symbols, optionally judging results, previewing changes, and refreshing locks.
+ * @param root Repository root in which to inspect the workspace and apply or preview generated documentation.
  * @param config Generation, workspace, inclusion, exclusion, and judging configuration.
- * @param options Controls the target mode, optional path bound, dry-run and dirty-tree behavior, judge bypass, and estimate/progress callbacks.
- * @param injectedProvider Optional LLM provider used to override provider resolution for generation.
- * @returns A result containing the requested symbol count, generated/skipped/rejected/failed symbol IDs, changed-file count, usage totals, and generated diff information.
+ * @param options Controls the generation mode, optional path filter, dry-run and dirty-tree behavior, judging, evaluation capture, and progress callbacks.
+ * @param injectedProvider Optional language-model provider used for generation instead of resolving the configured provider.
  */
 export const runGeneration = async (
   root: string,
@@ -91,6 +103,7 @@ export const runGeneration = async (
   options: GenerationOptions,
   injectedProvider?: LlmProvider,
 ): Promise<GenerationRunResult> => {
+  const runStarted = performance.now();
   validateGenerationOptions(config, options);
   if (options.dryRun !== true && options.allowDirty !== true) {
     if (await isWorkingTreeDirty(root)) {
@@ -120,7 +133,12 @@ export const runGeneration = async (
   options.onEstimate?.(
     estimateGeneration(config, targetIds.size, judgeEnabled),
   );
-  if (targetIds.size === 0) return emptyResult();
+  if (targetIds.size === 0) {
+    return emptyResult(
+      elapsedMilliseconds(runStarted),
+      options.captureEvaluation === true,
+    );
+  }
 
   const providers = resolveProviders(config, judgeEnabled, injectedProvider);
   const projectResults = await loadWorkspace(
@@ -165,6 +183,7 @@ export const runGeneration = async (
                     event.symbolId,
                   ),
                 }),
+          options.captureEvaluation === true,
         ),
       };
     },
@@ -194,6 +213,11 @@ export const runGeneration = async (
     })),
   );
   const files = projectResults.flatMap((project) => project.result.edits.files);
+  const evaluation = projectResults.flatMap((project) =>
+    project.result.evaluation.map((record) =>
+      canonicalEvaluationRecord(project.workspacePath, record),
+    ),
+  );
   if (options.dryRun !== true && generated.length > 0) {
     await refreshLocks(root, config, new Set(generated));
   }
@@ -218,6 +242,16 @@ export const runGeneration = async (
       )
       .filter(Boolean)
       .join("\n"),
+    metrics: {
+      durationMs: elapsedMilliseconds(runStarted),
+      generation: addGenerationStages(
+        projectResults.map((project) => project.result.metrics.generation),
+      ),
+      judge: addJudgeStages(
+        projectResults.map((project) => project.result.metrics.judge),
+      ),
+    },
+    ...(options.captureEvaluation === true ? { evaluation } : {}),
   };
 };
 
@@ -366,7 +400,10 @@ const withinPath = (filePath: string, scope: string): boolean => {
   );
 };
 
-const emptyResult = (): GenerationRunResult => ({
+const emptyResult = (
+  durationMs: number,
+  captureEvaluation: boolean,
+): GenerationRunResult => ({
   requested: 0,
   generated: [],
   skipped: [],
@@ -375,6 +412,27 @@ const emptyResult = (): GenerationRunResult => ({
   changedFiles: 0,
   usage: EMPTY_USAGE,
   diff: "",
+  metrics: {
+    durationMs,
+    generation: EMPTY_GENERATION_STAGE,
+    judge: EMPTY_JUDGE_STAGE,
+  },
+  ...(captureEvaluation ? { evaluation: [] } : {}),
+});
+
+const canonicalEvaluationRecord = (
+  projectPath: string,
+  record: GenerationEvaluationRecord,
+): GenerationEvaluationRecord => ({
+  ...record,
+  symbol: {
+    ...record.symbol,
+    id: canonicalResultId(projectPath, record.symbol.id),
+    filePath:
+      projectPath === "."
+        ? record.symbol.filePath
+        : `${projectPath}/${record.symbol.filePath}`,
+  },
 });
 
 const isDefined = <T>(value: T | undefined): value is T => value !== undefined;

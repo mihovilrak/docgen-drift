@@ -147,6 +147,7 @@ Finish the provider and command-line seams before adding another language. The d
 - [x] Add provider/model inspection and authentication preflight commands without making `check` load a provider or require credentials
 - [x] Keep configuration authoritative, with explicit per-run provider/model overrides only for generation commands
 - [x] Add live generation progress and structured operational logging; provide `--verbose` for per-symbol/provider detail and `--quiet` for errors and final machine-relevant output only
+- [x] Add machine-readable generation/judge counts and timings plus an opt-in evaluation artifact containing source ids, semantic output, judge decisions, and rendered comments
 
 ### Provider abstraction
 
@@ -175,6 +176,7 @@ Finish the provider and command-line seams before adding another language. The d
 - [x] Invoke only a user-installed executable and inherit its existing authentication; never read, copy, refresh, or expose CLI credential files
 - [x] Run transports without source-write tools, with read-only/restricted permissions, no session persistence, bounded timeouts, cancellation, and captured stderr
 - [x] Detect missing executables, interactive-login requirements, exhausted subscription limits, unsupported models, and malformed output with actionable errors
+- [x] Classify Claude structured-output turn-limit exits separately, permit bounded multi-turn schema completion, and keep full CLI diagnostics out of normal progress output
 - [x] Document that upstream provider terms still govern subscription use, that accounts and allowances must not be shared or resold, and that direct API credentials are recommended for shared or unattended CI
 - [x] Clarify ADR-011: CLI/SDK integrations are completion transports only; docgen still owns batching and no external agent chooses source spans or applies edits
 

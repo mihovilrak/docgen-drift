@@ -20,6 +20,16 @@
   standard modes omit sections reserved for more detailed output.
 - Judge and plan only the semantic documentation fields enabled by the selected
   granularity and tag configuration.
+- Include granularity and enabled tags in the versioned generation contract so
+  disabled fields are not requested or accepted.
+- Classify Claude structured-output turn exits, allow three internal turns, and
+  keep raw CLI diagnostics behind verbose or evaluation output.
+- Add generation/judge stage metrics to JSON results and `--evaluation` JSON
+  artifacts with semantic output, decisions, rendered comments, and source ids.
+- Share one cacheable module outline per file across its generation and judge
+  requests, charged against the per-symbol context budget, and order requests so
+  a prefix is written once before it is read (`context.shared`).
+- Document average per-symbol token cost and the caching model in the README.
 
 ## 1.0.0 - 2026-09-13
 

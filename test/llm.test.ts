@@ -7,6 +7,7 @@ import {
   type LlmProvider,
   type ProviderRequest,
   type ProviderResponse,
+  promptWithPrefix,
 } from "../src/llm/client.js";
 import { AnthropicProvider } from "../src/llm/providers/anthropic.js";
 import {
@@ -20,6 +21,9 @@ import {
   generationResponseJsonSchemaFor,
   parseGenerationResponse,
 } from "../src/llm/schema.js";
+import type { GenerationOutputPolicy } from "../src/llm/outputPolicy.js";
+import { generationOutputPolicy } from "../src/llm/outputPolicy.js";
+import { configSchema } from "../src/config/schema.js";
 
 describe("LLM generation", () => {
   it("limits concurrency, retries transient failures, and totals usage", async () => {
@@ -145,9 +149,9 @@ describe("LLM generation", () => {
     const item = symbol("prompt", ["value"]);
     const prompt = generationPrompt(item, "assembled context");
 
-    expect(GENERATION_PROMPT_VERSION).toBe("1");
-    expect(JUDGE_PROMPT_VERSION).toBe("1");
-    expect(PROMPT_VERSION).toBe("1:1");
+    expect(GENERATION_PROMPT_VERSION).toBe("3");
+    expect(JUDGE_PROMPT_VERSION).toBe("3");
+    expect(PROMPT_VERSION).toBe("3:3");
     expect(generationSystemPrompt).toContain("plain text");
     expect(prompt).toContain(
       'params must contain exactly these keys: ["value"]',
@@ -179,6 +183,124 @@ describe("LLM generation", () => {
     );
   });
 
+  it("constrains disabled output fields in both the prompt and schema", () => {
+    const item = symbol("minimal", ["value"]);
+    const output: GenerationOutputPolicy = {
+      granularity: "minimal",
+      detail: false,
+      params: false,
+      returns: false,
+      throws: false,
+    };
+    const prompt = generationPrompt(item, "context", output);
+    const schema = generationResponseJsonSchemaFor(item, output);
+    const properties = schema["properties"] as Record<
+      string,
+      Record<string, unknown>
+    >;
+
+    expect(prompt).toContain('output granularity is "minimal"');
+    expect(prompt).toContain("params must contain exactly these keys: []");
+    expect(prompt).toContain("return documentation is disabled");
+    expect(prompt).toContain("detail output is disabled");
+    expect(prompt).toContain("throws output is disabled");
+    expect(properties["params"]).toMatchObject({
+      properties: {},
+      required: [],
+      additionalProperties: false,
+    });
+    expect(properties["detail"]).toEqual({ type: "null" });
+    expect(properties["returns"]).toEqual({ type: "null" });
+    expect(properties["throws"]).toMatchObject({
+      type: "array",
+      maxItems: 0,
+      items: { type: "object" },
+    });
+  });
+
+  it("types every array item schema for strict structured output", () => {
+    const item = symbol("strict", ["value"]);
+    const typedItems = (value: unknown): void => {
+      if (Array.isArray(value)) {
+        value.forEach(typedItems);
+        return;
+      }
+      if (typeof value !== "object" || value === null) return;
+      const entries = Object.entries(value as Record<string, unknown>);
+      for (const [key, nested] of entries) {
+        if (key === "items") expect(nested).toHaveProperty("type");
+        typedItems(nested);
+      }
+    };
+
+    for (const throws of [true, false]) {
+      typedItems(
+        generationResponseJsonSchemaFor(item, {
+          granularity: "standard",
+          detail: false,
+          params: true,
+          returns: true,
+          throws,
+        }),
+      );
+    }
+  });
+
+  it("disables return output for symbols whose comments cannot render it", () => {
+    const item = symbol("void");
+    expect(item.returnsValue).not.toBe(true);
+    expect(generationOutputPolicy(configSchema.parse({}), item).returns).toBe(
+      false,
+    );
+  });
+
+  it("marks a shared prefix as the Anthropic cache breakpoint", async () => {
+    const create = vi.fn().mockResolvedValue({
+      content: [
+        { type: "text", text: JSON.stringify(okPayload("src/a.ts#a")) },
+      ],
+      usage: { input_tokens: 10, output_tokens: 2 },
+    });
+    const provider = new AnthropicProvider({
+      client: { messages: { create } } as unknown as Anthropic,
+    });
+
+    await provider.complete({
+      model: "claude-sonnet-5",
+      system: "system",
+      prefix: "MODULE: src/a.ts",
+      prompt: "prompt",
+      responseSchema: { type: "object" },
+    });
+
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "MODULE: src/a.ts",
+                cache_control: { type: "ephemeral" },
+              },
+              { type: "text", text: "prompt" },
+            ],
+          },
+        ],
+      }),
+      undefined,
+    );
+  });
+
+  it("inlines a shared prefix for providers without cache controls", () => {
+    expect(promptWithPrefix({ prompt: "prompt" })).toBe("prompt");
+    expect(promptWithPrefix({ prefix: "", prompt: "prompt" })).toBe("prompt");
+    expect(promptWithPrefix({ prefix: "outline", prompt: "prompt" })).toBe(
+      "outline\n\nprompt",
+    );
+  });
+
   it("uses Anthropic structured output and accounts for token cost", async () => {
     const create = vi.fn().mockResolvedValue({
       content: [
@@ -205,6 +327,13 @@ describe("LLM generation", () => {
 
     expect(create).toHaveBeenCalledWith(
       expect.objectContaining({
+        system: [
+          {
+            type: "text",
+            text: "system",
+            cache_control: { type: "ephemeral" },
+          },
+        ],
         output_config: {
           format: { type: "json_schema", schema: request.responseSchema },
         },

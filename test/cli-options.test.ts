@@ -137,9 +137,10 @@ describe("cli option aliases", () => {
     expect(check).toContain("--model <name>");
     expect(check).toContain("--verbose");
     expect(check).toContain("--quiet");
+    expect(check).toContain("--evaluation <path>");
     expect(extract).toContain("--include-variables");
     expect(check).not.toMatch(
-      /-\w, --(no-judge|sarif|provider|model|verbose|quiet)/u,
+      /-\w, --(no-judge|sarif|provider|model|verbose|quiet|evaluation)/u,
     );
     expect(extract).not.toMatch(/-\w, --include-variables/u);
   });

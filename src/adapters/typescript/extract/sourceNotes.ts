@@ -7,6 +7,12 @@ import type {
 import { findLineIndex, getLineStarts, sourceRange } from "./range.js";
 import { DIRECTIVE_PATTERN, LICENSE_PATTERN } from "./types.js";
 
+/**
+ * Extract the contiguous line-comment note immediately preceding a declaration when it is directly anchored to that declaration.
+ * @param sourceFile Source file containing the declaration and its preceding comments.
+ * @param declaration Declaration node whose leading comment note should be inspected.
+ * @returns A source note containing normalized text, raw source, range, and replacement eligibility, or null when no directly preceding line-comment block is found.
+ */
 export const extractSourceNote = (
   sourceFile: SourceFile,
   declaration: Node,

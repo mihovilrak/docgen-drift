@@ -29,6 +29,12 @@ export interface ContextBudget {
   readonly reduced: boolean;
 }
 
+/**
+ * Clamp the requested input-token budget to the model's usable context window while recording whether it was reduced.
+ * @param requested The desired number of input tokens.
+ * @param capabilities The model limits used to calculate the usable input window, including context capacity and reserved output tokens.
+ * @returns A budget containing the requested amount, the effective usable amount, and whether clamping occurred.
+ */
 export const contextBudgetFor = (
   requested: number,
   capabilities: ModelCapabilities,
@@ -46,6 +52,13 @@ export const contextBudgetFor = (
   return { requested, effective, reduced: effective < requested };
 };
 
+/**
+ * Estimate the USD cost of processing the specified input and output token counts, preserving an unknown result when pricing is unavailable.
+ * @param price Model pricing, or undefined when the cost cannot be estimated.
+ * @param inputTokens Number of input tokens to price.
+ * @param outputTokens Number of output tokens to price.
+ * @returns The estimated cost in USD, or undefined when price is unavailable.
+ */
 export const costFromPrice = (
   price: ModelPrice | undefined,
   inputTokens: number,

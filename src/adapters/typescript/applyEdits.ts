@@ -13,7 +13,7 @@ import type {
 } from "../../core/symbol.js";
 import { extractSymbols } from "./extract/index.js";
 import type { TypeScriptProjectHandle } from "./loadProject.js";
-import { renderDoc } from "./renderDoc.js";
+import { renderConfiguredDoc } from "./renderDoc.js";
 
 export interface PlannedDocEdit {
   readonly symbol: DocumentationSymbol;
@@ -41,6 +41,10 @@ export interface ApplyEditsResult {
 
 export type SourceWriter = (path: string, source: string) => Promise<void>;
 
+/**
+ * Compute a hash of the symbol content and documentation metadata used to detect changes before applying edits.
+ * @param symbol Symbol whose normalized signature, body, existing documentation, and source note are included in the hash.
+ */
 export const symbolAnchorHash = (symbol: DocumentationSymbol): string =>
   hashText(
     [
@@ -51,6 +55,14 @@ export const symbolAnchorHash = (symbol: DocumentationSymbol): string =>
     ].join("\0"),
   );
 
+/**
+ * Apply planned documentation edits to TypeScript files, validating, formatting, and optionally writing each changed file atomically.
+ * @param handle TypeScript project handle used to resolve and reparse source files.
+ * @param plans Planned documentation edits to apply, including symbols, generated documentation, and concurrency hashes.
+ * @param config Documentation generation configuration used when resolving and rendering edits.
+ * @param write Whether to persist successfully applied edits to source files.
+ * @param writeSource Function used to atomically write updated source content; defaults to the standard atomic writer.
+ */
 export const applyEdits = async (
   handle: TypeScriptProjectHandle,
   plans: readonly PlannedDocEdit[],
@@ -188,16 +200,9 @@ const buildEdit = (
   const start = editStart(symbol, config);
   const indentation = indentationAt(source, symbol.declaration.start);
   const eol = eolOf(source);
-  const includeStandardSections = config.docs.granularity !== "minimal";
-  const includeDetailedSections = config.docs.granularity === "detailed";
-  const rendered = renderDoc(plan.doc, symbol, {
+  const rendered = renderConfiguredDoc(plan.doc, symbol, config, {
     indentation,
     eol,
-    emitDetail: includeDetailedSections,
-    emitParams: includeStandardSections && config.docs.tags.params,
-    emitReturns: includeStandardSections && config.docs.tags.returns,
-    emitThrows: includeDetailedSections && config.docs.tags.throws,
-    preserveTags: config.docs.preserveTags,
   });
   return {
     start,

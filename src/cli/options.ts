@@ -55,6 +55,10 @@ export const QUIET: OptionSpec = [
   "--quiet",
   "Suppress estimates and progress output",
 ];
+export const EVALUATION: OptionSpec = [
+  "--evaluation <path>",
+  "Write proposed docs, judge decisions, rendered comments, and timings as JSON",
+];
 
 export const GENERATION: readonly OptionSpec[] = [
   ["-n, --dry-run", "Print the source diff without writing"],
@@ -62,13 +66,14 @@ export const GENERATION: readonly OptionSpec[] = [
   NO_JUDGE,
   ["--provider <id>", "Override the generation provider for this run"],
   ["--model <name>", "Override the generation model for this run"],
+  EVALUATION,
   VERBOSE,
   QUIET,
 ];
 
 /**
- * Validate that the logging mode flags are not enabled simultaneously.
- * @param options Logging options containing optional verbose and quiet flags.
+ * Reject configurations that enable both verbose and quiet logging modes.
+ * @param options Logging flags to validate for mutual exclusivity.
  */
 export const assertCompatibleLoggingOptions = (options: {
   readonly verbose?: boolean;

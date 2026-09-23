@@ -1,11 +1,8 @@
 /**
- * Generate a unified diff showing changes between two text versions.
- *
- * Return an empty string when the versions match; otherwise include up to three unchanged context lines around the differing region and identify the file as a/path and b/path.
- * @param path Use the repository-relative file path for the diff headers.
- * @param before Provide the original file contents.
- * @param after Provide the updated file contents.
- * @returns Return the unified diff as a string.
+ * Generate a unified diff with file headers and surrounding context for changed lines.
+ * @param path The file path to include in the diff headers.
+ * @param before The original file contents.
+ * @param after The updated file contents.
  */
 export const unifiedDiff = (
   path: string,

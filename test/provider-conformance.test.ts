@@ -1,3 +1,6 @@
+import { readdir } from "node:fs/promises";
+import { tmpdir } from "node:os";
+
 import Anthropic from "@anthropic-ai/sdk";
 import { describe, expect, it, vi } from "vitest";
 
@@ -6,6 +9,7 @@ import { LlmClient, type LlmProvider } from "../src/llm/client.js";
 import { JudgeClient } from "../src/llm/judge.js";
 import { AnthropicProvider } from "../src/llm/providers/anthropic.js";
 import {
+  CliTransportError,
   CliTransportProvider,
   type CliRunner,
   type CliTool,
@@ -333,6 +337,151 @@ describe("provider failures", () => {
       }),
     ).rejects.toMatchObject({ retryable: true });
   });
+
+  it("classifies Claude tool-use turn exits without exposing raw usage in the message", async () => {
+    const diagnostic = JSON.stringify({
+      stop_reason: "tool_use",
+      usage: { input_tokens: 99_999, output_tokens: 1 },
+    });
+    const provider = new CliTransportProvider({
+      tool: "claude",
+      run: () =>
+        Promise.resolve({
+          code: 1,
+          stdout: diagnostic,
+          stderr: "",
+        }),
+    });
+
+    const error = await provider
+      .complete({
+        model: "sonnet",
+        system: "system",
+        prompt: "prompt",
+        responseSchema: { type: "object" },
+      })
+      .catch((failure: unknown) => failure);
+
+    expect(error).toBeInstanceOf(CliTransportError);
+    expect(error).toMatchObject({
+      message:
+        "claude reached its structured-output turn limit before returning validated JSON",
+      retryable: false,
+      diagnostic,
+    });
+    expect((error as Error).message).not.toContain("input_tokens");
+  });
+
+  it("sends agent CLIs no project context and no redundant prompt text", async () => {
+    let seen:
+      | {
+          readonly args: readonly string[];
+          readonly input: string;
+          readonly cwd: string | undefined;
+          readonly entries: readonly string[];
+        }
+      | undefined;
+    const run: CliRunner = async (_command, args, input, options) => {
+      seen = {
+        args,
+        input,
+        cwd: options.cwd,
+        entries: options.cwd === undefined ? [] : await readdir(options.cwd),
+      };
+      return {
+        code: 0,
+        stdout: JSON.stringify({
+          result: JSON.stringify({
+            id: "src/a.ts#a",
+            verdict: "SKIP",
+            reason: "none",
+          }),
+        }),
+        stderr: "",
+      };
+    };
+
+    await new CliTransportProvider({ tool: "claude", run }).complete({
+      model: "sonnet",
+      system: "SYSTEM PROMPT",
+      prompt: "prompt",
+      responseSchema: { type: "object", properties: { marker: {} } },
+    });
+
+    const args = seen?.args ?? [];
+    expect(args[args.indexOf("--system-prompt") + 1]).toBe("SYSTEM PROMPT");
+    expect(args).toContain("--exclude-dynamic-system-prompt-sections");
+    expect(args).toContain("--strict-mcp-config");
+    // The harness preamble, project memory files and the schema are all sent by
+    // argv or suppressed, so none of them may appear in the prompt as well.
+    expect(seen?.input).not.toContain("SYSTEM PROMPT");
+    expect(seen?.input).not.toContain("marker");
+    expect(seen?.cwd?.startsWith(tmpdir())).toBe(true);
+    expect(seen?.entries).toEqual([]);
+  });
+
+  it("inlines the response schema only for tools without a schema flag", async () => {
+    const inputs = new Map<CliTool, string>();
+    const run: CliRunner = (_command, _args, input) => {
+      inputs.set(tool, input);
+      return Promise.resolve({
+        code: 0,
+        stdout: JSON.stringify({
+          sessionID: "ses_docgen",
+          session_id: "gemini-docgen",
+          result: JSON.stringify({
+            id: "src/a.ts#a",
+            verdict: "SKIP",
+            reason: "none",
+          }),
+        }),
+        stderr: "",
+      });
+    };
+    let tool: CliTool = "claude";
+
+    for (const candidate of ["claude", "codex", "pi"] as const) {
+      tool = candidate;
+      await new CliTransportProvider({ tool: candidate, run }).complete({
+        model: "test-model",
+        system: "system",
+        prompt: "prompt",
+        responseSchema: { type: "object", properties: { marker: {} } },
+      });
+    }
+
+    expect(inputs.get("claude")).not.toContain("marker");
+    expect(inputs.get("codex")).not.toContain("marker");
+    expect(inputs.get("pi")).toContain("marker");
+    expect(inputs.get("codex")).toContain("system");
+  });
+
+  it("keeps malformed CLI output in diagnostics instead of the public error", async () => {
+    const provider = new CliTransportProvider({
+      tool: "pi",
+      run: () =>
+        Promise.resolve({
+          code: 0,
+          stdout: "raw provider output with private usage details",
+          stderr: "",
+        }),
+    });
+
+    const error = await provider
+      .complete({
+        model: "test-model",
+        system: "system",
+        prompt: "prompt",
+        responseSchema: { type: "object" },
+      })
+      .catch((failure: unknown) => failure);
+
+    expect(error).toMatchObject({
+      message: "pi returned output that did not contain semantic JSON",
+      diagnostic: "raw provider output with private usage details",
+    });
+    expect((error as Error).message).not.toContain("private usage details");
+  });
 });
 
 const cliProvider = (
@@ -351,6 +500,7 @@ const cliProvider = (
     if (tool === "claude") {
       expect(args).toContain("--json-schema");
       expect(args).toContain("--no-session-persistence");
+      expect(args[args.indexOf("--max-turns") + 1]).toBe("3");
     }
     if (tool === "codex") {
       expect(args).toContain("--ephemeral");

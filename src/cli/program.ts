@@ -4,6 +4,10 @@ import { createInterface } from "node:readline/promises";
 import { cac, type CAC } from "cac";
 
 import { ConfigError, loadConfig } from "../config/load.js";
+import { judgeProviderConfig } from "../config/schema.js";
+import { generationOutputPolicy } from "../llm/outputPolicy.js";
+import { providerId } from "../llm/providers/index.js";
+import { PROMPT_VERSION } from "../llm/prompt/index.js";
 import { filterByChanges, readChangedFiles } from "./since.js";
 import { runBaseline, runCheck } from "./run.js";
 import { checkExitCode } from "./errors.js";
@@ -25,6 +29,7 @@ import { applyGenerationOverrides } from "./overrides.js";
 import { scopeProjects } from "./projectScope.js";
 import { renderEstimate, renderGeneration } from "./render.js";
 import { createGenerationProgressReporter } from "./progress.js";
+import { writeEvaluationArtifact } from "./evaluation.js";
 import type {
   GenerationEstimate,
   GenerationProgressEvent,
@@ -60,6 +65,7 @@ interface GenerationCommandOptions extends JsonOptions {
   readonly model?: string;
   readonly verbose?: boolean;
   readonly quiet?: boolean;
+  readonly evaluation?: string;
 }
 
 interface CheckCommandOptions extends GenerationCommandOptions {
@@ -82,12 +88,14 @@ const generationOptions = (
   readonly dryRun?: boolean;
   readonly allowDirty?: boolean;
   readonly noJudge?: boolean;
+  readonly captureEvaluation?: boolean;
 } => ({
   ...(options.dryRun === undefined ? {} : { dryRun: options.dryRun }),
   ...(options.allowDirty === undefined
     ? {}
     : { allowDirty: options.allowDirty }),
   ...(options.judge === false ? { noJudge: true } : {}),
+  ...(options.evaluation === undefined ? {} : { captureEvaluation: true }),
 });
 
 const overrides = (
@@ -103,10 +111,11 @@ const requireFix = (options: CheckCommandOptions): void => {
     options.allowDirty === true ||
     options.judge === false ||
     options.verbose === true ||
-    options.quiet === true
+    options.quiet === true ||
+    options.evaluation !== undefined
   ) {
     throw new ConfigError(
-      "--dry-run, --allow-dirty, --no-judge, --verbose, and --quiet require --fix",
+      "--dry-run, --allow-dirty, --no-judge, --verbose, --quiet, and --evaluation require --fix",
     );
   }
   if (options.provider !== undefined || options.model !== undefined) {
@@ -124,6 +133,7 @@ const runFix = async (
   const workspaceRoot = commandRoot(root);
   const loaded = await loadConfig(workspaceRoot, options.config);
   const config = scopeProjects(loaded, options.project);
+  const effectiveConfig = applyGenerationOverrides(config, overrides(options));
   const { runGeneration } = await import("./generate.js");
   let reporter: ReturnType<typeof createGenerationProgressReporter> | undefined;
   const onEstimate = (estimate: GenerationEstimate): void => {
@@ -138,18 +148,42 @@ const runFix = async (
   };
   let result: GenerationRunResult;
   try {
-    result = await runGeneration(
-      workspaceRoot,
-      applyGenerationOverrides(config, overrides(options)),
-      {
-        mode,
-        ...(path === undefined ? {} : { path }),
-        ...generationOptions(options),
-        ...(options.quiet === true ? {} : { onEstimate, onProgress }),
-      },
-    );
+    result = await runGeneration(workspaceRoot, effectiveConfig, {
+      mode,
+      ...(path === undefined ? {} : { path }),
+      ...generationOptions(options),
+      ...(options.quiet === true ? {} : { onEstimate, onProgress }),
+    });
   } finally {
     reporter?.finish();
+  }
+  if (options.evaluation !== undefined) {
+    await writeEvaluationArtifact(resolve(workspaceRoot, options.evaluation), {
+      schemaVersion: 1,
+      createdAt: new Date().toISOString(),
+      mode,
+      ...(path === undefined ? {} : { path }),
+      dryRun: options.dryRun === true,
+      promptVersion: PROMPT_VERSION,
+      outputPolicy: generationOutputPolicy(effectiveConfig),
+      providers: {
+        generation: {
+          id: providerId(effectiveConfig.generate.provider),
+          model: effectiveConfig.generate.model,
+        },
+        ...(effectiveConfig.judge.enabled && options.judge !== false
+          ? {
+              judge: {
+                id: providerId(judgeProviderConfig(effectiveConfig)),
+                model: effectiveConfig.judge.model,
+              },
+            }
+          : {}),
+      },
+      metrics: result.metrics,
+      usage: result.usage,
+      records: result.evaluation ?? [],
+    });
   }
   process.stdout.write(
     options.json === true

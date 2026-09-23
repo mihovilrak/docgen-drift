@@ -43,6 +43,10 @@ export class DuplicateSourceOwnershipError extends Error {
   }
 }
 
+/**
+ * Resolve the workspace root and project configurations, validating concurrency, project matches, and duplicate source ownership.
+ * @param options Configure the workspace root, project glob patterns, and optional project concurrency.
+ */
 export const resolveWorkspace = async (
   options: WorkspaceOptions,
 ): Promise<Workspace> => {
@@ -74,6 +78,12 @@ export const resolveWorkspace = async (
   return { root, projects, projectConcurrency };
 };
 
+/**
+ * Load resolved TypeScript projects with bounded concurrency and apply the visitor to each project.
+ * @param options Workspace root, project patterns, concurrency limit, and optional source inclusion or exclusion patterns.
+ * @param visit Callback invoked for each loaded project handle; its results become the corresponding output entries.
+ * @returns The visitor results in the same order as the resolved workspace projects.
+ */
 export const loadWorkspace = async <T>(
   options: WorkspaceOptions,
   visit: (project: TypeScriptProjectHandle) => Promise<T> | T,

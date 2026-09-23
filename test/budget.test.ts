@@ -12,6 +12,7 @@ import {
   sampleCallSites,
   type AssembleContextOptions,
 } from "../src/core/budget.js";
+import { assembleFileContext } from "../src/core/fileContext.js";
 import type { LlmProvider } from "../src/llm/client.js";
 import { tokenCounter } from "../src/llm/tokenizer.js";
 
@@ -187,5 +188,103 @@ describe("provider tokenizers", () => {
         (text) => conservativeTokenCount(text) * 2,
       ).count(doubled.text),
     ).toBe(doubled.tokenCount);
+  });
+});
+
+describe("shared module outline", () => {
+  const outline = async (
+    file: string,
+    budgetTokens = 2_000,
+    entryMaxTokens?: number,
+  ) => {
+    const project = await loadProject({ tsconfigPath: fixtureRoot });
+    return assembleFileContext({
+      filePath: file,
+      symbols: extractSymbols(project),
+      budgetTokens,
+      model: "claude-sonnet-5",
+      ...(entryMaxTokens === undefined ? {} : { entryMaxTokens }),
+    });
+  };
+
+  it("lists every sibling declaration in declaration order", async () => {
+    const context = await outline("src/service.ts");
+
+    expect(context.text).toContain("MODULE: src/service.ts");
+    expect(context.text).toContain("MODULE DECLARATIONS");
+    expect(
+      [...context.text.matchAll(/^- \S+ (\w+)/gmu)].map((match) => match[1]),
+    ).toEqual(["leaf", "mutualA", "mutualB", "orchestrate"]);
+    expect(context.tokenCount).toBe(
+      createTokenCounter("claude-sonnet-5").count(context.text),
+    );
+    expect(context.declaredNames.size).toBe(0);
+  });
+
+  it("renders interface fields and marks the name as substitutable", async () => {
+    const context = await outline("src/types.ts");
+
+    expect(context.text).toContain("- interface PaymentInput {");
+    expect(context.text).toContain("invoiceId: string;");
+    expect(context.text).not.toContain("- PaymentInput.validate");
+    expect([...context.declaredNames]).toEqual(["PaymentInput"]);
+  });
+
+  it("keeps a truncated entry out of the substitutable names", async () => {
+    const context = await outline("src/types.ts", 2_000, 4);
+
+    expect(context.text).not.toContain("validate(): boolean;");
+    expect(context.declaredNames.size).toBe(0);
+  });
+
+  it("never exceeds its own budget and yields nothing when it cannot fit", async () => {
+    const tight = await outline("src/service.ts", 60);
+    expect(tight.tokenCount).toBeLessThanOrEqual(60);
+
+    const empty = await outline("src/service.ts", 5);
+    expect(empty.text).toBe("");
+    expect(empty.tokenCount).toBe(0);
+  });
+
+  it("drops a per-symbol referenced type the outline already renders", async () => {
+    const project = await loadProject({ tsconfigPath: fixtureRoot });
+    const symbols = extractSymbols(project);
+    const symbol = symbols.find(
+      (candidate) => candidate.name === "orchestrate",
+    );
+    if (symbol === undefined) throw new Error("Expected orchestrate");
+    const index = buildGraph(project, symbols, {
+      testFilePaths: new Set([resolve(fixtureRoot, "src/service.test.ts")]),
+      referencedTypeSymbolIds: new Set([symbol.id]),
+    });
+    const options: AssembleContextOptions = {
+      symbol,
+      symbols,
+      graph: index.graph,
+      index: index.context,
+      budgetTokens: 2_000,
+      model: "claude-sonnet-5",
+      sources: {
+        testNames: false,
+        ownBody: false,
+        callSites: false,
+        calleeSummaries: false,
+        referencedTypes: true,
+        gitSubject: false,
+        calleeBodies: false,
+      },
+      includeSourceNotes: false,
+      bodyMaxLines: 120,
+      callSiteMax: 5,
+      callSiteSampling: "moduleDiversity",
+    };
+
+    expect(assembleContext(options).text).toContain("REFERENCED TYPE");
+    expect(
+      assembleContext({
+        ...options,
+        sharedDeclaredNames: new Set(["PaymentInput"]),
+      }).text,
+    ).not.toContain("REFERENCED TYPE");
   });
 });

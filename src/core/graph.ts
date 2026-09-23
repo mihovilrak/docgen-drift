@@ -5,8 +5,8 @@ export interface StronglyConnectedComponent {
 }
 
 /**
- * Partition the call graph with Tarjan's algorithm, sorting visits and members for deterministic output.
- * @param graph Call graph whose symbols and forward edges define the components to compute.
+ * Group mutually reachable symbols into sorted components, emitting callees before their callers.
+ * @param graph Graph whose symbols and edges define the call graph to condense.
  */
 export const stronglyConnectedComponents = (
   graph: Graph,
@@ -63,8 +63,9 @@ export const stronglyConnectedComponents = (
 };
 
 /**
- * Order strongly connected components with callees before callers and deterministic keys breaking ready-component ties.
- * @param graph The call graph whose symbols and edges determine the component ordering.
+ * Order condensed dependency components so callees precede callers with stable component-key tie-breaking.
+ * @param graph Graph whose symbols and forward edges define the dependency relationships to condense and order.
+ * @returns The strongly connected components in reverse topological order, with callees before their callers.
  */
 export const reverseTopologicalOrder = (
   graph: Graph,
@@ -122,8 +123,9 @@ export const reverseTopologicalOrder = (
 };
 
 /**
- * Group components into stable dependency levels whose members are mutually independent and depend only on lower levels.
- * @param graph The symbol graph whose components are leveled by dependency depth.
+ * Group condensed dependency components into levels so callees precede callers.
+ * @param graph Graph whose forward edges describe symbol dependencies.
+ * @returns The dependency levels, with each level containing strongly connected components that can be processed together.
  */
 export const reverseTopologicalLevels = (
   graph: Graph,

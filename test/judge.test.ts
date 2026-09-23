@@ -141,6 +141,20 @@ describe("documentation judge", () => {
     expect(prompt).toContain("behavioral context");
     expect(prompt).toContain('"summary": "Returns zero for empty input."');
   });
+
+  it("scopes the judge to the sections the output policy enabled", () => {
+    const prompt = judgePrompt(symbol(), doc(), "context", false, {
+      granularity: "standard",
+      detail: false,
+      params: true,
+      returns: true,
+      throws: false,
+    });
+    expect(prompt).toContain(
+      'judge only these sections: ["summary","params","returns"]',
+    );
+    expect(prompt).toContain("never reject for omitting one");
+  });
 });
 
 const provider = (

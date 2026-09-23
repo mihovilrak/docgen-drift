@@ -28,6 +28,12 @@ export interface BuildGraphOptions {
   readonly referencedTypeSymbolIds?: ReadonlySet<SymbolId>;
 }
 
+/**
+ * Build a symbol index with deduplicated call-graph edges, test references, call-site context, and selected referenced types.
+ * @param handle TypeScript project handle whose source files are traversed for call expressions and declarations.
+ * @param symbols Documented symbols used to identify graph nodes, callers, callees, and referenced types.
+ * @param options Optional test-file paths, call-site context length, and referenced-type selection settings.
+ */
 export const buildGraph = (
   handle: TypeScriptProjectHandle,
   symbols: readonly DocumentationSymbol[],

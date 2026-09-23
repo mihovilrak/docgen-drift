@@ -218,11 +218,19 @@ claim unused allowance is free. Missing executables, login requirements,
 exhausted limits, unsupported models, malformed output, cancellation, and
 timeouts fail without applying a partial response.
 
+Claude structured output may use more than one internal turn to satisfy the
+requested JSON Schema. The transport permits up to three turns while keeping
+tools disabled and sessions ephemeral. A `tool_use` or maximum-turn exit is
+classified separately and remains non-retryable, so docgen does not spend a
+second allowance automatically. This follows Claude Code's
+[CLI `--json-schema` and `--max-turns` contract](https://code.claude.com/docs/en/cli-usage).
+
 Generation writes concise progress counters to stderr. Pass `--verbose` for a
 line per generation and judge result, including the symbol, provider, model,
-outcome, and attempt count. Pass `--quiet` to suppress the estimate and progress;
-the final human or JSON result remains on stdout. The flags are mutually
-exclusive.
+outcome, attempt count, and bounded raw diagnostics on failure. Normal progress
+shows only the classified failure. Pass `--quiet` to suppress the estimate and
+progress; the final human or JSON result remains on stdout. The flags are
+mutually exclusive.
 
 Subscription access remains governed by each upstream provider's current terms
 and plan limits. Do not share or resell accounts or allowances. Use direct API

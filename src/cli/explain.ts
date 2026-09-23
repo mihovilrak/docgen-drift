@@ -18,10 +18,10 @@ interface ExplainCandidate {
 }
 
 /**
- * Assemble offline context for the uniquely matched workspace symbol.
- * @param root Workspace root used to load projects and compute project-relative symbol labels.
- * @param query Symbol query used to select candidate symbols.
- * @param config Configuration controlling workspace discovery, symbol extraction, context sources, limits, and formatting.
+ * Assemble offline context for the uniquely matching workspace symbol.
+ * @param root Workspace root used to resolve projects and report relative paths.
+ * @param query Symbol query used to select exactly one matching symbol.
+ * @param config Documentation configuration controlling workspace discovery, symbol extraction, context assembly, source inclusion, and token budgeting.
  */
 export const runExplain = async (
   root: string,

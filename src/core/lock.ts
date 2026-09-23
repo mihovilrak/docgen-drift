@@ -27,7 +27,7 @@ export interface LockError {
 }
 
 /**
- * Produce the versioned empty lock used when no lockfile exists, so callers need no missing-file special case.
+ * Create a schema-versioned lock file with no symbol entries.
  */
 export const emptyLock = (): LockFile => ({
   schemaVersion: LOCK_SCHEMA_VERSION,
@@ -35,8 +35,8 @@ export const emptyLock = (): LockFile => ({
 });
 
 /**
- * Load and validate a lockfile, returning an empty lock for a missing file and typed failures instead of throwing.
- * @param path Filesystem path to the lock file to read.
+ * Load and validate the lock file at the specified path, treating a missing file as an empty lock.
+ * @param path Path to the lock file to read.
  */
 export const readLock = async (
   path: string,
@@ -59,9 +59,9 @@ export const readLock = async (
 };
 
 /**
- * Persist the lock file to disk atomically by writing to a temporary file and renaming it into place.
- * @param path Filesystem path to write the lock file to.
- * @param lock Lock file contents to serialize as JSON.
+ * Persist the lock data atomically at the specified path.
+ * @param path Destination path for the lockfile.
+ * @param lock Schema-versioned lockfile data to serialize.
  */
 export const writeLock = async (
   path: string,

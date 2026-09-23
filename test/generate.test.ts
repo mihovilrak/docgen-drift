@@ -35,9 +35,31 @@ describe("generation commands", () => {
       provider(),
     );
 
-    expect(first).toEqual(second);
+    expect({ ...first, metrics: undefined }).toEqual({
+      ...second,
+      metrics: undefined,
+    });
     expect(first).toMatchObject({ requested: 2, changedFiles: 1 });
     expect(first.generated).toHaveLength(2);
+    expect(first.metrics).toMatchObject({
+      generation: {
+        requests: 2,
+        attempts: 2,
+        candidates: 2,
+        skipped: 0,
+        failed: 0,
+      },
+      judge: {
+        requests: 2,
+        attempts: 2,
+        accepted: 2,
+        rejected: 0,
+        failed: 0,
+      },
+    });
+    expect(first.metrics.durationMs).toBeGreaterThanOrEqual(0);
+    expect(first.metrics.generation.durationMs).toBeGreaterThanOrEqual(0);
+    expect(first.metrics.judge.durationMs).toBeGreaterThanOrEqual(0);
     expect(first.diff).toContain("--- a/src/api.ts");
     expect(first.diff).toContain("+++ b/src/api.ts");
     expect(first.diff).toContain("+/**");
@@ -192,6 +214,42 @@ describe("generation commands", () => {
     ).toBe(false);
   });
 
+  it("captures source-linked generation, judge, and rendered evaluation data", async () => {
+    const result = await runGeneration(
+      await copyFixture(),
+      config(),
+      {
+        mode: "missing",
+        path: "src",
+        dryRun: true,
+        captureEvaluation: true,
+      },
+      provider(),
+    );
+
+    expect(result.evaluation).toHaveLength(2);
+    const record = result.evaluation?.[0];
+    if (record === undefined) throw new Error("Missing evaluation record");
+    expect(record.symbol.id).toMatch(/^src\/api\.ts#/u);
+    expect(record.symbol.filePath).toBe("src/api.ts");
+    expect(record.symbol.startLine).toBeGreaterThan(0);
+    expect(record.symbol.signature.length).toBeGreaterThan(0);
+    expect(record.generation).toMatchObject({
+      provider: "stub",
+      outcome: "OK",
+      attempts: 1,
+    });
+    expect(record.generation.semanticDoc?.summary.length).toBeGreaterThan(0);
+    expect(record.judge).toMatchObject({
+      provider: "stub",
+      outcome: "ACCEPT",
+      attempts: 1,
+    });
+    expect(record.output?.semanticDoc.summary.length).toBeGreaterThan(0);
+    expect(record.output?.renderedComment).toContain("/**");
+    expect(record.output?.editStatus).toBe("proposed");
+  });
+
   it("requires judging for comment replacement", async () => {
     await expect(
       runGeneration(
@@ -287,10 +345,12 @@ describe("generation commands", () => {
     expect(check).toContain("--dry-run");
     expect(check).toContain("--allow-dirty");
     expect(check).toContain("--no-judge");
+    expect(check).toContain("--evaluation");
     expect(fix).toContain("--missing");
     expect(fix).toContain("--path");
     expect(fix).toContain("--project");
     expect(fix).toContain("--no-judge");
+    expect(fix).toContain("--evaluation");
   });
 });
 

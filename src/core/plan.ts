@@ -22,11 +22,10 @@ export interface CheckResult {
 }
 
 /**
- * Classify each current symbol against the lock file, then flag stale lock entries as orphaned.
- * @param current Symbols extracted from the project's current source to classify against the lock file.
- * @param knownIds Symbol ids to exclude from orphan detection even though they are absent from current.
- * @param lock Previously recorded symbol state used to detect drift, missing docs, and orphans.
- * @returns Check results sorted by file path, then start line, then symbol id.
+ * Classify current symbols against the lock file and report eligible removed symbols as orphaned, ordered by source location and identifier.
+ * @param current Current symbols to classify, including their identifiers, documentation metadata, and content hashes.
+ * @param knownIds Symbol identifiers that remain recognized and should not be reported as orphaned.
+ * @param lock Persisted symbol records used to determine each symbol’s status and identify removed undocumented symbols.
  */
 export const classifySymbols = (
   current: readonly CurrentSymbol[],

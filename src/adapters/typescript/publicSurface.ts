@@ -9,6 +9,12 @@ import type {
 } from "../../core/symbol.js";
 import type { TypeScriptProjectHandle } from "./loadProject.js";
 
+/**
+ * Identify exported documentation symbols declared by source files matched by the configured entry points.
+ * @param handle Use the TypeScript project handle to resolve entry points and inspect declarations included by the project configuration.
+ * @param symbols Provide the documentation symbols to filter for exported declarations.
+ * @param entryPoints Provide glob patterns for source files under the project root; matched files must belong to the configured TypeScript project.
+ */
 export const publicSurfaceSymbolIds = async (
   handle: TypeScriptProjectHandle,
   symbols: readonly DocumentationSymbol[],

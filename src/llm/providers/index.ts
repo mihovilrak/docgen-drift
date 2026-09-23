@@ -72,6 +72,12 @@ export const providerStatus = (
   };
 };
 
+/**
+ * Instantiate the configured LLM provider, resolving credentials from the supplied environment when required.
+ * @param config Provider configuration specifying the provider kind, connection settings, and optional execution limits.
+ * @param env Environment variables used to resolve provider API keys; defaults to process.env.
+ * @returns The initialized LLM provider instance.
+ */
 export const createProvider = (
   config: ProviderConfig,
   env: Env = process.env,

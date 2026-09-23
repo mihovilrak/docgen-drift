@@ -17,6 +17,13 @@ import type {
 } from "../../core/symbol.js";
 import type { TypeScriptProjectHandle } from "./loadProject.js";
 
+/**
+ * Collect referenced types from each selected symbol’s signature declarations.
+ * @param handle Use the TypeScript project handle to locate source files and declarations.
+ * @param symbols Provide the documentation symbols whose signature type nodes should be inspected.
+ * @param selectedIds Optionally restrict extraction to symbols whose IDs are in this set.
+ * @returns Map each processed symbol ID to its distinct referenced types, omitting symbols without resolvable declarations or type references.
+ */
 export const extractReferencedTypes = (
   handle: TypeScriptProjectHandle,
   symbols: readonly DocumentationSymbol[],

@@ -49,6 +49,8 @@ export interface AssembleContextOptions {
   readonly callSiteSampling: "moduleDiversity" | "first";
   readonly calleeSummaries?: ReadonlyMap<SymbolId, string>;
   readonly gitSubject?: string;
+  /** Type names already rendered in a shared module outline; their `referencedType` blocks are dropped. */
+  readonly sharedDeclaredNames?: ReadonlySet<string>;
 }
 
 export interface AssembledContext {
@@ -88,6 +90,10 @@ export const createTokenCounter = (
   };
 };
 
+/**
+ * Build a token-bounded context by prioritizing the most useful available source notes.
+ * @param options Configure the target symbol, context sources, token budget, model tokenizer, and selection limits used to assemble the context.
+ */
 export const assembleContext = (
   options: AssembleContextOptions,
 ): AssembledContext => {
@@ -127,10 +133,10 @@ export const assembleContext = (
 };
 
 /**
- * Greedily pack candidates in list order into the token budget, truncating at most one candidate to fill remaining space.
- * @param candidates Ordered list of context candidates to consider for inclusion; order determines priority when budget is limited.
- * @param budgetTokens Maximum combined token budget for selected candidate text plus separators; negative values are clamped to zero.
- * @param counter Token counter used to measure candidate text length and to truncate a candidate's text to fit the remaining budget.
+ * Select candidates in order until the token budget is exhausted, truncating eligible candidates when possible and reporting omissions.
+ * @param candidates Candidates to evaluate in order for inclusion.
+ * @param budgetTokens Maximum number of tokens available for the selected candidates.
+ * @param counter Token counter used to measure candidate text, separators, and truncation.
  */
 export const rankedKnapsack = (
   candidates: readonly ContextCandidate[],

@@ -18,6 +18,11 @@ import type { ExtractOptions } from "./types.js";
 export type { ExtractOptions } from "./types.js";
 export { parseExistingDoc } from "./jsdoc.js";
 
+/**
+ * Collect supported TypeScript declarations, deduplicate them, and return them in source order.
+ * @param handle TypeScript project handle containing the source files to inspect.
+ * @param options Extraction options, including whether to include non-function variables.
+ */
 export const extractSymbols = (
   handle: TypeScriptProjectHandle,
   options: ExtractOptions = {},

@@ -73,6 +73,18 @@ unchanged.
 Generation progress is written to stderr, leaving diffs and `--json` output on
 stdout. Use `--verbose` for per-symbol provider/model results or `--quiet` to
 suppress the estimate and live progress while retaining final output.
+Machine-readable results include generation and judge request, attempt, outcome,
+and timing totals. Add `--evaluation <path>` to write a separate JSON artifact
+containing source identifiers, semantic model output, judge decisions, rendered
+comments, and edit status:
+
+```bash
+pnpm exec docgen fix -m -p src/api -n --evaluation .docgen/evaluation.json
+```
+
+Raw provider diagnostics are omitted from normal progress output. Use
+`--verbose` while troubleshooting; evaluation artifacts also retain diagnostics
+for failed records.
 
 Direct OpenAI and Google APIs, OpenAI-compatible local servers, and opt-in
 Claude, Codex, Gemini, OpenCode, and Pi CLI transports are also supported. See
@@ -114,6 +126,54 @@ model call:
 ```bash
 pnpm exec docgen explain 'src/billing/settle.ts#settleInvoice'
 ```
+
+## Token cost and caching
+
+Every `fix` and `check --fix` run prints an upper-bound estimate before the
+first model call. With the defaults — a 2,000-token context budget,
+`claude-sonnet-5` for generation, `claude-haiku-4-5` for judging — that bound is
+per symbol:
+
+| Stage | Input | Output | List cost |
+| --- | --- | --- | --- |
+| generation | 2,300 | 300 | $0.0114 |
+| judge | 2,800 | 80 | $0.0032 |
+| total | 5,100 | 380 | ~$0.015 |
+
+So roughly **$15 per 1,000 symbols**, or about $1.50 with judging disabled and a
+Haiku-class generation model. Real runs land under the bound, because the
+context knapsack usually does not fill the budget: a symbol with no tests, no
+call sites, and a short body sends far less than 2,000 tokens. Subscription CLI
+transports report no token counts at all, so their cost basis is `unknown` and
+no monetary total is printed.
+
+Caching is layered on top:
+
+- The system prompt is a cache breakpoint on Anthropic, so it is written once
+  per run and read thereafter.
+- When a file contributes at least `context.shared.minSymbols` documented
+  symbols, docgen builds one **module outline** — the file path plus its sibling
+  declarations — and sends it as a shared prefix marked as an Anthropic cache
+  breakpoint. The judge receives the same prefix, so a claim grounded in a
+  sibling declaration is not rejected as unsupported.
+- Requests are ordered so the first request carrying a given prefix is issued
+  and awaited before the requests that read it, instead of racing under
+  `generate.concurrency` and each paying a cache write.
+- The outline is charged **against** `context.budgetTokens`, never added to it.
+  Per-symbol context shrinks by the outline's size, and same-file referenced
+  type blocks that the outline already renders are dropped, so a request does
+  not grow just because its file has an outline.
+
+Honest accounting: a cached prefix costs 1.25 copies to write and 0.1 copies per
+read, so substituting shared content for per-symbol content breaks even at about
+four documented symbols in a file and runs roughly 10-15% below the uncached
+input cost at eight. Files with one or two documented symbols gain nothing
+monetarily — and a prefix below Anthropic's minimum cacheable length is silently
+not cached — so the main return is quality: the model sees what a symbol sits
+next to, which matters most for types and interfaces whose own signature says
+nothing about their purpose. Providers without cache controls, including the CLI
+transports, inline the same prefix so generated content stays provider
+independent.
 
 ## Configuration and monorepos
 

@@ -97,6 +97,12 @@ export const variableFunctionSymbol = (
   });
 };
 
+/**
+ * Assemble a documentation symbol for a variable declaration, including its type, initializer, export status, and source metadata.
+ * @param handle Use the TypeScript project handle when constructing the documentation symbol.
+ * @param statement Provide the variable statement that contains the declaration and its associated documentation metadata.
+ * @param declaration Provide the specific variable declaration whose name, type, and initializer are extracted.
+ */
 export const variableSymbol = (
   handle: TypeScriptProjectHandle,
   statement: VariableStatement,

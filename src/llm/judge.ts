@@ -10,9 +10,14 @@ import {
   type ProviderRequest,
   type ProviderResponse,
 } from "./client.js";
+import {
+  DEFAULT_OUTPUT_POLICY,
+  type GenerationOutputPolicy,
+} from "./outputPolicy.js";
 import { judgePrompt, judgeSystemPrompt } from "./prompt/index.js";
 import { portableJsonSchema } from "./schema.js";
 import { addUsage, EMPTY_USAGE, type ProviderUsage } from "./usage.js";
+import { errorDiagnostic, errorMessage } from "./errors.js";
 
 const judgeResponseSchema = z
   .object({
@@ -30,8 +35,11 @@ export interface JudgeRequest {
   readonly symbol: DocumentationSymbol;
   readonly doc: GeneratedDoc;
   readonly context: string;
+  /** Shared module outline; the judge needs it or claims it supports read as unsupported. */
+  readonly prefix?: string;
   readonly model: string;
   readonly strict: boolean;
+  readonly output?: GenerationOutputPolicy;
 }
 
 export interface JudgeResult {
@@ -41,6 +49,7 @@ export interface JudgeResult {
   readonly usage: ProviderUsage;
   readonly attempts: number;
   readonly error?: string;
+  readonly diagnostic?: string;
 }
 
 export interface JudgeBatchResult {
@@ -58,6 +67,9 @@ export interface JudgeClientOptions {
   readonly onResult?: (result: JudgeResult) => void;
 }
 
+/**
+ * Evaluate generated documentation concurrently against a language-model provider with retries and response validation.
+ */
 export class JudgeClient {
   readonly #provider: LlmProvider;
   readonly #options: JudgeClientOptions &
@@ -76,6 +88,11 @@ export class JudgeClient {
     };
   }
 
+  /**
+   * Evaluate documentation requests concurrently and aggregate their results with total provider usage.
+   * @param requests Documentation judging requests to process.
+   * @returns A batch containing each judge result and the aggregated provider usage.
+   */
   async judge(requests: readonly JudgeRequest[]): Promise<JudgeBatchResult> {
     const results = await mapConcurrent(
       requests,
@@ -108,12 +125,14 @@ export class JudgeClient {
         const completed = await this.#completeWithRetry({
           model: request.model,
           system: judgeSystemPrompt,
+          ...(request.prefix === undefined ? {} : { prefix: request.prefix }),
           prompt: appendValidationFeedback(
             judgePrompt(
               request.symbol,
               request.doc,
               request.context,
               request.strict,
+              request.output ?? DEFAULT_OUTPUT_POLICY,
             ),
             validationAttempt,
             validationError,
@@ -151,6 +170,9 @@ export class JudgeClient {
             usage,
             attempts,
             error: error.message,
+            ...(error.diagnostic === undefined
+              ? {}
+              : { diagnostic: error.diagnostic }),
           };
         }
         validationError = errorMessage(error);
@@ -186,7 +208,11 @@ export class JudgeClient {
           attempt >= this.#options.retryCount ||
           !this.#provider.isRetryable(error)
         ) {
-          throw new JudgeProviderFailure(errorMessage(error), attempt + 1);
+          throw new JudgeProviderFailure(
+            errorMessage(error),
+            attempt + 1,
+            errorDiagnostic(error),
+          );
         }
         await this.#options.sleep(
           this.#options.baseDelayMs * Math.pow(2, attempt),
@@ -198,10 +224,12 @@ export class JudgeClient {
 
 class JudgeProviderFailure extends Error {
   readonly attempts: number;
+  readonly diagnostic?: string;
 
-  constructor(message: string, attempts: number) {
+  constructor(message: string, attempts: number, diagnostic?: string) {
     super(message);
     this.attempts = attempts;
+    if (diagnostic !== undefined) this.diagnostic = diagnostic;
   }
 }
 
@@ -234,6 +262,3 @@ const mapConcurrent = async <T, R>(
   await Promise.all(workers);
   return results;
 };
-
-const errorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : "Unknown judge error";

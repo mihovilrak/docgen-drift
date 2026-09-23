@@ -4,6 +4,10 @@ import type {
   GeneratedDoc,
   Symbol as DocumentationSymbol,
 } from "../core/symbol.js";
+import {
+  DEFAULT_OUTPUT_POLICY,
+  type GenerationOutputPolicy,
+} from "./outputPolicy.js";
 
 export const generatedResponseSchema = z
   .object({
@@ -26,14 +30,22 @@ export const generationResponseJsonSchema = z.toJSONSchema(
   generatedResponseSchema,
 );
 
+/**
+ * Constrain the generation schema to the symbol’s parameter names and enabled output fields.
+ * @param symbol The documentation symbol whose parameters define the allowed parameter keys.
+ * @param output The output policy controlling parameter inclusion and whether detail, returns, and throws content is enabled.
+ */
 export const generationResponseJsonSchemaFor = (
   symbol: DocumentationSymbol,
+  output: GenerationOutputPolicy = DEFAULT_OUTPUT_POLICY,
 ): Readonly<Record<string, unknown>> => {
   const properties = generationResponseJsonSchema["properties"] as Record<
     string,
     unknown
   >;
-  const parameterNames = symbol.parameters.map((parameter) => parameter.name);
+  const parameterNames = output.params
+    ? symbol.parameters.map((parameter) => parameter.name)
+    : [];
   return portableJsonSchema({
     ...generationResponseJsonSchema,
     properties: {
@@ -46,6 +58,18 @@ export const generationResponseJsonSchemaFor = (
         required: parameterNames,
         additionalProperties: false,
       },
+      ...(output.detail ? {} : { detail: { type: "null" } }),
+      ...(output.returns ? {} : { returns: { type: "null" } }),
+      ...(output.throws
+        ? {}
+        : {
+            // Keep the item schema: OpenAI structured output rejects an empty
+            // `items` schema even when `maxItems` forbids every element.
+            throws: {
+              ...(properties["throws"] as Record<string, unknown>),
+              maxItems: 0,
+            },
+          }),
     },
   }) as Readonly<Record<string, unknown>>;
 };
@@ -56,6 +80,11 @@ const PORTABLE_SCHEMA_OMISSIONS = new Set([
   "propertyNames",
 ]);
 
+/**
+ * Recursively remove non-portable schema fields while preserving arrays, primitives, and remaining object structure.
+ * @param value The schema value to sanitize recursively.
+ * @returns The sanitized schema value.
+ */
 export const portableJsonSchema = (value: unknown): unknown => {
   if (Array.isArray(value)) return value.map(portableJsonSchema);
   if (typeof value !== "object" || value === null) return value;
@@ -70,9 +99,17 @@ export type GenerationOutcome =
   | { readonly verdict: "OK"; readonly id: string; readonly doc: GeneratedDoc }
   | { readonly verdict: "SKIP"; readonly id: string; readonly reason: string };
 
+/**
+ * Validate and normalize a model-generated documentation response for the target symbol.
+ * @param value The generated response value to parse and validate.
+ * @param symbol The documentation symbol whose identifier and parameters the response must match.
+ * @param output The policy controlling which documentation sections to include; defaults to the standard policy.
+ * @returns Return a normalized documentation outcome or a valid SKIP outcome.
+ */
 export const parseGenerationResponse = (
   value: unknown,
   symbol: DocumentationSymbol,
+  output: GenerationOutputPolicy = DEFAULT_OUTPUT_POLICY,
 ): GenerationOutcome => {
   const response = generatedResponseSchema.parse(
     typeof value === "string" ? JSON.parse(value) : value,
@@ -93,7 +130,9 @@ export const parseGenerationResponse = (
   if (summary === undefined || summary === "") {
     throw new Error(`Response for ${symbol.id} has no summary`);
   }
-  const expectedParams = symbol.parameters.map((parameter) => parameter.name);
+  const expectedParams = output.params
+    ? symbol.parameters.map((parameter) => parameter.name)
+    : [];
   const actualParams = Object.keys(response.params);
   if (
     expectedParams.length !== actualParams.length ||
@@ -115,8 +154,8 @@ export const parseGenerationResponse = (
     }
   }
 
-  const detail = nonempty(response.detail);
-  const returns = nonempty(response.returns);
+  const detail = output.detail ? nonempty(response.detail) : undefined;
+  const returns = output.returns ? nonempty(response.returns) : undefined;
 
   return {
     verdict: "OK",
@@ -131,10 +170,12 @@ export const parseGenerationResponse = (
         ]),
       ),
       ...(returns === undefined ? {} : { returns }),
-      throws: response.throws.map((item) => ({
-        type: item.type.trim(),
-        when: item.when.trim(),
-      })),
+      throws: output.throws
+        ? response.throws.map((item) => ({
+            type: item.type.trim(),
+            when: item.when.trim(),
+          }))
+        : [],
     },
   };
 };

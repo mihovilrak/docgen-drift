@@ -14,6 +14,9 @@ interface LineRange {
   readonly end: number;
 }
 
+/**
+ * Preserve a distinct error identity for failures reported by the since command.
+ */
 export class SinceError extends Error {
   constructor(message: string) {
     super(message);
@@ -22,9 +25,10 @@ export class SinceError extends Error {
 }
 
 /**
- * Read zero-context changed line ranges from Git without allowing external diff drivers.
- * @param root Workspace directory in which to run Git.
- * @param reference Git revision or comparison reference passed to git diff.
+ * Read changed-file ranges from a Git diff against the specified reference.
+ * @param root Working directory in which to run Git.
+ * @param reference Git reference to compare against.
+ * @returns A promise resolving to a map of changed file paths and their changed line ranges.
  */
 export const readChangedFiles = async (
   root: string,
@@ -45,9 +49,9 @@ export const readChangedFiles = async (
 };
 
 /**
- * Keep results from changed files whose declarations overlap a changed line range.
- * @param results Check results to filter.
- * @param changed Map of file paths to their changed line ranges.
+ * Retain results from changed files whose declarations overlap a diff range, along with orphaned or symbol-less results.
+ * @param results The check results to filter.
+ * @param changed A map of changed file paths to their modified line ranges.
  */
 export const filterByChanges = (
   results: readonly CheckResult[],

@@ -2,10 +2,10 @@ import { formatCost } from "../llm/usage.js";
 import type { GenerationEstimate, GenerationRunResult } from "./generate.js";
 
 /**
- * Format generation outcomes, optional dry-run changes, counts, and usage into a CLI report.
- * @param result Generation results containing per-symbol statuses, changed-file counts, usage data, and an optional diff.
- * @param dryRun Whether to include a non-empty generated diff in the report.
- * @returns A newline-terminated human-readable generation report.
+ * Format generation results, optional dry-run diffs, per-item issues, file counts, and usage information as CLI output.
+ * @param result Generation results to summarize, including generated, skipped, rejected, failed, changed-file, diff, and usage data.
+ * @param dryRun Whether to include a non-empty generated diff in the output.
+ * @returns A newline-terminated human-readable summary string.
  */
 export const renderGeneration = (
   result: GenerationRunResult,
@@ -24,9 +24,8 @@ export const renderGeneration = (
 };
 
 /**
- * Report estimated generation usage, cost basis, judge inclusion, retry scope, and any reduced context budget.
- * @param estimate Generation estimate containing symbol counts, token totals, pricing information, judge inclusion, and context-budget status.
- * @returns A newline-terminated human-readable estimate report.
+ * Format a human-readable estimate of token usage, cost, judge inclusion, retries, and any reduced context budget.
+ * @param estimate Generation estimate containing symbol, token, cost, judge, and context-budget information.
  */
 export const renderEstimate = (estimate: GenerationEstimate): string => {
   const budget = estimate.contextBudgetReduced

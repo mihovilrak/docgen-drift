@@ -7,6 +7,12 @@ import { makeSymbolId } from "../../../core/id.js";
 import type { TypeScriptProjectHandle } from "../loadProject.js";
 import { sourceRange, toPosixPath } from "./range.js";
 
+/**
+ * Assemble a documentation symbol with a stable identifier, normalized file path, and source range.
+ * @param handle Use the project handle to resolve the declaration's path relative to the project root.
+ * @param declaration Provide the source node whose file and character range identify the symbol declaration.
+ * @param data Supply the symbol metadata to enrich with its generated identifier, file path, and declaration range.
+ */
 export const makeSymbol = (
   handle: TypeScriptProjectHandle,
   declaration: Node,

@@ -11,11 +11,10 @@ export interface GenerationProgressReporter {
 }
 
 /**
- * Track generation and judge outcomes, rendering verbose events or aggregate TTY progress to the configured stream.
- * @param total Total number of symbols to generate.
- * @param verbose Whether to render per-symbol provider details instead of aggregate counters.
- * @param stream Output stream for progress rendering; defaults to process.stderr.
- * @returns A reporter exposing update and finish operations for generation progress output.
+ * Track generation and judge outcomes and render concise progress updates, with optional verbose diagnostics and TTY cleanup.
+ * @param total Expected number of symbols to process.
+ * @param verbose Whether to emit per-event provider details and diagnostics instead of compact aggregate progress.
+ * @param stream Output stream for progress messages; defaults to standard error.
  */
 export const createGenerationProgressReporter = (
   total: number,
@@ -47,6 +46,9 @@ export const createGenerationProgressReporter = (
 
     if (verbose) {
       stream.write(`${verboseLine(event, generation, total, judged)}\n`);
+      if (event.diagnostic !== undefined) {
+        stream.write(`  diagnostic: ${diagnosticLine(event.diagnostic)}\n`);
+      }
       return;
     }
     const line = `Progress: generation ${String(generation)}/${String(total)} (${String(candidates)} candidates, ${String(skipped)} skipped, ${String(generationFailed)} failed); judge ${String(judged)} (${String(accepted)} accepted, ${String(rejected)} rejected, ${String(judgeFailed)} failed)`;
@@ -79,3 +81,6 @@ const verboseLine = (
 
 const oneLine = (value: string): string =>
   value.replace(/\s+/gu, " ").trim().slice(0, 300);
+
+const diagnosticLine = (value: string): string =>
+  value.replace(/\s+/gu, " ").trim().slice(0, 2_000);

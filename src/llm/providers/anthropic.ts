@@ -32,6 +32,11 @@ const PRICES: readonly (readonly [string, ModelPrice])[] = [
   ["opus", { inputUsdPerMillion: 5, outputUsdPerMillion: 25 }],
 ];
 
+/**
+ * Resolve the model’s per-million-token Anthropic pricing, including special Sonnet 5 rates, and leave unsupported models unknown.
+ * @param model Model identifier used to select the applicable Anthropic pricing.
+ * @returns Return input and output USD rates per million tokens, or undefined when the model has no known price.
+ */
 export const anthropicPrice = (model: string): ModelPrice | undefined => {
   if (model.includes("sonnet-5")) {
     return { inputUsdPerMillion: 2, outputUsdPerMillion: 10 };
@@ -39,6 +44,27 @@ export const anthropicPrice = (model: string): ModelPrice | undefined => {
   return PRICES.find(([name]) => model.includes(name))?.[1];
 };
 
+/**
+ * Split the shared prefix into its own cache-controlled block so a batch of
+ * requests over the same module pays for it once and reads it thereafter.
+ */
+const userContent = (
+  request: ProviderRequest,
+): Anthropic.Messages.ContentBlockParam[] =>
+  request.prefix === undefined || request.prefix === ""
+    ? [{ type: "text", text: request.prompt }]
+    : [
+        {
+          type: "text",
+          text: request.prefix,
+          cache_control: { type: "ephemeral" },
+        },
+        { type: "text", text: request.prompt },
+      ];
+
+/**
+ * Configure Anthropic-backed completions with JSON output, usage accounting, and retry classification.
+ */
 export class AnthropicProvider implements LlmProvider {
   readonly id = "anthropic";
   readonly #client: Anthropic;
@@ -56,13 +82,28 @@ export class AnthropicProvider implements LlmProvider {
       });
   }
 
+  /**
+   * Generate a JSON-schema-conforming response through Anthropic and record token usage, including prompt-cache activity.
+   * @param request Specify the model, system and user prompts, response schema, optional output-token limit, and optional cancellation signal.
+   * @returns Resolve with the generated text and its token-usage accounting.
+   */
   async complete(request: ProviderRequest): Promise<ProviderResponse> {
     const message = await this.#client.messages.create(
       {
         model: request.model,
         max_tokens: request.maxOutputTokens ?? this.#maxOutputTokens,
-        system: request.system,
-        messages: [{ role: "user", content: request.prompt }],
+        system: [
+          {
+            type: "text",
+            text: request.system,
+            // Cacheable prefix. Anthropic ignores a prefix shorter than the
+            // per-model minimum (1024 tokens on Sonnet and Opus) instead of
+            // charging the write premium, so this is free until a shared
+            // prefix is large enough to hit.
+            cache_control: { type: "ephemeral" },
+          },
+        ],
+        messages: [{ role: "user", content: userContent(request) }],
         output_config: {
           format: { type: "json_schema", schema: request.responseSchema },
         },
@@ -94,6 +135,10 @@ export class AnthropicProvider implements LlmProvider {
     };
   }
 
+  /**
+   * Treat connection failures and transient HTTP statuses as retryable.
+   * @param error The unknown error to classify for retry eligibility.
+   */
   isRetryable(error: unknown): boolean {
     if (
       error instanceof APIConnectionError ||

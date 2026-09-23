@@ -2,28 +2,28 @@
   "schemaVersion": 1,
   "symbols": {
     "src/core/diff.ts#unifiedDiff": {
-      "symbolHash": "a76eb2c13fdfb469208f575ab77458e3a888e3a06bc714f048f96c3eeed218d0",
-      "docHash": "8d48059604a4d40af93f1a1c0f4a6072a523a8043566526c28bead8479b18897",
+      "symbolHash": "3f47e19cd1430bb4eafe4aff3b6f01195be8b5f7049c7102fce5f220242b94c4",
+      "docHash": "daf17bffb7b86bfff7e36e338d2f3f89bbc39f4f4492e6af170fd5523bd2c28b",
       "filePath": "src/core/diff.ts",
-      "startLine": 10
+      "startLine": 7
     },
     "src/cli/errors.ts#errorExitCode": {
-      "symbolHash": "82805ebdfd43f565bd416ba94d921940eb24e68e2928f93216a380996b0f7bc1",
-      "docHash": "174fb5278550d6d07ed7301a7f38a44532f356efee4c22fa59f9de0f28046566",
+      "symbolHash": "f9774ddf12cbef774fca611d66233bf14005e050ae8653c5d0fa368f77d6b3a2",
+      "docHash": "fe1f300d484596a10cc543a89fe9474b355fbbc38c14dabbe36e78e7da6ee8fd",
       "filePath": "src/cli/errors.ts",
-      "startLine": 13
+      "startLine": 14
     },
     "src/cli/explain.ts#runExplain": {
-      "symbolHash": "a8532d985a7a02f4defaa5942e6d2721150cf4059ded32b0478d8b23bcfa0cfa",
-      "docHash": "a92c8049ef7e29daa724b680adc0cc7f30b22d60eab0af71878a5e538faedd3c",
+      "symbolHash": "3458d607adc35e6b139b9ce0be29e3f34f8c6afe4c6afeae18b43373a3e8b2cd",
+      "docHash": "f0c6ba7389a104b13eb35e5e9a703261790f3589b00ee7a7d13b2b0818c51acf",
       "filePath": "src/cli/explain.ts",
       "startLine": 26
     },
     "src/cli/generate.ts#runGeneration": {
-      "symbolHash": "4034240d2889d37bb6c839e4cf9dc6dd335d274ef9b76efdedc26e8ffd5d7234",
-      "docHash": "6a7dc9f36041f03c3066815c0791cac6754d646336c09db08b2789cd24c467ac",
+      "symbolHash": "75ea23e913f00c2a99feeddd2820a2b4e6a48dae2b2e36980dbd50bf4fa2a19e",
+      "docHash": "8720fbf1562ef787d6a8d709bb3cbf86a48509dbde1725f23c8382451056dead",
       "filePath": "src/cli/generate.ts",
-      "startLine": 88
+      "startLine": 100
     },
     "src/cli/generate.ts#estimateGeneration": {
       "symbolHash": "6358dd696ce4e04701182449687642678e77bb3cb26613e5eb2f073781188e4c",
@@ -32,10 +32,10 @@
       "startLine": 231
     },
     "src/cli/generateProject.ts#generateProject": {
-      "symbolHash": "6d379a5de7bd9b93cde3940981dcaa2b3426793cef2447ca5dbc38d10fe19b3a",
-      "docHash": "9466bc6b20b7e2d1c32b50c8d33ebcdf87deb000ea7c45ceaa84e079cbf89b6c",
+      "symbolHash": "802a4b4cf70b9a53be0ef0ca2c98a5bf9666d767622d0929c7c5d4c8dd436e91",
+      "docHash": "6bab68d459925afcb646db38f40fe243b185f8beaca8eb4ee2a48fb2ad5653b7",
       "filePath": "src/cli/generateProject.ts",
-      "startLine": 83
+      "startLine": 102
     },
     "src/cli/inspect.ts#ProviderInspection": {
       "symbolHash": "d167fa788787655168926516cf4ff3b8ffc9362dc6d540c9a813b34f2e7b3796",
@@ -50,10 +50,10 @@
       "startLine": 132
     },
     "src/cli/options.ts#assertCompatibleLoggingOptions": {
-      "symbolHash": "5ed73218ed1534e4c1cdb1ac7c1bce28fcfab74cb2ff41812d9fdd92f0eb68b1",
-      "docHash": "5f1628da23dc89a960fdc864aebfcd739e22c185105a562563ee25cddd73beda",
+      "symbolHash": "48496ef10f1a7a23bfc80a29d169ae016a43ab17a5f9e9011d9161af5e4d47f9",
+      "docHash": "6cc04ebe1e56c175652c3ab7d25a490ee1cdaec5bc8ca973451b5f0df40f98ad",
       "filePath": "src/cli/options.ts",
-      "startLine": 73
+      "startLine": 78
     },
     "src/cli/options.ts#withOptions": {
       "symbolHash": "80f41e5729ef50d6dded1789cbca1cd5bce3d098b950ca55e342115627ace15d",
@@ -68,92 +68,92 @@
       "startLine": 166
     },
     "src/cli/progress.ts#createGenerationProgressReporter": {
-      "symbolHash": "799d60c8a9845ee270154eb649a42b328c07aa497bf0145495d8e585054ba14e",
-      "docHash": "d26212743e4e08038f2b1e1f6219222829080daae4f7021d115ec807dcf7003d",
+      "symbolHash": "46aaa57ef458def1c57acd28a2c354582498230520e98e48f0085a37e67332f9",
+      "docHash": "9f7cb0654c7adf30798006caf059f1a377badfbe019ac096a37e3388a9fa3052",
       "filePath": "src/cli/progress.ts",
-      "startLine": 20
+      "startLine": 19
     },
     "src/cli/projectScope.ts#scopeProjects": {
-      "symbolHash": "934a97330484c7c5265eb800964d19888c607a1b141b181e9eeda511809075a5",
-      "docHash": "67bee095d70a151264b0eb211a2ad95221a2063715ce06e22b612fb7e0500854",
+      "symbolHash": "dce870abb0ab26468338a8c421197a88cb0fb0ca7b6dbc829f59bbcc5a943856",
+      "docHash": "295876b782132ba0f424cf31709b696567a791396421c09adb9976ec3877bc3d",
       "filePath": "src/cli/projectScope.ts",
       "startLine": 8
     },
     "src/cli/render.ts#renderGeneration": {
-      "symbolHash": "0b16d186610bd020912ac4b5c5d310c7ed9948c36d61239068f21c8b81f2cf1c",
-      "docHash": "aba8fb969998182da6e9b041e933b8faa4bfdfd1320eb63a0ff98a6b3da17c43",
+      "symbolHash": "ae319b1b228f1bbfeb4a3b15a9e0443fc0197ca3a66b7eb197400d852ee608b6",
+      "docHash": "ca3dfc05dd3c5faa306a9e75d48af9dec77b5cbe8a11bd9177bd97187bfa3a72",
       "filePath": "src/cli/render.ts",
       "startLine": 10
     },
     "src/cli/render.ts#renderEstimate": {
-      "symbolHash": "80f52887523d4d388238e9c49c889c4056eb20a8681ade3ec62c2cb29097c78d",
-      "docHash": "bb4765ba0d88ad428b61012507ffedb8174ad1faebd35d7d4b6d2e7c6cf65821",
+      "symbolHash": "458911c0dfc5b679300ae2b8bdaeaf41b3266caf0601b28ed9c80f9b79d46a4c",
+      "docHash": "d98fc7901167cfc8a9fb0cde5ed7734748c122e6502243c3409d79b2b19baa13",
       "filePath": "src/cli/render.ts",
-      "startLine": 31
+      "startLine": 30
     },
     "src/cli/run.ts#runBaseline": {
-      "symbolHash": "b5d931690e03ec737fc2596146ce81fcd04635f2b5fb944a9dbbdac80a313aad",
-      "docHash": "60310128c97ad1420bee05b0a50dd233518372bdb5e82e60d8561459234a1b53",
+      "symbolHash": "1e37cd89ff5bda5d640d328a656fb01aa57706299d8f5ff1aab77d24b3ae6fbe",
+      "docHash": "1b480dfd906835888b22d0a7ef1e5e07fa644005c52582ea4a02d339fe68cbb1",
       "filePath": "src/cli/run.ts",
-      "startLine": 37
+      "startLine": 38
     },
     "src/cli/run.ts#runCheck": {
-      "symbolHash": "827da9676af87dbbe63c7e62fd9b36d6b62946356f8a002809e6f98d8fc374fa",
-      "docHash": "f7a9603b4cf47fde5af5ef008aa6172bff83b275075c852bff94456cdb6bcf03",
+      "symbolHash": "27577885e3f31089d498e4d42b7455fbd612b80919da9f81ffb6fae49e9a623a",
+      "docHash": "6b675c9cb00145a469418f20d9ce383cea1863f25e6515f3c3d641ac0158c965",
       "filePath": "src/cli/run.ts",
-      "startLine": 74
+      "startLine": 75
     },
     "src/cli/run.ts#refreshLocks": {
-      "symbolHash": "fd7f8b46aee3933da3a515b266d73038d157b191e1e33c2c61b7e874a081d396",
-      "docHash": "9477cb8d3f7d1ceb8b9b066b0d6cf94882a677b97f3af4a5951b7a560cb47685",
+      "symbolHash": "ac416966dd2ec8abf616f2e279ba0290fd51e5bf9bee3857c1a0bee43803bfd7",
+      "docHash": "1a99a1636e873f79b0f708eb2012e6fa80d97b61140ec4b8048ff61fbd3e15c4",
       "filePath": "src/cli/run.ts",
-      "startLine": 109
+      "startLine": 110
     },
     "src/cli/since.ts#readChangedFiles": {
-      "symbolHash": "4bac65c3e64868ac29340fc235041bb1dcd6f1dd62d578cab07404b7c43420fb",
-      "docHash": "52a6b93c9fbd61b6543d9b3f84ed8114cd3f3062fffadd629feecb52004e51a9",
+      "symbolHash": "2c401042a669f93153e224b6fa8cad06188ffde1cd6a3baf52e54e8ef6d28602",
+      "docHash": "e74e5eeffb3808a56d90575fa1ad94e40479fcd4d51cd01d740372b34f2d7282",
       "filePath": "src/cli/since.ts",
-      "startLine": 29
+      "startLine": 33
     },
     "src/cli/since.ts#filterByChanges": {
-      "symbolHash": "d7ca5a6413af71b1c4a8fb98a4ccc248d9ceb2c9029f37cb6ff4e87857e96ef8",
-      "docHash": "a9ce4067cd01de80d0c1743810f0e66346987c338745e07b5339ef14fb45c5ed",
+      "symbolHash": "c18099a9b29ab81c5628f0497ec7798deceed517ce4dd60f197091a38e045618",
+      "docHash": "629b7307f683a33f4730dcffe32757a5a299587be6982610b28dba64483b4ccb",
       "filePath": "src/cli/since.ts",
-      "startLine": 52
+      "startLine": 56
     },
     "src/cli/workspace.ts#indexWorkspace": {
-      "symbolHash": "e3c77cd8ee4b4ca14ed8920b5bcc586d384286eee975cd5260943de04cf5ed5e",
-      "docHash": "c9e1b4834104afc561244c208883e2f75fdc71d6d6c33e65ecbd9c14a1114ef3",
+      "symbolHash": "19da757542313a632e8fb5f7f6123318a9c28b67ca47ef4f668e50f9f73483a4",
+      "docHash": "f55a713fb1ecfc4a621fb18cb402dc6c807b093d201ce764e50e35144d1510e8",
       "filePath": "src/cli/workspace.ts",
       "startLine": 29
     },
     "src/cli/workspace.ts#currentSymbols": {
-      "symbolHash": "6719b54e56b3ab949c3f2782ea4ce15a924a003b24e3d58db2be42a57bd08aeb",
-      "docHash": "dfe2df13513546e46e7a225c32e10bf13c5d491cb0add5ab7003cf1ad75b70e7",
+      "symbolHash": "7d983ff6e1fb18e57087b9e0621c57a7d75fa3959a975c4df7c002abf46e0980",
+      "docHash": "53cf9a81f3e2273bf6f4481155381ca8e888387d7e01d0155783c730d834a662",
       "filePath": "src/cli/workspace.ts",
       "startLine": 104
     },
     "src/cli/workspace.ts#knownSymbolIds": {
-      "symbolHash": "4715a5ad452eae0a3efd8ea45fb86ccf50819443dea2164cd1e2d33a7cae47a3",
-      "docHash": "e06eb84495dafb5ea37fd19f4efc817b783e3fee53ecc0b5f24ca8842fad6004",
+      "symbolHash": "d21cfa7d9cf2b4ed8d4f21abe683a34946fea30b1189e676b4b8e1b1fbb10e69",
+      "docHash": "bcb76d1e4e1f53ea69f41dbe660a4f7aee8534b56f4497c86c6c63142015b3d4",
       "filePath": "src/cli/workspace.ts",
       "startLine": 122
     },
     "src/cli/workspace.ts#hashRecipe": {
-      "symbolHash": "837f3e182f6b740f03454e94b1e8b05b2a4f6bd4b98e38c21a2a2f451591a974",
-      "docHash": "ed92af88857bb281bb424f128cd54131b638444ce34c84fc5c9de18aed6ad8ad",
+      "symbolHash": "ae64f299b3ac9fb1b33ecc7ea09a0f051797653e2b852171b039018192f003d7",
+      "docHash": "4e83a8a87500332d1439d227790781692a16d4e41a001704af14f3da99134826",
       "filePath": "src/cli/workspace.ts",
       "startLine": 140
     },
     "src/core/budget.ts#rankedKnapsack": {
-      "symbolHash": "2161384a0c35f1350d71b980b57043457ea48fc0a14f47314625116c03a912d8",
-      "docHash": "00bfeb57c357d885152bbf77515c4f69b98c47e4fd968d343e17753cb28c243a",
+      "symbolHash": "8519ce6bdebdb589e98376084d25ccd3b229e1843836922c9dc772be699eecde",
+      "docHash": "50f287f25254a24b361ae7ff5610a0f7c14097b5f1aa616fb390cbab7cc09377",
       "filePath": "src/core/budget.ts",
-      "startLine": 135
+      "startLine": 139
     },
     "src/core/contextCandidates.ts#contextCandidates": {
-      "symbolHash": "bf3b58918e32a3d07b83ebb72e32daa65bd15748de47d8566e02045555d76f17",
-      "docHash": "8ca7c45d7e5a16592a7b76b0398c376fdef2fcaccc3970b741d5af271e7fee40",
+      "symbolHash": "918e8a3592308089611dedaef08a1abd9fd47025b6a5a9b984caad81563a815a",
+      "docHash": "e195d2414dbc6d545702bcea7814c21a5e2e917c0f28ddfe98985b7e81894db7",
       "filePath": "src/core/contextCandidates.ts",
       "startLine": 8
     },
@@ -164,68 +164,68 @@
       "startLine": 101
     },
     "src/core/git.ts#findGitSubject": {
-      "symbolHash": "e668306071aa6ee96f755693480cda0409e5db0169dda779021df4111c7c4b0a",
-      "docHash": "f6ec19e243a832103b17d8247c84fc309e01e254abf5db49954e5d64fa938067",
+      "symbolHash": "51878e07acc76c761b8a496db1642e51a081136035cd5cb9d5312e9e1526ab6d",
+      "docHash": "e8bf46c20ad59b71a49baba1278157d84de7dc7b5a1702a395557995dc95ab66",
       "filePath": "src/core/git.ts",
-      "startLine": 20
+      "startLine": 19
     },
     "src/core/git.ts#isWorkingTreeDirty": {
-      "symbolHash": "6fb4c2113369be84b0be3a4d0c2fcd6b9468416e53a448bad5fa046fac8a2725",
-      "docHash": "36324a8d580d11beb96cee3017bc8c4331562068d00fba1a6c0c194f7423635e",
+      "symbolHash": "c308ae2482df0e07398d909eaaa9d61cb06e70e4891f1e45b0b783fbc1669aae",
+      "docHash": "e1a204cd19f6a07e4fbce3bc80b5fd3749214871635df6c801c850b6830b84d1",
       "filePath": "src/core/git.ts",
-      "startLine": 46
+      "startLine": 45
     },
     "src/core/graph.ts#stronglyConnectedComponents": {
-      "symbolHash": "eda27fd7a84d647a971598736a386d9c3082df5e55d4f18f6d724379d77db83e",
-      "docHash": "9ad7cc7d008ec8cb2b0657c763555d6e2a1a5e8333622e418cdc1cc7ceb8970e",
+      "symbolHash": "28916158d05746312917aac3244b628e058f38f8e44dcb45760f87217703a1e8",
+      "docHash": "7e4f0607981016bfd7a4c5593ab8f4009de361a327b1046105d0d4f0e392df83",
       "filePath": "src/core/graph.ts",
       "startLine": 11
     },
     "src/core/graph.ts#reverseTopologicalOrder": {
-      "symbolHash": "d19c1331eda6d80c362a64b8b17b81101775bd5de4fd1e272b5783079a7f9202",
-      "docHash": "c325d6e5d8f6cda11b49802072d9f69423f53bf8d3231dc85b268f0d80559c7b",
+      "symbolHash": "a0f41c8d9ce5e484c71ef4e4cf287e92a3dc7dfbb065ba4aaef5f0d45130f3db",
+      "docHash": "e113a01e781f86c98a4120a028f37ac4c1c997ab4da29866ee00c7c9e1a8ae34",
       "filePath": "src/core/graph.ts",
-      "startLine": 69
+      "startLine": 70
     },
     "src/core/graph.ts#reverseTopologicalLevels": {
-      "symbolHash": "f3bdb4e98b85a88c277b63bfe7f35be051930897576d408885cc40e74f93867c",
-      "docHash": "825d04684621eca295787a1f4d28144e355843b5ed4501f3faa1f29e7c3883cd",
+      "symbolHash": "e12ff010d42f9bfa47b5d889bee4f9862fd4de55c9b941921040147de07abbc1",
+      "docHash": "d18de322d13be91848da72c3c90fb1074740eedf811214e23557c9d606f9396b",
       "filePath": "src/core/graph.ts",
-      "startLine": 128
+      "startLine": 130
     },
     "src/core/hash.ts#hashSymbol": {
-      "symbolHash": "54f07acaebcba6a11e0f0be703c653cbd927453102e6cb651d9d4df64fa173f1",
-      "docHash": "7a49c0618ad6f1198cbd724f2cd69faf44d8d3356989ccc726ad034c68c30655",
+      "symbolHash": "f285c55686d93408f6fe3c43e9b2ac55537a0175e165638220c442a3cd02c2d8",
+      "docHash": "1941403024a8b1237deaed5c8fdb8a74b50a2162c7f62a4ab092772fcbfa290f",
       "filePath": "src/core/hash.ts",
-      "startLine": 111
+      "startLine": 119
     },
     "src/core/id.ts#makeSymbolId": {
-      "symbolHash": "43d70fe8b963849beb207aaa24a278836eafe61ec9e9c1170c4e871a827d1d2b",
-      "docHash": "b9a4c0aab4baf97bdc156f78bd9880d67ae4e7237f5b072a818ea704cc420543",
+      "symbolHash": "354741a0ce8cbff175f8b2fbe838cb3652cf2afce6e71770f0052b8c54799526",
+      "docHash": "dde14c5769f9a641eae3b022b0f2ddb9dc4d8b0f5b53e4aed079240be6d3d6ed",
       "filePath": "src/core/id.ts",
-      "startLine": 13
+      "startLine": 12
     },
     "src/core/id.ts#workspaceSymbolId": {
-      "symbolHash": "c06a4c8089037295b7160c532b643d873ecea5082fe84e40c9185d82ad28d427",
-      "docHash": "9335c877e9d88f569958a16604eca83316bb1b2f553b14263cbb72ade9d8e760",
+      "symbolHash": "57a6a4ebf566dec5c4dac39175c083b6c3d58cf1153a3befcea31a3373b339fb",
+      "docHash": "f34d769c566a3cf7c6bed4624e0e70e1190c8c382314469d8051100086a82c60",
       "filePath": "src/core/id.ts",
-      "startLine": 31
+      "startLine": 29
     },
     "src/core/lock.ts#emptyLock": {
-      "symbolHash": "6d7f6ba70066b700a2a4f41c1d3c6b4fc742795ba00087a7b09a751c1d989e75",
-      "docHash": "783d7533bf6ec65390701f966bc2d864df7aa5ad3ce2d65f3429009650b0c02a",
+      "symbolHash": "9e332d912229ab8e222e67009577ce66bed40a9d44065ed005fa5162dac0b4e1",
+      "docHash": "e3411af4a5b68a866c904a447ce0cfd7cfbcbfd7c9c8ec3c98e2169b689059fc",
       "filePath": "src/core/lock.ts",
       "startLine": 32
     },
     "src/core/lock.ts#readLock": {
-      "symbolHash": "f5ff9af71af8f2098991a1784a458e261534faa08001b7cfc7a054b3d8a2e183",
-      "docHash": "ca72c5496b709316e9a648050e27cb86499f6c2fc8ef400ce18a5498c1effe39",
+      "symbolHash": "ee6b44e65bb4c1b143ad782ca65acda84ae4ebb787be632be683d5c989689ff6",
+      "docHash": "ae70d1856e6b9f9d48c71be9cc834fa2c5adec003807c29457d5c6fccbb8d72c",
       "filePath": "src/core/lock.ts",
       "startLine": 41
     },
     "src/core/lock.ts#writeLock": {
-      "symbolHash": "cf45072523126520b9037f72b4412d71fd57e59ed3726cdb174e3a208c5cc5a7",
-      "docHash": "397ec36faf2620371d0a750761f2983d1aa9e0704608d27de869eb481ddccfae",
+      "symbolHash": "0bbbb12766ccac043d186328f99ac8f8f55e90ef3d9cf4a97a354184e97b99a2",
+      "docHash": "017b03c928125c1ec9a4293bce4d9887264e393409343f0096faa5b2e3db8e2c",
       "filePath": "src/core/lock.ts",
       "startLine": 66
     },
@@ -236,10 +236,10 @@
       "startLine": 10
     },
     "src/core/plan.ts#classifySymbols": {
-      "symbolHash": "0256b85c632e913d8ddfbe3d5e08369a0f8fb962c7efafd9f82d7e9d2a829d9b",
-      "docHash": "e3c533f282f172952101b05b1ac541bd9905e8d5620af6422113c6f9bd874245",
+      "symbolHash": "3cfc433567d83be49c51b7481f3438c6b7a4d76fe2379103e9d06b311c1cff96",
+      "docHash": "8069eba1eca1afe47eb60e2b3da9759cf214bfef63f37f5177fed4c8e03263c3",
       "filePath": "src/core/plan.ts",
-      "startLine": 31
+      "startLine": 30
     },
     "src/core/plan.ts#lockEntries": {
       "symbolHash": "e71de87273c1708adbbf1d33c4bdd2eaa724077c51bf9286fa6c446afb0cf907",
@@ -252,6 +252,498 @@
       "docHash": "1144e12e772f05800f400250ed2c982685c97743db985636712eb8039e51cc5d",
       "filePath": "src/core/symbol.ts",
       "startLine": 91
+    },
+    "src/llm/outputPolicy.ts#generationOutputPolicy": {
+      "symbolHash": "344188fddfbc262b14db7f7902664633c39f0f558113df4cdb85004d422de9f3",
+      "docHash": "16b9e9bde2fd54cc0571113aca5a8f0900e57c2e3f0720e2bf7e7f5dcf9418f1",
+      "filePath": "src/llm/outputPolicy.ts",
+      "startLine": 28
+    },
+    "src/llm/outputPolicy.ts#projectGeneratedDoc": {
+      "symbolHash": "d48d3083b94c3530099dd269f6d7ee9cc601d7e193569116259125155f3ff24c",
+      "docHash": "b5524a92d68f78dfdd6d98391a402ca4eb6678bf4dee1e5329bb5c38cd5cd3c9",
+      "filePath": "src/llm/outputPolicy.ts",
+      "startLine": 52
+    },
+    "src/cli/generationMetrics.ts#addJudgeStages": {
+      "symbolHash": "bf8331cc93e9a4377ca6d26c71642e3f9052586d2215dac7ca703001bd57f308",
+      "docHash": "4837e12f444f1368e607510b62f5cae5236201238eba46757a000d217d32dfbb",
+      "filePath": "src/cli/generationMetrics.ts",
+      "startLine": 62
+    },
+    "src/config/load.ts#loadConfig": {
+      "symbolHash": "226ac35c63d22a0964156ae031f9a0c7a643856354353d9f9bd2aa6154a4e222",
+      "docHash": "9aa663853aac254ae887fa794c4d5c0343c8f50406071760116f072c68cb60e7",
+      "filePath": "src/config/load.ts",
+      "startLine": 19
+    },
+    "src/report/index.ts#reportableResults": {
+      "symbolHash": "a2dac8199711a244261de3402b59e1d3825c90bd491248499d9f659d2bc47b24",
+      "docHash": "5d235f09885d639d414f37bcd04ab5bcf89af9cb0e722e70137a58c69fe3e7d6",
+      "filePath": "src/report/index.ts",
+      "startLine": 23
+    },
+    "src/report/index.ts#renderHuman": {
+      "symbolHash": "7223571116c33e8c3daac1de77c92365bb56317c09f01bae769bc69a5589aa93",
+      "docHash": "6f3dac615c83c520603f6c81f15dbc4405e3fbdb36f9487ea3b7d7970546639d",
+      "filePath": "src/report/index.ts",
+      "startLine": 43
+    },
+    "src/report/index.ts#renderJson": {
+      "symbolHash": "fed70de5d3281a10a13dec781428e45ff9f2e2bdc96c46f3318f03579b21a3cb",
+      "docHash": "9a4023ff9e81e9c37efa6607f3193bbff7e45f7195ca2be4529b5ecf1d5d8917",
+      "filePath": "src/report/index.ts",
+      "startLine": 64
+    },
+    "src/report/index.ts#renderSarif": {
+      "symbolHash": "cd21033ccb45bbf9d04a9be8f587ee9be01fb8f306fcc6513dd4becbbbd6160d",
+      "docHash": "a9d205effe4c42cd77a00835cc6e8f614d89fa47437044a2128acb38aa9e8a45",
+      "filePath": "src/report/index.ts",
+      "startLine": 83
+    },
+    "src/eval/metrics.ts#judgeMetrics": {
+      "symbolHash": "96303440e6c91a0e39d4454d26b539e7e87684218fa7db132e1b069af5be2322",
+      "docHash": "e3d75f28c781c3fd76e86afb1e3ec49f0defc5fa733baad57c66740da5d7cb1b",
+      "filePath": "src/eval/metrics.ts",
+      "startLine": 51
+    },
+    "src/eval/metrics.ts#commentPromotionMetrics": {
+      "symbolHash": "2433efca0b83c7dbce2eba12318a5f08f0b13adae0576762b66204909451a35a",
+      "docHash": "c1d805ec9f920bc114a131b5eaf7f8238f3e50c1d75caaa39aa503920076170d",
+      "filePath": "src/eval/metrics.ts",
+      "startLine": 87
+    },
+    "src/cli/evaluation.ts#writeEvaluationArtifact": {
+      "symbolHash": "531249ade1a890f2f7c1329697e01519b826fc31047f64bdbc486cd88a5eb845",
+      "docHash": "7fce211d495a3d21d3c0894a2e4d7c95dd31487138bf1d3d72bea18eb4ce8f02",
+      "filePath": "src/cli/evaluation.ts",
+      "startLine": 135
+    },
+    "src/cli/init.ts#runInit": {
+      "symbolHash": "621a278ee257a124065cbfc2646e24d7b24732f64a91d2d8a71b44e1be85bc86",
+      "docHash": "5f0fec839227718a0fe91b6672f24118ea8a593ae7287a1c6cd4893df2a652d0",
+      "filePath": "src/cli/init.ts",
+      "startLine": 26
+    },
+    "src/cli/since.ts#SinceError": {
+      "symbolHash": "f397fa5d7ec75b8d33fb6f32b3893e316c2853248af16f76a8ad23dbd4c103d3",
+      "docHash": "eeb85a877142233e59026cc9b82b79d735361b974a7a014f2ddb2e53625ad305",
+      "filePath": "src/cli/since.ts",
+      "startLine": 20
+    },
+    "src/core/budget.ts#assembleContext": {
+      "symbolHash": "ca5954ee5fb718b55db29c25d84aaef1e65f0dd7cdcc8b036637443060209fc0",
+      "docHash": "f87e8d18875716937d61a7e47962a3c17785683cae5f467173a0bbe1096a2796",
+      "filePath": "src/core/budget.ts",
+      "startLine": 95
+    },
+    "src/core/hash.ts#normalizeCode": {
+      "symbolHash": "3e3a9230bda2a7d0f561a7817c7628c909015255935bf26c8ca61c8031686cb0",
+      "docHash": "e658c9b716e6c1b966ff343c9886efb6197164bec338d32f1c9759fad4a14009",
+      "filePath": "src/core/hash.ts",
+      "startLine": 22
+    },
+    "src/core/hash.ts#normalizeDoc": {
+      "symbolHash": "ddcfb8a65da53b033e34ae8c8df60699afc5be0879ba7be4103aa352f1982abe",
+      "docHash": "249a134689007270b6cf1f5a7531733e3c752d2ade4eb9f4354d87fed8172694",
+      "filePath": "src/core/hash.ts",
+      "startLine": 101
+    },
+    "src/llm/capabilities.ts#contextBudgetFor": {
+      "symbolHash": "b9436dda8b840d763cea9b1fcc37008e9ab706c9dcb6a7fd94465e47910a27b4",
+      "docHash": "4832ad040fd711cc4330cdc241a6a8747145bbec5a4d1b4a48a805f71e6a7612",
+      "filePath": "src/llm/capabilities.ts",
+      "startLine": 38
+    },
+    "src/llm/capabilities.ts#costFromPrice": {
+      "symbolHash": "e2204f4742fa092cbb233035cefd7bc004dd86f05b2888fea43592398a8e494c",
+      "docHash": "a53b4f4171222b69621a467600b5da837c883efabfd64fae2ad725e5d2e9b39c",
+      "filePath": "src/llm/capabilities.ts",
+      "startLine": 62
+    },
+    "src/llm/client.ts#LlmClient": {
+      "symbolHash": "651642b8f7bc41f993b24d2e10aa1fdbf160abd8f3e4e112e7f98bdd2b796334",
+      "docHash": "fb6fce97e3534d900743bde1848c8256b6e17a1af50858c7906855e85beffacb",
+      "filePath": "src/llm/client.ts",
+      "startLine": 74
+    },
+    "src/llm/client.ts#LlmClient.generate": {
+      "symbolHash": "ed9874f4c219f360dcaafc99827b3576cc60f507483c4227d989fadddc5fe5de",
+      "docHash": "6aeb5231ac9f9cca626e47b8cd6626d3517f4856c4d6dd38ed8c21b76ab349bc",
+      "filePath": "src/llm/client.ts",
+      "startLine": 97
+    },
+    "src/llm/client.ts#optionalRequestFields": {
+      "symbolHash": "9dcae3cc6f4292e126c68f54b4d76668f4b26d0fc21b5bc144416d75c0c22f74",
+      "docHash": "b87a07769d60a6cdae17203ec8d58f3a52aec30a6022171a850aada9aada5263",
+      "filePath": "src/llm/client.ts",
+      "startLine": 244
+    },
+    "src/llm/errors.ts#errorDiagnostic": {
+      "symbolHash": "995a08a0f45bca9166fed87a45277d9433022e48058710ea261027758dbf3b41",
+      "docHash": "9ca4caafeb47934b79ded29a259420c6276d10e51dd44e2799d0672b32c7469d",
+      "filePath": "src/llm/errors.ts",
+      "startLine": 8
+    },
+    "src/llm/judge.ts#JudgeClient": {
+      "symbolHash": "efd68fb2fcbe777720d8a21faddc542f4af612de43a7eb1c3b87ca8e681a496e",
+      "docHash": "fe0c0e48d6a392f4f0e969ce0badf8958a55409e65ee003c3274a990d2c3b3b2",
+      "filePath": "src/llm/judge.ts",
+      "startLine": 71
+    },
+    "src/llm/judge.ts#JudgeClient.judge": {
+      "symbolHash": "5f1edfe08840a8b9fd70fb1c3054e4ccde4c1534cfc4991dccb532511030fa59",
+      "docHash": "1a3bcb37ee5ac4695ee8b7c7853ad2c3a60452b1bdf3d8848d6bf8e64451ea79",
+      "filePath": "src/llm/judge.ts",
+      "startLine": 94
+    },
+    "src/llm/prompt/v1.ts#generationPrompt": {
+      "symbolHash": "839a4a4e5eb7e30f7e35660a99389ba118aada6992f0ac32790639d04a442464",
+      "docHash": "1e8d3952bfe34dbc49adce74ef6b61c887d7d37fc55e610efc81cf25df5432e9",
+      "filePath": "src/llm/prompt/v1.ts",
+      "startLine": 23
+    },
+    "src/llm/prompt/v1.ts#judgePrompt": {
+      "symbolHash": "5042e8b2d05a3e0e6089677f9aef8a01e3a5ce5a41dcfd1914134dace066f540",
+      "docHash": "e13aa4da2f6d1c402ae4183f759b4147004caeac7daf0f483bd2b81b116fa247",
+      "filePath": "src/llm/prompt/v1.ts",
+      "startLine": 54
+    },
+    "src/llm/providers/anthropic.ts#anthropicPrice": {
+      "symbolHash": "a76aa1b201371d3e5c428dd9826e48031b83ebc546fa7abfd0cff208df234257",
+      "docHash": "8db7ae0f5cafe67ecefc7dec9bba7d40710a3ca9fe33a2b1e34c79ecd0d4ba83",
+      "filePath": "src/llm/providers/anthropic.ts",
+      "startLine": 40
+    },
+    "src/llm/providers/anthropic.ts#AnthropicProvider": {
+      "symbolHash": "0378fc22b06fff3d96d132167f18bd6a8499924e9f60aaf3d62d2fe2a6aa6e28",
+      "docHash": "77ecf4b968ef5a4689b35632e8e720067d1d62bfd735d84f5ce8fc6253b00683",
+      "filePath": "src/llm/providers/anthropic.ts",
+      "startLine": 50
+    },
+    "src/llm/providers/anthropic.ts#AnthropicProvider.complete": {
+      "symbolHash": "a5d316bcb91e2c7c560e285724125ac89b6eca374c1497ae9460566c80ade94d",
+      "docHash": "b1ab8b2cb359803cedb2e7ad4e1d869b04df43e8d7174c97224fac0b6b16ee09",
+      "filePath": "src/llm/providers/anthropic.ts",
+      "startLine": 72
+    },
+    "src/llm/providers/anthropic.ts#AnthropicProvider.isRetryable": {
+      "symbolHash": "2dd0de860ca7422b2dda04130a70acb705ccc597883a19ebda63874f790bfa31",
+      "docHash": "f51b8172be1b86b575eb3c9d98d5bd270f9da3490ce4da7cc19ea3c07c1a1b29",
+      "filePath": "src/llm/providers/anthropic.ts",
+      "startLine": 124
+    },
+    "src/llm/providers/cliTransport.ts#CliTransportProvider": {
+      "symbolHash": "4db64d6945ec61d23039119b1b1b778618c7cd4e156ae3d7466da2381e92b2d6",
+      "docHash": "49512768586b41398bafe64efb74026f5fd27aa2a95cf9cd3c1b7bf92c7b44e4",
+      "filePath": "src/llm/providers/cliTransport.ts",
+      "startLine": 132
+    },
+    "src/llm/providers/cliTransport.ts#CliTransportProvider.complete": {
+      "symbolHash": "622d43b37892f578b15bd9bd652106c782fefd3bf232c641c630e5bd490f0d02",
+      "docHash": "679045ea161d5dc119a76934ba0bfd19b3f3b76fd472def67b4e684bb5891de3",
+      "filePath": "src/llm/providers/cliTransport.ts",
+      "startLine": 146
+    },
+    "src/llm/providers/cliTransport.ts#CliTransportProvider.isRetryable": {
+      "symbolHash": "6517b7b489c5d9449371cabbf452f60327d409a01235674fae02444326e71db0",
+      "docHash": "ec99c0eba2ef0851cdbd5556497251d2098113f2dfff3303563c0c50c2033861",
+      "filePath": "src/llm/providers/cliTransport.ts",
+      "startLine": 210
+    },
+    "src/llm/providers/cliTransport.ts#CliTransportProvider.describe": {
+      "symbolHash": "887f480c42cd36d277a4ecd9c1df160c74b8df2be6b52b197fb1eeefb19faacf",
+      "docHash": "0260882d9bea4e0675f843c58024410226d3b24f6059917044bd188294ac8d97",
+      "filePath": "src/llm/providers/cliTransport.ts",
+      "startLine": 218
+    },
+    "src/llm/providers/cliTransport.ts#CliTransportError": {
+      "symbolHash": "dad01e5ea9342891716905b9c87600258b3efe982da38c5f3c608bca96fbf35c",
+      "docHash": "982d8fd1867477076778513d135cc1f4a294ae5857a933fadc3e87b0d5ad6ae0",
+      "filePath": "src/llm/providers/cliTransport.ts",
+      "startLine": 232
+    },
+    "src/llm/providers/google.ts#GoogleProvider.complete": {
+      "symbolHash": "b921673d4ab185540d4b002ec5a606663b6b05c73727df9b0f0c814f19c90486",
+      "docHash": "7985dc4553112fffb441166d5a14557cd97740e8a361df2055608ab2a6147486",
+      "filePath": "src/llm/providers/google.ts",
+      "startLine": 58
+    },
+    "src/llm/providers/google.ts#GoogleProvider.isRetryable": {
+      "symbolHash": "ff135bb3c0c02609d11f47544ab9febb752f270045e700ae23c006687015ed96",
+      "docHash": "7b71fd0bff9a65b3e10829716778cba181fbf1170d373eca1fe3f17932bf1900",
+      "filePath": "src/llm/providers/google.ts",
+      "startLine": 89
+    },
+    "src/llm/providers/http.ts#isRetryableHttpError": {
+      "symbolHash": "f073ed05276d6cf1594ecbf4c1a956514454360071db0900fe37ec400a8e3560",
+      "docHash": "8d0c38b0b4196a037f2c033aa57ca33fa7aaf1b936d4628e44f65cbc5d8e4838",
+      "filePath": "src/llm/providers/http.ts",
+      "startLine": 18
+    },
+    "src/llm/providers/http.ts#numberAt": {
+      "symbolHash": "b6228440c749e2d97b14fee6d676c27303cffb52732a8a58180e0ea958ad98c4",
+      "docHash": "b0d10b653896299606863d5e732ed72cf23cee4b3b51be5b19d3006e326008b9",
+      "filePath": "src/llm/providers/http.ts",
+      "startLine": 82
+    },
+    "src/llm/providers/index.ts#createProvider": {
+      "symbolHash": "8554effdbb4cad86a7ad50e7c5664f6c3233b926d42c39f0bc1e6c1ff90783a3",
+      "docHash": "84fc4ec034e007370fc5c1d340acd9e769709a6f36b2afc8005c0c63b6341902",
+      "filePath": "src/llm/providers/index.ts",
+      "startLine": 81
+    },
+    "src/llm/providers/openaiCompatible.ts#OpenAiCompatibleProvider": {
+      "symbolHash": "6840719c71d2b44b1313bbb50b0e43b5f0c61ad5955e87caa28fe2c7bb7953b8",
+      "docHash": "b3560918526a566ad1ae3a1b09817f6fc91fe7279b0f546202e0f7e8ca7ebac1",
+      "filePath": "src/llm/providers/openaiCompatible.ts",
+      "startLine": 36
+    },
+    "src/llm/providers/openaiCompatible.ts#OpenAiCompatibleProvider.isRetryable": {
+      "symbolHash": "ff135bb3c0c02609d11f47544ab9febb752f270045e700ae23c006687015ed96",
+      "docHash": "eedf51f9242e16b7494d6c6543549680f8e1a1f94e255f8b8bfc3f6597b079c4",
+      "filePath": "src/llm/providers/openaiCompatible.ts",
+      "startLine": 92
+    },
+    "src/llm/providers/openaiCompatible.ts#OpenAiCompatibleProvider.describe": {
+      "symbolHash": "e558d09d2710c8ae47b6b3a16f08fbbdcf890b412a5e8f57c7a53b1169ece8e0",
+      "docHash": "3f06695abbdac4015a51e264ef0caa07de539ce39704ba0349fc917aed300ed5",
+      "filePath": "src/llm/providers/openaiCompatible.ts",
+      "startLine": 101
+    },
+    "src/llm/schema.ts#generationResponseJsonSchemaFor": {
+      "symbolHash": "8efe5d2308250d7d93fbe6ab6bbced325cbf8437574debe3ff944e357b432101",
+      "docHash": "cbae05594a6ec6edfbf17267f42b5a8fd09c6c662ea38c2eaddf9c8cb952c5c0",
+      "filePath": "src/llm/schema.ts",
+      "startLine": 38
+    },
+    "src/llm/schema.ts#portableJsonSchema": {
+      "symbolHash": "1953a1f13bf08870aebad089bdb0c8c37f8a263e9172443f9bf19a5c036a92e5",
+      "docHash": "9c87d36bd31917806fccc68eaff62c2d38c8f1b3c7b75723ca5044f7f8008205",
+      "filePath": "src/llm/schema.ts",
+      "startLine": 88
+    },
+    "src/llm/schema.ts#parseGenerationResponse": {
+      "symbolHash": "3913bba1e6134c465f37e9212b35640d9c5fc3715a9bb4623afc149cd3157034",
+      "docHash": "8cff416153d30298c57632fd0043f169d082973f03f71446d7244fa2e447a5cd",
+      "filePath": "src/llm/schema.ts",
+      "startLine": 109
+    },
+    "src/llm/usage.ts#addUsage": {
+      "symbolHash": "28427aee6da40ecef02ea6eb35e86789353a6e9d423e9e60d210b3bbb3f6fa9a",
+      "docHash": "f4b24ba2ece2686cfb580708b12df4c945208c08b0a359400d72e6fde37a2d1b",
+      "filePath": "src/llm/usage.ts",
+      "startLine": 36
+    },
+    "src/llm/usage.ts#usdUsage": {
+      "symbolHash": "ad8e18d7edfff38883848ec18ea72d72674dfa59295346ae2225b982bfcd3288",
+      "docHash": "c0833463074bd82ba09a33d87793b33bd7d5942e06f70514f5e394fe1a43af25",
+      "filePath": "src/llm/usage.ts",
+      "startLine": 64
+    },
+    "src/adapters/typescript/applyEdits.ts#symbolAnchorHash": {
+      "symbolHash": "469647e02e1a64000639ca40fe3f1819f06b8b5a8d368e5a0209e0831102f1cf",
+      "docHash": "f759491071297006629fb8cfceb2e10163ca6c02a1775e5cdb6852180c0024ad",
+      "filePath": "src/adapters/typescript/applyEdits.ts",
+      "startLine": 48
+    },
+    "src/adapters/typescript/applyEdits.ts#applyEdits": {
+      "symbolHash": "1d0ba72adf0b4fdc0503556a25ab3090ef8df6abcf8724208021f48f6962bc32",
+      "docHash": "6bc96d87819745466f1061efda25306b614d558cdfc4819ed024d392a82a8f94",
+      "filePath": "src/adapters/typescript/applyEdits.ts",
+      "startLine": 66
+    },
+    "src/adapters/typescript/extract/callableSymbols.ts#variableSymbol": {
+      "symbolHash": "14321f43037fbbbf6df23456ea9dc29d0ab751956f017976ffebbe5abaa03abc",
+      "docHash": "2674dfc27869bccd9c754b04a5802fc5038a2bcb4561a334b0aa6f0c6c738e0f",
+      "filePath": "src/adapters/typescript/extract/callableSymbols.ts",
+      "startLine": 106
+    },
+    "src/adapters/typescript/extract/declarationSymbols.ts#classSymbol": {
+      "symbolHash": "3479b2a69f8e753755a09f69679bc59a51aed0b09c14334a71571c5ff772ac73",
+      "docHash": "7263792afe7767ccb716e17b045d4107fa7838f14364d98c794d6a355b1cfef5",
+      "filePath": "src/adapters/typescript/extract/declarationSymbols.ts",
+      "startLine": 20
+    },
+    "src/adapters/typescript/extract/declarationSymbols.ts#interfaceSymbol": {
+      "symbolHash": "911068bc88be2ce137bf72f64f0fb4b02e5fd5b19adc4295a9f63cd3a7620996",
+      "docHash": "753c86dcdc4658cb59f248b39cb3c78c53232dda74c003b3028d150e1527271f",
+      "filePath": "src/adapters/typescript/extract/declarationSymbols.ts",
+      "startLine": 58
+    },
+    "src/adapters/typescript/extract/declarationSymbols.ts#typeAliasSymbol": {
+      "symbolHash": "db2c8e539ae47ac3dda0e019ba4b4669158dbbe1cc8fc9ffef395a06f58fbec3",
+      "docHash": "adb2b12b373f2a1dce6fc1fa0cd4bfcfc3e79fbae8f90463b24b1246151c1cf1",
+      "filePath": "src/adapters/typescript/extract/declarationSymbols.ts",
+      "startLine": 89
+    },
+    "src/adapters/typescript/extract/declarationSymbols.ts#enumSymbol": {
+      "symbolHash": "f316863a59018adc83a390b2b0d47b04dc8b793fb2fcc8207db93d9ec80e6277",
+      "docHash": "5942e20ebf2ae6eb8282272224b61ab9aef24c2210a0ff2a022e4392388d4964",
+      "filePath": "src/adapters/typescript/extract/declarationSymbols.ts",
+      "startLine": 114
+    },
+    "src/adapters/typescript/extract/index.ts#extractSymbols": {
+      "symbolHash": "161f0834b12bcf3cd86455016b62c01171230412d93f71b9c18b6ab01a5fbce6",
+      "docHash": "8941e10033b6a9be1394c21beecc51f0681f5b4b54540a1a99618ae6b708c4c1",
+      "filePath": "src/adapters/typescript/extract/index.ts",
+      "startLine": 26
+    },
+    "src/adapters/typescript/extract/jsdoc.ts#parseExistingDoc": {
+      "symbolHash": "37041e16fee8329285434555c29afa7723c52d8495bf3a2859620e3e060af77d",
+      "docHash": "4241c6463303fcaf5bfd9bdc95ca69d1bce22a1218d803cd11ea0de38716f47f",
+      "filePath": "src/adapters/typescript/extract/jsdoc.ts",
+      "startLine": 12
+    },
+    "src/adapters/typescript/extract/signature.ts#renderCallableSignature": {
+      "symbolHash": "854f7251c162966343fee2035e895c30f9c99450531475b16d1610899ee47263",
+      "docHash": "fe3f28e21c6d13f942b9e8078979662202b8d1a514208dda45bbb89d0c1d9ee1",
+      "filePath": "src/adapters/typescript/extract/signature.ts",
+      "startLine": 22
+    },
+    "src/adapters/typescript/extract/signature.ts#renderTypeParameters": {
+      "symbolHash": "cdf9eab6e0838de19d02c0b2cedb8dc0a950f466ce1e32955fc06cf869190658",
+      "docHash": "ed6527468b836247285c5dd5c4626ce56592809ff6fe1446fe86e04ada6a5786",
+      "filePath": "src/adapters/typescript/extract/signature.ts",
+      "startLine": 57
+    },
+    "src/adapters/typescript/extract/signature.ts#getCallableBody": {
+      "symbolHash": "801e00b6a7d6d4a39f12908bcd037017c954d73125b11434d86dad9ab75cd181",
+      "docHash": "3178bc719f17e91706a56bcbacb06178aa035e47cda7f9f3c1c456fce7247182",
+      "filePath": "src/adapters/typescript/extract/signature.ts",
+      "startLine": 78
+    },
+    "src/adapters/typescript/extract/signature.ts#callableReturnsValue": {
+      "symbolHash": "63b6daa9f0930082b174fd792c4082b11254926573a5797179478d38b3c522d6",
+      "docHash": "ca3eecc1d9c98b7988ced8a09645cb553de565211651d0efaefc78d225c3ff63",
+      "filePath": "src/adapters/typescript/extract/signature.ts",
+      "startLine": 90
+    },
+    "src/adapters/typescript/extract/sourceNotes.ts#extractSourceNote": {
+      "symbolHash": "ecdadaab9ea837b3a3a245f40ae891184c509f3b040afe4e18007cb37f0b34aa",
+      "docHash": "e11db02cf58848b7622b1cdf9af5b0de52d4ae8c69ad4441adec172d44ca837d",
+      "filePath": "src/adapters/typescript/extract/sourceNotes.ts",
+      "startLine": 16
+    },
+    "src/adapters/typescript/extract/symbolFactory.ts#makeSymbol": {
+      "symbolHash": "9e34c2b846aac4417379e90fa5e6ad6bbb49490ed27563874d3197453655b992",
+      "docHash": "9f51cff8c4a0eea06fbbf450a736701919a62935b5f599fe90913204f15a77b7",
+      "filePath": "src/adapters/typescript/extract/symbolFactory.ts",
+      "startLine": 16
+    },
+    "src/adapters/typescript/extract/visibility.ts#isTopLevelExported": {
+      "symbolHash": "693b7a8b1d4e0876d32c614183b16c489cf24af44d3a7d10130f8ad8234dc1de",
+      "docHash": "d5799058f6c9660e437bf6d769cab7f7897af431f5804851ec5281c3d470737e",
+      "filePath": "src/adapters/typescript/extract/visibility.ts",
+      "startLine": 9
+    },
+    "src/adapters/typescript/extract/visibility.ts#getVisibility": {
+      "symbolHash": "ec4b420e152e954469fc5cffbc0bee73cf18ff3c3b9a240d953acda9b8a2d667",
+      "docHash": "d59d3c33234f869c3073cd2359a53c659d6f6ff1a3917d3886185e1c5a8b2bb0",
+      "filePath": "src/adapters/typescript/extract/visibility.ts",
+      "startLine": 21
+    },
+    "src/adapters/typescript/extract/visibility.ts#isDeclarationExported": {
+      "symbolHash": "c0b3b5e92f6f768c8e77371a0683aede3097e855be6b36ac5e9482493f5a7ccc",
+      "docHash": "92363b9ccfcd6db00e308f7ddb881899996cf4a004e1b35673391dad2f08028d",
+      "filePath": "src/adapters/typescript/extract/visibility.ts",
+      "startLine": 42
+    },
+    "src/adapters/typescript/extract/visibility.ts#getContainerName": {
+      "symbolHash": "50579bd62637525e59426a7eb8d98921d89c75f5cbd37add3fec62ec2f2cecac",
+      "docHash": "a2a47839cdcc64e778044fa29f51457c9a9052a690c5958b1809dec34b2d158d",
+      "filePath": "src/adapters/typescript/extract/visibility.ts",
+      "startLine": 67
+    },
+    "src/adapters/typescript/graph.ts#buildGraph": {
+      "symbolHash": "cc9035350905506512e6d5125295f054dfa908742d0b47cfc44c4a191932cb48",
+      "docHash": "dc7bf1895c23c529a770867e0dc24346a69fd87b88ee9977a38edfb996de0798",
+      "filePath": "src/adapters/typescript/graph.ts",
+      "startLine": 37
+    },
+    "src/adapters/typescript/graphContext.ts#resolveCallee": {
+      "symbolHash": "e414aa9a4eb04cfcd51a472bfd34ae8cbe70312931728ad5604c29b133324527",
+      "docHash": "d97959491652e57cc63b4559f93363c7c78a80df55d6c6f8fa26c57066e8eb1d",
+      "filePath": "src/adapters/typescript/graphContext.ts",
+      "startLine": 20
+    },
+    "src/adapters/typescript/graphContext.ts#declarationLookup": {
+      "symbolHash": "ae4f888e84a2753713d5c04b82d2b8222aa4d8e39951c7b43c4a41195b6a3d19",
+      "docHash": "095873712031e95bf0affec82754d8ca9b0d492e7b019d7b798d3e543d768f02",
+      "filePath": "src/adapters/typescript/graphContext.ts",
+      "startLine": 46
+    },
+    "src/adapters/typescript/graphContext.ts#enclosingSymbol": {
+      "symbolHash": "a2621ae9dffee99670e70263f465340e67f1d6bca539b20f747de9b0f4b132ce",
+      "docHash": "5938907bb4545912b55b36a8a74afdd79f64612ff5e9d1fa953078a0fc5c05aa",
+      "filePath": "src/adapters/typescript/graphContext.ts",
+      "startLine": 65
+    },
+    "src/adapters/typescript/graphContext.ts#enclosingFunctionName": {
+      "symbolHash": "36c473d13883fdd5ee6005dd1313f430d5b904ecdf52f3d026422e3d189ad00a",
+      "docHash": "5f71479f277c40d2a415d4d38de4e54fcee018cc6a2ad0a59d109a7901a3189c",
+      "filePath": "src/adapters/typescript/graphContext.ts",
+      "startLine": 87
+    },
+    "src/adapters/typescript/graphContext.ts#enclosingTestNames": {
+      "symbolHash": "153c3522c047641cb2471f8551feb064ec2020a058cd4a20b1d6d0b5673319e5",
+      "docHash": "c514f92b3951ac8759111285a5311d026cfb0b04e700e03facf2f3f64882dd96",
+      "filePath": "src/adapters/typescript/graphContext.ts",
+      "startLine": 109
+    },
+    "src/adapters/typescript/graphContext.ts#sourceWindow": {
+      "symbolHash": "b507b013b4d234e523fdecd3389fd69ad84d625a6e6de07b5fa9ef30b534e3bb",
+      "docHash": "1d953ec7b21bfd95c52f1f4cf7c7dfc2216059bf7aa860d53ec19750f1551511",
+      "filePath": "src/adapters/typescript/graphContext.ts",
+      "startLine": 142
+    },
+    "src/adapters/typescript/loadProject.ts#resolveTsconfigPath": {
+      "symbolHash": "9a19e425a75daac40c0123f4e88bd95611d06f0faa7ae9c20dec0347c9114989",
+      "docHash": "89797f278136f7a5d9f2e5e32b1393257ab2455b0e1ee74286afe424c21c0c5f",
+      "filePath": "src/adapters/typescript/loadProject.ts",
+      "startLine": 31
+    },
+    "src/adapters/typescript/loadProject.ts#loadProject": {
+      "symbolHash": "1f1ccd4d2ca75d09ee45817d633d010e5824760f85b2006d9e25c1c182a5fa12",
+      "docHash": "0a56db31b757b7c29d1012a87685fd482a5c507384358c21820f5687de10c399",
+      "filePath": "src/adapters/typescript/loadProject.ts",
+      "startLine": 45
+    },
+    "src/adapters/typescript/loadWorkspace.ts#resolveWorkspace": {
+      "symbolHash": "82692fbf004db768995f008f6656e52f6c5d806a54374b81ef495269f30db90a",
+      "docHash": "87e8e6cab091e94e7795a2cbe32a47fc5f619c075f31b5ec0b05ec15b7251483",
+      "filePath": "src/adapters/typescript/loadWorkspace.ts",
+      "startLine": 50
+    },
+    "src/adapters/typescript/loadWorkspace.ts#loadWorkspace": {
+      "symbolHash": "5f05cef774d9c0164459909fbf7587b19dc8d67fdc61c3d7f38b4d71ab795ef7",
+      "docHash": "f374ad333f32bd71c04c71cbc2150bf2cba529474767ce39dad7aeda8f758e88",
+      "filePath": "src/adapters/typescript/loadWorkspace.ts",
+      "startLine": 87
+    },
+    "src/adapters/typescript/publicSurface.ts#publicSurfaceSymbolIds": {
+      "symbolHash": "332fcdd4ef889a169402ebaf991956e8d20d2c2b2db7d2875c2017ee27011040",
+      "docHash": "2e3839b2d1bd4f1cb27ca7a55fcd1e75d22b2d1ba7f378663be4cf6bb8b04b37",
+      "filePath": "src/adapters/typescript/publicSurface.ts",
+      "startLine": 18
+    },
+    "src/adapters/typescript/referencedTypes.ts#extractReferencedTypes": {
+      "symbolHash": "1896f5c0c30b8298328617177119dddac780cae366d10af07cfc5ed486de9e82",
+      "docHash": "27a36d9686f0af27a27c9b670e5aadf39a01cb58f7a215bdea97a82a74e34e1f",
+      "filePath": "src/adapters/typescript/referencedTypes.ts",
+      "startLine": 27
+    },
+    "src/adapters/typescript/renderDoc.ts#renderDoc": {
+      "symbolHash": "3e75e8daf002116c221f4830dad931973e8e4c1177f8e6cefdfc6d2cd307ddd3",
+      "docHash": "d8cc907fc3c49812d46fac7d0b9bac16e939ec031ae06cf932fa3ca5b5d87569",
+      "filePath": "src/adapters/typescript/renderDoc.ts",
+      "startLine": 24
+    },
+    "src/adapters/typescript/renderDoc.ts#renderConfiguredDoc": {
+      "symbolHash": "cc8c81fb3e83f4ec86c0f39c25cee0755fcf809fc4eaa54d97d85d5e32dd6bde",
+      "docHash": "27153db22fcc01e4719d34642c5596b1b7a2ad0205389e96279848c2926d9f96",
+      "filePath": "src/adapters/typescript/renderDoc.ts",
+      "startLine": 70
     }
   }
 }

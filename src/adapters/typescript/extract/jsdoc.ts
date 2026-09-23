@@ -4,6 +4,11 @@ import type { ExistingDoc, ExistingDocTag } from "../../../core/symbol.js";
 import { sourceRange } from "./range.js";
 import { KNOWN_JSDOC_TAGS } from "./types.js";
 
+/**
+ * Extract the latest JSDoc description, tags, raw text, and source range from the node.
+ * @param node JSDocable node whose latest JSDoc comment should be parsed.
+ * @returns The parsed existing documentation, or null when the node has no JSDoc comment.
+ */
 export const parseExistingDoc = (node: JSDocableNode): ExistingDoc | null => {
   const doc = node.getJsDocs().at(-1);
   if (doc === undefined) return null;

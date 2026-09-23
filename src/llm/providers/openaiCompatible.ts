@@ -5,10 +5,11 @@ import {
   type ModelCapabilities,
   type ModelPrice,
 } from "../capabilities.js";
-import type {
-  LlmProvider,
-  ProviderRequest,
-  ProviderResponse,
+import {
+  promptWithPrefix,
+  type LlmProvider,
+  type ProviderRequest,
+  type ProviderResponse,
 } from "../client.js";
 import { usdUsage, type ProviderUsage } from "../usage.js";
 import {
@@ -30,6 +31,9 @@ export interface OpenAiCompatibleOptions {
   readonly fetchImpl?: typeof fetch;
 }
 
+/**
+ * Use configured OpenAI-compatible endpoints to request schema-constrained completions and report model capabilities.
+ */
 export class OpenAiCompatibleProvider implements LlmProvider {
   readonly id: string;
   readonly #options: OpenAiCompatibleOptions;
@@ -49,7 +53,7 @@ export class OpenAiCompatibleProvider implements LlmProvider {
       [this.#options.maxTokensField ?? "max_tokens"]: maxTokens,
       messages: [
         { role: "system", content: request.system },
-        { role: "user", content: request.prompt },
+        { role: "user", content: promptWithPrefix(request) },
       ],
       response_format: {
         type: "json_schema",
@@ -82,10 +86,19 @@ export class OpenAiCompatibleProvider implements LlmProvider {
     return { value: contentOf(payload, this.id), usage: this.#usage(payload) };
   }
 
+  /**
+   * Determine whether the error represents a retryable HTTP provider failure.
+   * @param error The error to evaluate.
+   */
   isRetryable(error: unknown): boolean {
     return isRetryableHttpError(error);
   }
 
+  /**
+   * Describe the model using configured or fallback capability limits and optional pricing information.
+   * @param model Identify the model whose capabilities and pricing should be resolved.
+   * @returns Return the model's capabilities, including context and output limits, structured-output support, cost basis, and optional pricing.
+   */
   describe(model: string): ModelCapabilities {
     return pricedCapabilities(
       model,

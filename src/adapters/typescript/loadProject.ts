@@ -24,6 +24,10 @@ const DEFAULT_EXCLUDES = [
   "**/*.d.ts",
 ];
 
+/**
+ * Resolve the supplied path to an accessible absolute tsconfig.json file.
+ * @param path Path to a TypeScript configuration file or project directory.
+ */
 export const resolveTsconfigPath = async (path: string): Promise<string> => {
   const absolutePath = resolve(path);
   const tsconfigPath = absolutePath.endsWith(".json")
@@ -34,6 +38,10 @@ export const resolveTsconfigPath = async (path: string): Promise<string> => {
   return tsconfigPath;
 };
 
+/**
+ * Load the configured TypeScript project and select its eligible source files.
+ * @param options Project configuration containing the tsconfig path and optional include and exclude globs.
+ */
 export const loadProject = async (
   options: TypeScriptProjectOptions,
 ): Promise<TypeScriptProjectHandle> => {

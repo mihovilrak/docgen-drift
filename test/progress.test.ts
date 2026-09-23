@@ -35,6 +35,24 @@ describe("generation progress", () => {
     expect(output.text()).toContain("— Adds supported behavior.");
   });
 
+  it("keeps raw provider diagnostics out of normal output and shows them when verbose", () => {
+    const normal = capture(false);
+    const verbose = capture(false);
+    const failed = event(
+      "generation",
+      "FAILED",
+      "claude reached its structured-output turn limit",
+      '{"usage":{"input_tokens":99999},"stop_reason":"tool_use"}',
+    );
+
+    createGenerationProgressReporter(1, false, normal.stream).update(failed);
+    createGenerationProgressReporter(1, true, verbose.stream).update(failed);
+
+    expect(normal.text()).not.toContain("input_tokens");
+    expect(verbose.text()).toContain("diagnostic:");
+    expect(verbose.text()).toContain("input_tokens");
+  });
+
   it("clears an in-place TTY status when finished", () => {
     const output = capture(true);
     const reporter = createGenerationProgressReporter(1, false, output.stream);
@@ -51,6 +69,7 @@ const event = (
   stage: GenerationProgressEvent["stage"],
   outcome: GenerationProgressEvent["outcome"],
   reason?: string,
+  diagnostic?: string,
 ): GenerationProgressEvent => ({
   stage,
   symbolId: "src/api.ts#leaf",
@@ -59,6 +78,7 @@ const event = (
   outcome,
   attempts: 1,
   ...(reason === undefined ? {} : { reason }),
+  ...(diagnostic === undefined ? {} : { diagnostic }),
 });
 
 const capture = (isTTY: boolean) => {

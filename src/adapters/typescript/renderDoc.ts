@@ -3,6 +3,7 @@ import type {
   GeneratedDoc,
   Symbol as DocumentationSymbol,
 } from "../../core/symbol.js";
+import type { DocgenConfig } from "../../config/schema.js";
 
 export interface RenderDocOptions {
   readonly indentation?: string;
@@ -14,6 +15,12 @@ export interface RenderDocOptions {
   readonly preserveTags?: readonly string[];
 }
 
+/**
+ * Assemble a JSDoc comment from generated content and symbol metadata, honoring formatting, emission, and tag-preservation options.
+ * @param doc Generated documentation containing the summary, optional detail and return text, parameter descriptions, and thrown-error descriptions.
+ * @param symbol Documentation symbol whose parameters, return status, and preserved tags determine which JSDoc tags are rendered.
+ * @param options Optional formatting, tag-emission, and preserved-tag settings.
+ */
 export const renderDoc = (
   doc: GeneratedDoc,
   symbol: DocumentationSymbol,
@@ -50,6 +57,32 @@ export const renderDoc = (
   }
   lines.push(" */");
   return lines.join(`${eol}${indentation}`);
+};
+
+/**
+ * Render generated documentation as a configured JSDoc comment, applying granularity, tag, preservation, and source-formatting settings.
+ * @param doc Generated documentation content to render.
+ * @param symbol Documented symbol metadata used to contextualize the comment.
+ * @param config Documentation configuration controlling granularity, emitted tags, and preserved tags.
+ * @param formatting Optional indentation and line-ending settings for the rendered comment.
+ * @returns The rendered JSDoc comment.
+ */
+export const renderConfiguredDoc = (
+  doc: GeneratedDoc,
+  symbol: DocumentationSymbol,
+  config: DocgenConfig,
+  formatting: Pick<RenderDocOptions, "indentation" | "eol"> = {},
+): string => {
+  const standard = config.docs.granularity !== "minimal";
+  const detailed = config.docs.granularity === "detailed";
+  return renderDoc(doc, symbol, {
+    ...formatting,
+    emitDetail: detailed,
+    emitParams: standard && config.docs.tags.params,
+    emitReturns: standard && config.docs.tags.returns,
+    emitThrows: detailed && config.docs.tags.throws,
+    preserveTags: config.docs.preserveTags,
+  });
 };
 
 const docLines = (text: string): readonly string[] =>

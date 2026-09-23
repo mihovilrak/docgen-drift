@@ -12,6 +12,11 @@ import { renderTypeParameters } from "./signature.js";
 import { extractSourceNote } from "./sourceNotes.js";
 import { makeSymbol } from "./symbolFactory.js";
 
+/**
+ * Build a documentation symbol for a class declaration, including its type parameters, inheritance, implemented interfaces, members, visibility, and existing documentation.
+ * @param handle Use the TypeScript project handle to create the symbol with normalized source metadata.
+ * @param declaration Provide the class declaration to extract.
+ */
 export const classSymbol = (
   handle: TypeScriptProjectHandle,
   declaration: ClassDeclaration,
@@ -45,6 +50,11 @@ export const classSymbol = (
   });
 };
 
+/**
+ * Build a documentation symbol for an interface declaration, including its rendered type parameters and inheritance.
+ * @param handle Use the TypeScript project context when assembling the symbol.
+ * @param declaration Read the interface name, type parameters, extended interfaces, members, visibility, and source documentation from this declaration.
+ */
 export const interfaceSymbol = (
   handle: TypeScriptProjectHandle,
   declaration: InterfaceDeclaration,
@@ -71,6 +81,11 @@ export const interfaceSymbol = (
   });
 };
 
+/**
+ * Build the documentation symbol for a TypeScript type-alias declaration.
+ * @param handle Provide the TypeScript project context used to assemble the symbol and resolve its source metadata.
+ * @param declaration Provide the type-alias declaration whose name, type parameters, body, visibility, documentation, and source note are extracted.
+ */
 export const typeAliasSymbol = (
   handle: TypeScriptProjectHandle,
   declaration: TypeAliasDeclaration,
@@ -91,6 +106,11 @@ export const typeAliasSymbol = (
   });
 };
 
+/**
+ * Build a documentation symbol for an enum, including its members, visibility, existing JSDoc, and anchored source note.
+ * @param handle Project context used to assemble the documentation symbol and normalize its source metadata.
+ * @param declaration Enum declaration whose name, members, export status, documentation, and source location are extracted.
+ */
 export const enumSymbol = (
   handle: TypeScriptProjectHandle,
   declaration: EnumDeclaration,

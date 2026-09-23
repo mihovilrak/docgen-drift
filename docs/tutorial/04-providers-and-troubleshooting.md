@@ -73,6 +73,14 @@ Increase the provider's `timeoutMs` only after checking that the upstream
 process is actually making progress. Keep `generate.concurrency` at `1` for
 subscription CLIs until the installed tool and account behavior are measured.
 
+### Claude exits with `tool_use` or a turn-limit error
+
+Claude may need several internal turns to produce JSON that satisfies the
+schema. docgen allows three turns, disables tools, and reports this exit as a
+structured-output turn-limit failure. It does not retry automatically because
+another CLI process would spend more allowance. Capture one bounded run with
+`--verbose --evaluation <path>` and inspect the diagnostic before retrying.
+
 ### The judge rejects useful output
 
 Run with `--verbose` and inspect its reason. Improve the selected context or
@@ -112,6 +120,7 @@ when testing a generation/judge pair.
 
 ```bash
 pnpm exec docgen fix -m -p src/public-api.ts -n --verbose \
+  --evaluation docgen-evaluation.json \
   > docgen-preview.diff 2> docgen-preview.log
 ```
 
@@ -122,6 +131,8 @@ Record:
 - selected symbol count and estimate;
 - wall time;
 - generation, skip, reject, and failure counts;
+- generation/judge requests, attempts, outcomes, and timings from the
+  evaluation artifact;
 - the first actionable error, without credential contents.
 
 Do not attach provider credential stores, environment dumps, or prompts that

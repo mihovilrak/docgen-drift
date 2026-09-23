@@ -14,6 +14,11 @@ export interface SymbolHashes {
   readonly docHash: string;
 }
 
+/**
+ * Canonicalize source text for stable hashing while preserving token boundaries and literal contents.
+ * @param text Source text to normalize by removing comments and insignificant whitespace.
+ * @returns The normalized source text.
+ */
 export const normalizeCode = (text: string): string => {
   let result = "";
   let index = 0;
@@ -89,6 +94,10 @@ export const normalizeCode = (text: string): string => {
   return result.trim();
 };
 
+/**
+ * Normalize an existing document into a trimmed, whitespace-collapsed string containing its description and raw tags.
+ * @param doc The existing document to normalize, or null when no document exists.
+ */
 export const normalizeDoc = (doc: ExistingDoc | null): string =>
   doc === null
     ? ""
@@ -103,10 +112,9 @@ export const hashText = (text: string): string =>
 export const EMPTY_DOC_HASH = hashText("");
 
 /**
- * Combine a symbol's normalized signature, body, optional source note, and recipe versions into a content hash separate from its existing-doc hash.
- * @param symbol Documentation symbol whose signature, body, source note, and existing doc feed the two hashes.
- * @param recipe Versioning and inclusion flags (source-note toggle, context recipe version, prompt version, config fingerprint) mixed into the content hash so recipe changes invalidate it.
- * @returns symbolHash covers the normalized signature, body, source note, and recipe versions; docHash covers only the normalized existing documentation, so code drift and doc drift can be detected independently.
+ * Compute stable content and documentation hashes from normalized symbol data and the selected hashing recipe.
+ * @param symbol Symbol whose signature, body, source notes, and existing documentation contribute to the hashes.
+ * @param recipe Hashing options and version fingerprints that control source-note inclusion and invalidate hashes when hashing inputs change.
  */
 export const hashSymbol = (
   symbol: DocumentationSymbol,

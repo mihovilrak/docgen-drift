@@ -84,14 +84,22 @@ the behavior a useful JSDoc should capture.
 
 ```bash
 pnpm exec docgen fix --missing --path src/core/diff.ts --dry-run --verbose \
+  --evaluation docgen-evaluation.json \
   > docgen-preview.diff 2> docgen-preview.log
 ```
 
-The two files have separate purposes:
+The three files have separate purposes:
 
 - `docgen-preview.diff` contains rejection/failure details, the proposed unified
   diff, and the final count.
 - `docgen-preview.log` contains the estimate and generation/judge progress.
+- `docgen-evaluation.json` contains source identifiers, semantic documentation,
+  judge decisions, rendered comments, edit status, and stage timings.
+
+The evaluation file is written atomically. In a dry run, an accepted comment
+has `editStatus: "proposed"`; a real write uses `"written"`. Rejected output is
+`"not-selected"`, while a validated candidate that could not be edited is
+`"edit-failed"`.
 
 An accepted run resembles:
 

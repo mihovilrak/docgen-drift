@@ -11,6 +11,12 @@ import {
 import type { Symbol as DocumentationSymbol } from "../../core/symbol.js";
 import type { TypeScriptProjectHandle } from "./loadProject.js";
 
+/**
+ * Resolve a call expression to its uniquely matching documented declaration.
+ * @param call Call expression whose callee declaration should be resolved.
+ * @param handle TypeScript project handle used to normalize declaration source paths.
+ * @param lookup Map from normalized declaration locations and names to documented symbols.
+ */
 export const resolveCallee = (
   call: CallExpression,
   handle: TypeScriptProjectHandle,
@@ -32,6 +38,11 @@ export const resolveCallee = (
   return undefined;
 };
 
+/**
+ * Group symbols by their file path and name for declaration-based lookup.
+ * @param symbols Symbols to index by the combined file path and name of each declaration.
+ * @returns A read-only map from each file-path/name key to the symbols sharing that declaration identity.
+ */
 export const declarationLookup = (
   symbols: readonly DocumentationSymbol[],
 ): ReadonlyMap<string, readonly DocumentationSymbol[]> => {
@@ -45,6 +56,12 @@ export const declarationLookup = (
   return result;
 };
 
+/**
+ * Find the innermost symbol whose declaration contains the specified position.
+ * @param position Source position to locate within the declarations.
+ * @param symbols Symbols to search for a containing declaration.
+ * @returns The smallest enclosing symbol, or undefined when no declaration contains the position.
+ */
 export const enclosingSymbol = (
   position: number,
   symbols: readonly DocumentationSymbol[],
@@ -62,6 +79,11 @@ export const enclosingSymbol = (
         (right.declaration.end - right.declaration.start),
     )[0];
 
+/**
+ * Find the nearest enclosing function-like declaration and return its declared name, including names obtained from variable declarations.
+ * @param node AST node whose enclosing function name should be determined.
+ * @returns The enclosing function name, or undefined when no enclosing function-like declaration is found.
+ */
 export const enclosingFunctionName = (node: Node): string | undefined => {
   const callable = node.getFirstAncestor((ancestor) =>
     Node.isFunctionLikeDeclaration(ancestor),
@@ -80,6 +102,10 @@ export const enclosingFunctionName = (node: Node): string | undefined => {
     ?.getName();
 };
 
+/**
+ * Collect the literal names of enclosing describe, it, and test calls from outermost to innermost.
+ * @param node AST node whose ancestor calls are inspected.
+ */
 export const enclosingTestNames = (node: Node): readonly string[] => {
   const names: string[] = [];
   let current = node.getParent();
@@ -107,6 +133,12 @@ export const enclosingTestNames = (node: Node): readonly string[] => {
   return names.reverse();
 };
 
+/**
+ * Extract a trimmed source-text window centered on the specified position.
+ * @param sourceFile Source file from which to read the surrounding lines.
+ * @param position Character position whose line should be centered in the window.
+ * @param radius Number of lines to include on each side of the position's line.
+ */
 export const sourceWindow = (
   sourceFile: SourceFile,
   position: number,

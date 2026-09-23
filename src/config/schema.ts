@@ -112,6 +112,14 @@ const contextSchema = z
       .strict()
       .prefault({}),
     bodyMaxLines: z.number().int().positive().default(120),
+    shared: z
+      .object({
+        enabled: z.boolean().default(true),
+        budgetTokens: z.number().int().positive().default(1200),
+        minSymbols: z.number().int().min(2).default(2),
+      })
+      .strict()
+      .prefault({}),
     git: z
       .object({ timeoutMs: z.number().int().positive().default(2000) })
       .strict()

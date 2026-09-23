@@ -253,6 +253,26 @@
           "exclusiveMinimum": 0,
           "maximum": 9007199254740991
         },
+        "shared": {
+          "type": "object",
+          "properties": {
+            "enabled": { "default": true, "type": "boolean" },
+            "budgetTokens": {
+              "default": 1200,
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            },
+            "minSymbols": {
+              "default": 2,
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": ["enabled", "budgetTokens", "minSymbols"],
+          "additionalProperties": false
+        },
         "git": {
           "type": "object",
           "properties": {
@@ -272,6 +292,7 @@
         "sources",
         "callSites",
         "bodyMaxLines",
+        "shared",
         "git"
       ],
       "additionalProperties": false

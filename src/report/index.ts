@@ -14,6 +14,12 @@ export const summarize = (results: readonly CheckResult[]): ReportSummary => ({
   orphaned: count(results, "orphaned"),
 });
 
+/**
+ * Select drifted results and optionally include missing or orphaned results according to reporting settings.
+ * @param results Provide the check results to filter.
+ * @param options Specify whether missing and orphaned results should be reported.
+ * @returns Return the results eligible for reporting.
+ */
 export const reportableResults = (
   results: readonly CheckResult[],
   options: {
@@ -28,6 +34,12 @@ export const reportableResults = (
       (result.status === "orphaned" && options.reportOrphaned),
   );
 
+/**
+ * Format check outcomes as a terse human-readable report with issue lines and status counts.
+ * @param results All check results used to calculate drifted, missing, orphaned, and unchanged totals.
+ * @param issues Check results to list with file path, line number, status, and symbol identifier.
+ * @returns A newline-terminated human-readable report containing one line per issue followed by aggregate status counts.
+ */
 export const renderHuman = (
   results: readonly CheckResult[],
   issues: readonly CheckResult[],
@@ -43,6 +55,12 @@ export const renderHuman = (
   return `${lines.join("\n")}\n`;
 };
 
+/**
+ * Serialize the check report into structured, human-readable JSON.
+ * @param results Check results to include in the report's results array and summary.
+ * @param issues Check results to include in the report's issues array.
+ * @returns A formatted JSON string containing the summary, issues, and results.
+ */
 export const renderJson = (
   results: readonly CheckResult[],
   issues: readonly CheckResult[],
@@ -57,6 +75,11 @@ export const renderJson = (
     2,
   )}\n`;
 
+/**
+ * Serialize the check results as an indented, newline-terminated SARIF 2.1.0 report for CLI output.
+ * @param issues Provide the check results to represent as SARIF results with rule statuses, messages, source file locations, and starting lines.
+ * @returns Return the formatted SARIF 2.1.0 report as a JSON string.
+ */
 export const renderSarif = (issues: readonly CheckResult[]): string =>
   `${JSON.stringify(
     {

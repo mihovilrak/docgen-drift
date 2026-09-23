@@ -13,12 +13,12 @@ import { extractSymbols } from "../adapters/typescript/extract/index.js";
 import { buildGraph } from "../adapters/typescript/graph.js";
 import type { TypeScriptProjectHandle } from "../adapters/typescript/loadProject.js";
 import type { DocgenConfig } from "../config/schema.js";
-import { assembleContext } from "../core/budget.js";
+import { assembleContext, type TokenCount } from "../core/budget.js";
+import { assembleFileContext, type FileContext } from "../core/fileContext.js";
 import { findGitSubject } from "../core/git.js";
 import { reverseTopologicalLevels } from "../core/graph.js";
 import { hashText } from "../core/hash.js";
 import type {
-  GeneratedDoc,
   Symbol as DocumentationSymbol,
   SymbolId,
 } from "../core/symbol.js";
@@ -30,11 +30,26 @@ import {
 import { JudgeClient, type JudgeResult } from "../llm/judge.js";
 import { contextBudgetFor } from "../llm/capabilities.js";
 import {
+  generationOutputPolicy,
+  projectGeneratedDoc,
+  type GenerationOutputPolicy,
+} from "../llm/outputPolicy.js";
+import {
   generationPrompt,
   generationSystemPrompt,
 } from "../llm/prompt/index.js";
 import { tokenCounter } from "../llm/tokenizer.js";
 import { addUsage, EMPTY_USAGE, type ProviderUsage } from "../llm/usage.js";
+import {
+  elapsedMilliseconds,
+  EMPTY_GENERATION_STAGE,
+  EMPTY_JUDGE_STAGE,
+  type GenerationRunMetrics,
+} from "./generationMetrics.js";
+import {
+  evaluationRecord,
+  type GenerationEvaluationRecord,
+} from "./evaluation.js";
 
 export interface GenerationProviders {
   readonly generation: LlmProvider;
@@ -50,6 +65,7 @@ export interface ProjectGenerationProgress {
   readonly outcome: "OK" | "SKIP" | "ACCEPT" | "REJECT" | "FAILED";
   readonly attempts: number;
   readonly reason?: string;
+  readonly diagnostic?: string;
 }
 
 export interface ProjectGenerationResult {
@@ -65,20 +81,24 @@ export interface ProjectGenerationResult {
   readonly failed: readonly {
     readonly id: SymbolId;
     readonly reason: string;
+    readonly diagnostic?: string;
   }[];
   readonly usage: ProviderUsage;
   readonly edits: ApplyEditsResult;
+  readonly metrics: Omit<GenerationRunMetrics, "durationMs">;
+  readonly evaluation: readonly GenerationEvaluationRecord[];
 }
 
 /**
- * Generate in dependency order, propagate only accepted callee summaries, and optionally write accepted documentation.
- * @param handle TypeScript project handle supplying the project root and source files to analyze.
- * @param targetIds Stable symbol identifiers restricting generation to the selected symbols.
- * @param config Documentation-generation configuration controlling extraction, context, models, concurrency, tests, and output behavior.
- * @param providers Generation provider configuration, including the optional judge provider.
- * @param write Whether accepted documentation edits should be written to source files.
- * @param judgeEnabled Whether generated documentation should be evaluated by the judge; defaults to config.judge.enabled.
- * @param onProgress Optional callback receiving generation and judging progress events.
+ * Generate documentation for the selected project symbols in dependency order, optionally judging results and reporting progress.
+ * @param handle Provide the TypeScript project handle to analyze.
+ * @param targetIds Provide the symbol IDs to document.
+ * @param config Provide the documentation-generation configuration.
+ * @param providers Provide the generation and optional judging providers.
+ * @param write Set whether planned documentation edits should be written.
+ * @param judgeEnabled Set whether generated documentation should be evaluated; defaults to the configured judge setting.
+ * @param onProgress Optionally receive generation and judging progress events.
+ * @param captureEvaluation Set whether generation and judgment inputs should be included in the result.
  */
 export const generateProject = async (
   handle: TypeScriptProjectHandle,
@@ -88,6 +108,7 @@ export const generateProject = async (
   write: boolean,
   judgeEnabled = config.judge.enabled,
   onProgress?: (event: ProjectGenerationProgress) => void,
+  captureEvaluation = false,
 ): Promise<ProjectGenerationResult> => {
   const symbols = extractSymbols(handle, {
     includeNonFunctionVariables: config.symbols.kinds.includes("variable"),
@@ -113,10 +134,17 @@ export const generateProject = async (
   const generated: SymbolId[] = [];
   const skipped: { id: SymbolId; reason: string }[] = [];
   const rejected: { id: SymbolId; reason: string }[] = [];
-  const failed: { id: SymbolId; reason: string }[] = [];
+  const failed: { id: SymbolId; reason: string; diagnostic?: string }[] = [];
   const plans: PlannedDocEdit[] = [];
+  const evaluationInputs: {
+    readonly symbol: DocumentationSymbol;
+    readonly generation: GenerationResult;
+    readonly judgment?: JudgeResult;
+  }[] = [];
   const fileHashes = await sourceFileHashes(handle, targets);
   let usage = EMPTY_USAGE;
+  let generationMetrics = EMPTY_GENERATION_STAGE;
+  let judgeMetrics = EMPTY_JUDGE_STAGE;
   const client = new LlmClient(providers.generation, {
     concurrency: config.generate.concurrency,
     ...(onProgress === undefined
@@ -140,6 +168,13 @@ export const generateProject = async (
 
   const countTokens = tokenCounter(providers.generation, config.generate.model);
   const contextBudget = effectiveContextBudget(config, providers, judgeEnabled);
+  const fileContexts = sharedFileContexts(
+    config,
+    targets,
+    symbols,
+    countTokens,
+    contextBudget,
+  );
   const levels = reverseTopologicalLevels(index.graph);
   for (let levelIndex = 0; levelIndex < levels.length; levelIndex++) {
     const level = levels[levelIndex] ?? [];
@@ -151,68 +186,127 @@ export const generateProject = async (
     if (levelTargets.length === 0) continue;
 
     const contexts = await Promise.all(
-      levelTargets.map(async (symbol) => ({
-        symbol,
-        context: assembleContext({
+      levelTargets.map(async (symbol) => {
+        const shared = fileContexts.get(symbol.filePath);
+        return {
           symbol,
-          symbols,
-          graph: index.graph,
-          index: index.context,
-          budgetTokens: contextBudget,
+          ...(shared === undefined ? {} : { prefix: shared.text }),
+          context: assembleContext({
+            symbol,
+            symbols,
+            graph: index.graph,
+            index: index.context,
+            // The shared outline is charged against the same budget, so a
+            // module prefix displaces per-symbol context instead of adding to
+            // the request.
+            budgetTokens:
+              shared === undefined
+                ? contextBudget
+                : Math.max(
+                    contextBudget - shared.tokenCount,
+                    MIN_SYMBOL_BUDGET,
+                  ),
+            model: config.generate.model,
+            countTokens,
+            sources: config.context.sources,
+            includeSourceNotes: config.docs.leadingComments.includeInContext,
+            bodyMaxLines: config.context.bodyMaxLines,
+            callSiteMax: config.context.callSites.max,
+            callSiteSampling: config.context.callSites.sampling,
+            calleeSummaries: summaries,
+            ...(shared === undefined
+              ? {}
+              : { sharedDeclaredNames: shared.declaredNames }),
+            ...(await gitSubject(handle, symbol, config)),
+          }),
+        };
+      }),
+    );
+    const generationStarted = performance.now();
+    const generationResults: GenerationResult[] = [];
+    for (const wave of requestWaves(
+      contexts.map(({ symbol, context, prefix }) => {
+        const outputPolicy = generationOutputPolicy(config, symbol);
+        return {
+          symbol,
           model: config.generate.model,
-          countTokens,
-          sources: config.context.sources,
-          includeSourceNotes: config.docs.leadingComments.includeInContext,
-          bodyMaxLines: config.context.bodyMaxLines,
-          callSiteMax: config.context.callSites.max,
-          callSiteSampling: config.context.callSites.sampling,
-          calleeSummaries: summaries,
-          ...(await gitSubject(handle, symbol, config)),
-        }),
-      })),
+          system: generationSystemPrompt,
+          ...(prefix === undefined ? {} : { prefix }),
+          prompt: generationPrompt(symbol, context.text, outputPolicy),
+          outputPolicy,
+        };
+      }),
+    )) {
+      const batch = await client.generate(wave);
+      generationResults.push(...batch.results);
+      usage = addUsage(usage, batch.usage);
+    }
+    generationMetrics = addGenerationBatchMetrics(
+      generationMetrics,
+      generationResults,
+      elapsedMilliseconds(generationStarted),
     );
-    const batch = await client.generate(
-      contexts.map(({ symbol, context }) => ({
-        symbol,
-        model: config.generate.model,
-        system: generationSystemPrompt,
-        prompt: generationPrompt(symbol, context.text),
-      })),
-    );
-    usage = addUsage(usage, batch.usage);
     const judgeById = new Map<SymbolId, JudgeResult>();
     if (judgeEnabled) {
       const contextById = new Map(
         contexts.map(({ symbol, context }) => [symbol.id, context.text]),
       );
-      const judged = await judge.judge(
-        batch.results.flatMap((result) => {
+      const judgeStarted = performance.now();
+      const judgeResults: JudgeResult[] = [];
+      for (const wave of requestWaves(
+        generationResults.flatMap((result) => {
           const symbol = byId.get(result.symbolId);
           const context = contextById.get(result.symbolId);
-          return result.outcome?.verdict === "OK" &&
-            symbol !== undefined &&
-            context !== undefined
-            ? [
-                {
-                  symbol,
-                  doc: docForOutput(result.outcome.doc, config),
-                  context,
-                  model: config.judge.model,
-                  strict: config.judge.strictLeaves && levelIndex === 0,
-                },
-              ]
-            : [];
+          if (
+            result.outcome?.verdict !== "OK" ||
+            symbol === undefined ||
+            context === undefined
+          ) {
+            return [];
+          }
+          const prefix = fileContexts.get(symbol.filePath)?.text;
+          return [
+            {
+              symbol,
+              doc: projectGeneratedDoc(
+                result.outcome.doc,
+                generationOutputPolicy(config, symbol),
+              ),
+              context,
+              ...(prefix === undefined ? {} : { prefix }),
+              model: config.judge.model,
+              strict: config.judge.strictLeaves && levelIndex === 0,
+              output: generationOutputPolicy(config, symbol),
+            },
+          ];
         }),
+      )) {
+        const judged = await judge.judge(wave);
+        judgeResults.push(...judged.results);
+        usage = addUsage(usage, judged.usage);
+      }
+      judgeMetrics = addJudgeBatchMetrics(
+        judgeMetrics,
+        judgeResults,
+        elapsedMilliseconds(judgeStarted),
       );
-      usage = addUsage(usage, judged.usage);
-      for (const result of judged.results) {
+      for (const result of judgeResults) {
         judgeById.set(result.symbolId, result);
       }
     }
-    for (const result of batch.results) {
+    for (const result of generationResults) {
+      const symbol = byId.get(result.symbolId);
+      const judgment = judgeById.get(result.symbolId);
+      if (captureEvaluation && symbol !== undefined) {
+        evaluationInputs.push({
+          symbol,
+          generation: result,
+          ...(judgment === undefined ? {} : { judgment }),
+        });
+      }
       consumeResult(
         result,
-        judgeById.get(result.symbolId),
+        judgment,
         judgeEnabled,
         byId,
         fileHashes,
@@ -222,13 +316,14 @@ export const generateProject = async (
         rejected,
         failed,
         plans,
-        config,
+        generationOutputPolicy(config, symbol),
       );
     }
   }
 
   const edits = await applyEdits(handle, plans, config, write);
   const applied = new Set(edits.applied);
+  const planned = new Set(plans.map((plan) => plan.symbol.id));
   for (const editFailure of edits.failed) {
     failed.push({ id: editFailure.symbolId, reason: editFailure.reason });
   }
@@ -239,8 +334,67 @@ export const generateProject = async (
     failed,
     usage,
     edits,
+    metrics: { generation: generationMetrics, judge: judgeMetrics },
+    evaluation: evaluationInputs.map((input) =>
+      evaluationRecord({
+        ...input,
+        generationProvider: providers.generation.id,
+        generationModel: config.generate.model,
+        judgeProvider: (providers.judge ?? providers.generation).id,
+        judgeModel: config.judge.model,
+        outputPolicy: generationOutputPolicy(config, input.symbol),
+        config,
+        planned: planned.has(input.symbol.id),
+        applied: applied.has(input.symbol.id),
+        write,
+      }),
+    ),
   };
 };
+
+const addGenerationBatchMetrics = (
+  current: typeof EMPTY_GENERATION_STAGE,
+  results: readonly GenerationResult[],
+  durationMs: number,
+): typeof EMPTY_GENERATION_STAGE => ({
+  requests: current.requests + results.length,
+  attempts:
+    current.attempts +
+    results.reduce((sum, result) => sum + result.attempts, 0),
+  candidates:
+    current.candidates +
+    results.filter((result) => result.outcome?.verdict === "OK").length,
+  skipped:
+    current.skipped +
+    results.filter((result) => result.outcome?.verdict === "SKIP").length,
+  failed:
+    current.failed +
+    results.filter((result) => result.outcome === undefined).length,
+  durationMs: current.durationMs + durationMs,
+});
+
+const addJudgeBatchMetrics = (
+  current: typeof EMPTY_JUDGE_STAGE,
+  results: readonly JudgeResult[],
+  durationMs: number,
+): typeof EMPTY_JUDGE_STAGE => ({
+  requests: current.requests + results.length,
+  attempts:
+    current.attempts +
+    results.reduce((sum, result) => sum + result.attempts, 0),
+  accepted:
+    current.accepted +
+    results.filter((result) => result.error === undefined && result.accepted)
+      .length,
+  rejected:
+    current.rejected +
+    results.filter((result) => result.error === undefined && !result.accepted)
+      .length,
+  failed:
+    current.failed +
+    results.filter((result) => result.error !== undefined).length,
+  durationMs: current.durationMs + durationMs,
+});
 
 const generationProgress = (
   result: GenerationResult,
@@ -263,6 +417,7 @@ const generationProgress = (
     : result.error === undefined
       ? {}
       : { reason: result.error }),
+  ...(result.diagnostic === undefined ? {} : { diagnostic: result.diagnostic }),
 });
 
 const judgeProgress = (
@@ -286,6 +441,7 @@ const judgeProgress = (
     : result.reason === ""
       ? {}
       : { reason: result.reason }),
+  ...(result.diagnostic === undefined ? {} : { diagnostic: result.diagnostic }),
 });
 
 const consumeResult = (
@@ -298,9 +454,9 @@ const consumeResult = (
   generated: SymbolId[],
   skipped: { id: SymbolId; reason: string }[],
   rejected: { id: SymbolId; reason: string }[],
-  failed: { id: SymbolId; reason: string }[],
+  failed: { id: SymbolId; reason: string; diagnostic?: string }[],
   plans: PlannedDocEdit[],
-  config: DocgenConfig,
+  outputPolicy: GenerationOutputPolicy,
 ): void => {
   const symbol = byId.get(result.symbolId);
   if (symbol === undefined) return;
@@ -309,13 +465,22 @@ const consumeResult = (
     return;
   }
   if (result.outcome?.verdict !== "OK") {
-    failed.push({ id: symbol.id, reason: result.error ?? "Generation failed" });
+    failed.push({
+      id: symbol.id,
+      reason: result.error ?? "Generation failed",
+      ...(result.diagnostic === undefined
+        ? {}
+        : { diagnostic: result.diagnostic }),
+    });
     return;
   }
   if (judgeEnabled && judgment?.error !== undefined) {
     failed.push({
       id: symbol.id,
       reason: `Judge failed: ${judgment.error}`,
+      ...(judgment.diagnostic === undefined
+        ? {}
+        : { diagnostic: judgment.diagnostic }),
     });
     return;
   }
@@ -326,7 +491,7 @@ const consumeResult = (
     });
     return;
   }
-  const doc = docForOutput(result.outcome.doc, config);
+  const doc = projectGeneratedDoc(result.outcome.doc, outputPolicy);
   summaries.set(symbol.id, doc.summary);
   generated.push(symbol.id);
   plans.push({
@@ -335,23 +500,6 @@ const consumeResult = (
     expectedFileHash: fileHashes.get(symbol.filePath) ?? "",
     expectedAnchorHash: symbolAnchorHash(symbol),
   });
-};
-
-const docForOutput = (
-  doc: GeneratedDoc,
-  config: DocgenConfig,
-): GeneratedDoc => {
-  const standard = config.docs.granularity !== "minimal";
-  const detailed = config.docs.granularity === "detailed";
-  return {
-    summary: doc.summary,
-    params: standard && config.docs.tags.params ? doc.params : {},
-    throws: detailed && config.docs.tags.throws ? doc.throws : [],
-    ...(detailed && doc.detail !== undefined ? { detail: doc.detail } : {}),
-    ...(standard && config.docs.tags.returns && doc.returns !== undefined
-      ? { returns: doc.returns }
-      : {}),
-  };
 };
 
 const sourceFileHashes = async (
@@ -385,6 +533,75 @@ const gitSubject = async (
     timeoutMs: config.context.git.timeoutMs,
   });
   return subject === undefined ? {} : { gitSubject: subject };
+};
+
+/** Floor for per-symbol context once a shared module outline is charged against the budget. */
+const MIN_SYMBOL_BUDGET = 400;
+
+/**
+ * Build one cacheable module outline per file that has enough targets to amortize it.
+ * @param config Read the shared-context toggle, token budget, and minimum target count from the configuration.
+ * @param targets Count documentation targets per file to decide which files get an outline.
+ * @param symbols Provide every extracted symbol so an outline can list siblings that are not themselves targets.
+ * @param countTokens Measure outline size with the provider tokenizer.
+ * @param contextBudget Cap the outline so per-symbol context keeps at least `MIN_SYMBOL_BUDGET` tokens.
+ */
+const sharedFileContexts = (
+  config: DocgenConfig,
+  targets: readonly DocumentationSymbol[],
+  symbols: readonly DocumentationSymbol[],
+  countTokens: TokenCount,
+  contextBudget: number,
+): ReadonlyMap<string, FileContext> => {
+  const result = new Map<string, FileContext>();
+  const budgetTokens = Math.min(
+    config.context.shared.budgetTokens,
+    contextBudget - MIN_SYMBOL_BUDGET,
+  );
+  if (!config.context.shared.enabled || budgetTokens <= 0) return result;
+  const counts = new Map<string, number>();
+  for (const target of targets) {
+    counts.set(target.filePath, (counts.get(target.filePath) ?? 0) + 1);
+  }
+  for (const [filePath, count] of counts) {
+    if (count < config.context.shared.minSymbols) continue;
+    const context = assembleFileContext({
+      filePath,
+      symbols,
+      budgetTokens,
+      model: config.generate.model,
+      countTokens,
+    });
+    if (context.text !== "") result.set(filePath, context);
+  }
+  return result;
+};
+
+/**
+ * Order a batch so each distinct prefix is written to the provider cache once
+ * before the requests that read it are issued. Without this, the concurrent
+ * requests of one file would all miss and each pay the cache-write premium.
+ * @param requests Requests to order; those without a prefix stay in the first wave.
+ * @returns One wave when nothing would repeat a prefix, otherwise a lead wave and a follower wave.
+ */
+const requestWaves = <T extends { readonly prefix?: string }>(
+  requests: readonly T[],
+): readonly (readonly T[])[] => {
+  if (!requests.some((request) => request.prefix !== undefined)) {
+    return [requests];
+  }
+  const written = new Set<string>();
+  const lead: T[] = [];
+  const followers: T[] = [];
+  for (const request of requests) {
+    if (request.prefix === undefined || !written.has(request.prefix)) {
+      if (request.prefix !== undefined) written.add(request.prefix);
+      lead.push(request);
+      continue;
+    }
+    followers.push(request);
+  }
+  return followers.length === 0 ? [lead] : [lead, followers];
 };
 
 const effectiveContextBudget = (

@@ -69,6 +69,25 @@ describe("generation cost estimation", () => {
           costBasis: "subscription",
         },
         diff: "",
+        metrics: {
+          durationMs: 0,
+          generation: {
+            requests: 1,
+            attempts: 1,
+            candidates: 1,
+            skipped: 0,
+            failed: 0,
+            durationMs: 0,
+          },
+          judge: {
+            requests: 0,
+            attempts: 0,
+            accepted: 0,
+            rejected: 0,
+            failed: 0,
+            durationMs: 0,
+          },
+        },
       },
       true,
     );

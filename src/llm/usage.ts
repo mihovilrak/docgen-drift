@@ -28,6 +28,11 @@ const mergeBasis = (left: CostBasis, right: CostBasis): CostBasis => {
   return left === right ? left : "unknown";
 };
 
+/**
+ * Combine two usage records by summing token counts and compatible USD costs while preserving availability and cost-basis metadata.
+ * @param left The first provider usage record to combine.
+ * @param right The second provider usage record to combine.
+ */
 export const addUsage = (
   left: ProviderUsage,
   right: ProviderUsage,
@@ -49,6 +54,13 @@ export const addUsage = (
   };
 };
 
+/**
+ * Represent token consumption and its monetary charge as USD-based provider usage.
+ * @param inputTokens Number of tokens sent to the provider.
+ * @param outputTokens Number of tokens produced by the provider.
+ * @param costUsd Usage cost in US dollars.
+ * @returns A provider usage record with the supplied token counts, USD cost, and USD cost basis.
+ */
 export const usdUsage = (
   inputTokens: number,
   outputTokens: number,

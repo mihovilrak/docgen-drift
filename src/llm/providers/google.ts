@@ -4,10 +4,11 @@ import {
   type ModelCapabilities,
   type ModelPrice,
 } from "../capabilities.js";
-import type {
-  LlmProvider,
-  ProviderRequest,
-  ProviderResponse,
+import {
+  promptWithPrefix,
+  type LlmProvider,
+  type ProviderRequest,
+  type ProviderResponse,
 } from "../client.js";
 import { usdUsage, type ProviderUsage } from "../usage.js";
 import {
@@ -50,6 +51,11 @@ export class GoogleProvider implements LlmProvider {
     this.#options = options;
   }
 
+  /**
+   * Generate structured JSON content with Google’s supported schema keywords and return its value with usage data.
+   * @param request Specify the model, system instructions, prompt, response schema, and optional token limit or cancellation signal.
+   * @returns A promise resolving to the generated response value and provider usage data.
+   */
   async complete(request: ProviderRequest): Promise<ProviderResponse> {
     const base = (this.#options.baseUrl ?? GOOGLE_BASE_URL).replace(/\/+$/, "");
     const payload = await postJson({
@@ -57,7 +63,9 @@ export class GoogleProvider implements LlmProvider {
       headers: { "x-goog-api-key": this.#options.apiKey },
       body: {
         systemInstruction: { parts: [{ text: request.system }] },
-        contents: [{ role: "user", parts: [{ text: request.prompt }] }],
+        contents: [
+          { role: "user", parts: [{ text: promptWithPrefix(request) }] },
+        ],
         generationConfig: {
           responseMimeType: "application/json",
           responseJsonSchema: googleJsonSchema(request.responseSchema),
@@ -77,6 +85,10 @@ export class GoogleProvider implements LlmProvider {
     return { value: textOf(payload), usage: usageOf(payload, request.model) };
   }
 
+  /**
+   * Determine whether the error represents a transient HTTP failure worth retrying.
+   * @param error Error value to evaluate for retry eligibility.
+   */
   isRetryable(error: unknown): boolean {
     return isRetryableHttpError(error);
   }

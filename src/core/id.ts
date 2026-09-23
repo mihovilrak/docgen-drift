@@ -3,12 +3,11 @@ import { posix } from "node:path";
 import type { SymbolId } from "./symbol.js";
 
 /**
- * Build a stable, workspace-portable identifier for a symbol from its file path, name, and optional container and discriminator.
- * @param filePath Source file path of the symbol; path separators are normalized and a leading './' is removed.
- * @param name The symbol's own name, used as-is when containerName is not given.
- * @param containerName Optional enclosing symbol name; when present, qualifies name as 'containerName.name'.
- * @param discriminator Optional suffix appended as ':discriminator' to distinguish otherwise-identical symbols.
- * @returns A string of the form "normalizedPath#qualifiedName" with an optional ":discriminator" suffix.
+ * Normalize the file path and combine the symbol's qualification and discriminator into a stable identifier.
+ * @param filePath The source file path, with backslashes converted to forward slashes and a leading ./ removed.
+ * @param name The symbol name.
+ * @param containerName An optional containing symbol name to qualify before the symbol name.
+ * @param discriminator An optional discriminator appended to distinguish otherwise equivalent symbols.
  */
 export const makeSymbolId = (
   filePath: string,
@@ -23,10 +22,9 @@ export const makeSymbolId = (
 };
 
 /**
- * Rewrite a project-scoped symbol id into a workspace-scoped id by resolving its file path against the project's path within the workspace.
- * @param projectPath Path of the symbol's project relative to (or within) the workspace root, used to prefix the file path portion of the id.
- * @param projectSymbolId Symbol id scoped to its own project, in "filePath#name" form.
- * @returns The symbol id with its file path resolved against projectPath, or the original projectSymbolId if it contains no "#" separator.
+ * Resolve a project-relative symbol ID against the workspace path while preserving its symbol suffix.
+ * @param projectPath Workspace path used to resolve the symbol's file path.
+ * @param projectSymbolId Project-relative symbol ID whose file path should be made workspace-safe.
  */
 export const workspaceSymbolId = (
   projectPath: string,

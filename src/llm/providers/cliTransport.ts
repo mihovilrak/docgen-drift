@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -8,10 +8,11 @@ import {
   FALLBACK_CONTEXT_WINDOW_TOKENS,
   type ModelCapabilities,
 } from "../capabilities.js";
-import type {
-  LlmProvider,
-  ProviderRequest,
-  ProviderResponse,
+import {
+  promptWithPrefix,
+  type LlmProvider,
+  type ProviderRequest,
+  type ProviderResponse,
 } from "../client.js";
 import type { ProviderUsage } from "../usage.js";
 
@@ -39,6 +40,7 @@ export type CliRunner = (
   input: string,
   options: {
     readonly timeoutMs: number;
+    readonly cwd?: string;
     readonly signal?: AbortSignal;
     readonly env?: NodeJS.ProcessEnv;
   },
@@ -49,15 +51,19 @@ export type CliRunner = (
  * construction: docgen owns batching and edits, the CLI only completes text.
  * Authentication is whatever the user already established for the executable;
  * docgen never touches credential files.
+ *
+ * Every flag that replaces or suppresses the agent harness preamble is a direct
+ * token saving repeated on every symbol, so prefer them over prompt text.
  */
 const ARGV: Record<
   CliTool,
   (
     model: string,
+    system: string,
     artifacts?: Readonly<Record<string, string>>,
   ) => readonly string[]
 > = {
-  claude: (model, artifacts) => [
+  claude: (model, system, artifacts) => [
     "-p",
     "--model",
     model,
@@ -66,15 +72,21 @@ const ARGV: Record<
     ...(artifacts?.["schemaJson"] === undefined
       ? []
       : ["--json-schema", artifacts["schemaJson"]]),
+    // Replaces the agent system prompt instead of appending to it: docgen needs
+    // a JSON completion, not a coding agent.
+    "--system-prompt",
+    system,
+    "--exclude-dynamic-system-prompt-sections",
+    "--strict-mcp-config",
     "--tools",
     "",
     "--permission-mode",
     "plan",
     "--max-turns",
-    "1",
+    "3",
     "--no-session-persistence",
   ],
-  codex: (model, artifacts) => [
+  codex: (model, _system, artifacts) => [
     "exec",
     "--model",
     model,
@@ -89,7 +101,7 @@ const ARGV: Record<
       : ["--output-schema", artifacts["schema"]]),
     "-",
   ],
-  gemini: (model, artifacts) => [
+  gemini: (model, _system, artifacts) => [
     "--model",
     model,
     "--output-format",
@@ -115,6 +127,9 @@ const ARGV: Record<
   ],
 };
 
+/**
+ * Route completion requests through a configured command-line tool and expose subscription-backed model capabilities.
+ */
 export class CliTransportProvider implements LlmProvider {
   readonly id: string;
   readonly #options: CliTransportOptions;
@@ -124,24 +139,34 @@ export class CliTransportProvider implements LlmProvider {
     this.#options = options;
   }
 
+  /**
+   * Execute the configured CLI provider and parse its structured response.
+   * @param request Provide the model, system instructions, prompt, response schema, and optional cancellation signal for the CLI request.
+   * @returns A provider response containing the parsed value and subscription usage.
+   */
   async complete(request: ProviderRequest): Promise<ProviderResponse> {
     const command = this.#options.command ?? this.#options.tool;
     const run = this.#options.run ?? runProcess;
-    const execute = (artifacts?: Readonly<Record<string, string>>) =>
+    const execute = (workspace: CliWorkspace) =>
       run(
         command,
         [
           ...(this.#options.args ?? []),
-          ...ARGV[this.#options.tool](request.model, artifacts),
+          ...ARGV[this.#options.tool](
+            request.model,
+            request.system,
+            workspace.artifacts,
+          ),
         ],
-        cliPrompt(request),
+        cliPrompt(request, this.#options.tool),
         {
           timeoutMs: this.#options.timeoutMs ?? 120_000,
+          cwd: workspace.cwd,
           ...(request.signal === undefined ? {} : { signal: request.signal }),
           ...cliEnvironment(this.#options.tool),
         },
       );
-    const result = await withCliArtifacts(
+    const result = await withCliWorkspace(
       this.#options.tool,
       request.responseSchema,
       execute,
@@ -169,7 +194,8 @@ export class CliTransportProvider implements LlmProvider {
       );
     }
     if (result.code !== 0) {
-      throw new CliTransportError(classify(command, result));
+      const failure = classify(command, result, this.#options.tool);
+      throw new CliTransportError(failure.message, false, failure.diagnostic);
     }
     if (cleanupError !== undefined) throw cleanupError;
     return {
@@ -178,10 +204,18 @@ export class CliTransportProvider implements LlmProvider {
     };
   }
 
+  /**
+   * Treat only retryable CLI transport failures as eligible for another attempt.
+   * @param error The error to evaluate for retry eligibility.
+   */
   isRetryable(error: unknown): boolean {
     return error instanceof CliTransportError && error.retryable;
   }
 
+  /**
+   * Describe the CLI model's capability limits and subscription-based cost model.
+   * @param model The model identifier to include in the capability description.
+   */
   describe(model: string): ModelCapabilities {
     return {
       model,
@@ -193,12 +227,17 @@ export class CliTransportProvider implements LlmProvider {
   }
 }
 
+/**
+ * Represent a CLI transport failure and expose whether retrying may succeed.
+ */
 export class CliTransportError extends Error {
   readonly retryable: boolean;
+  readonly diagnostic?: string;
 
-  constructor(message: string, retryable = false) {
+  constructor(message: string, retryable = false, diagnostic?: string) {
     super(message);
     this.retryable = retryable;
+    if (diagnostic !== undefined) this.diagnostic = diagnostic;
   }
 }
 
@@ -235,26 +274,53 @@ decision = "deny"
 priority = 999
 `;
 
-const withCliArtifacts = async <T>(
+interface CliWorkspace {
+  readonly cwd: string;
+  readonly artifacts?: Readonly<Record<string, string>>;
+}
+
+/**
+ * Runs the CLI in an empty directory. Agent CLIs discover AGENTS.md, CLAUDE.md
+ * and other project context from their working directory and resend it with
+ * every request; the completion is fully specified by stdin and does not need
+ * any of it. Artifacts live beside the working directory, not in it.
+ */
+const withCliWorkspace = async <T>(
   tool: CliTool,
   schema: Readonly<Record<string, unknown>>,
-  use: (artifacts?: Readonly<Record<string, string>>) => Promise<T>,
+  use: (workspace: CliWorkspace) => Promise<T>,
 ): Promise<T> => {
-  if (tool === "claude") return use({ schemaJson: JSON.stringify(schema) });
-  if (tool !== "codex" && tool !== "gemini") return use();
   const directory = await mkdtemp(join(tmpdir(), "docgen-cli-"));
+  const cwd = join(directory, "cwd");
   try {
-    if (tool === "codex") {
-      const path = join(directory, "response.schema.json");
-      await writeFile(path, JSON.stringify(schema), "utf8");
-      return await use({ schema: path });
-    }
-    const path = join(directory, "deny-all-tools.toml");
-    await writeFile(path, GEMINI_POLICY, "utf8");
-    return await use({ policy: path });
+    await mkdir(cwd);
+    const artifacts = await cliArtifacts(tool, schema, directory);
+    return await use({
+      cwd,
+      ...(artifacts === undefined ? {} : { artifacts }),
+    });
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+};
+
+const cliArtifacts = async (
+  tool: CliTool,
+  schema: Readonly<Record<string, unknown>>,
+  directory: string,
+): Promise<Readonly<Record<string, string>> | undefined> => {
+  if (tool === "claude") return { schemaJson: JSON.stringify(schema) };
+  if (tool === "codex") {
+    const path = join(directory, "response.schema.json");
+    await writeFile(path, JSON.stringify(schema), "utf8");
+    return { schema: path };
+  }
+  if (tool === "gemini") {
+    const path = join(directory, "deny-all-tools.toml");
+    await writeFile(path, GEMINI_POLICY, "utf8");
+    return { policy: path };
+  }
+  return undefined;
 };
 
 const cleanupGeminiSession = async (
@@ -324,25 +390,75 @@ const openCodeSessionId = (stdout: string): string | undefined => {
   return [...matches][0]?.[1];
 };
 
-const cliPrompt = (request: ProviderRequest): string =>
-  `${request.system}\n\n${request.prompt}\n\nRespond with a single JSON object and nothing else. It must validate against this JSON Schema:\n${JSON.stringify(request.responseSchema)}`;
+/** Tools that take the system prompt as argv instead of prompt text. */
+const SYSTEM_PROMPT_ARGV: ReadonlySet<CliTool> = new Set(["claude"]);
 
-const classify = (command: string, result: CliRunResult): string => {
+/** Tools that constrain output with a schema flag, so inlining it is waste. */
+const SCHEMA_ARGV: ReadonlySet<CliTool> = new Set(["claude", "codex"]);
+
+const cliPrompt = (request: ProviderRequest, tool: CliTool): string =>
+  [
+    ...(SYSTEM_PROMPT_ARGV.has(tool) ? [] : [request.system]),
+    promptWithPrefix(request),
+    SCHEMA_ARGV.has(tool)
+      ? "Respond with a single JSON object and nothing else."
+      : `Respond with a single JSON object and nothing else. It must validate against this JSON Schema:\n${JSON.stringify(request.responseSchema)}`,
+  ].join("\n\n");
+
+interface CliFailure {
+  readonly message: string;
+  readonly diagnostic: string;
+}
+
+const classify = (
+  command: string,
+  result: CliRunResult,
+  tool: CliTool,
+): CliFailure => {
   const detail = `${result.stderr}\n${result.stdout}`.trim();
-  const short = detail.slice(0, 500);
+  const short = oneLine(detail).slice(0, 240);
+  if (
+    tool === "claude" &&
+    /"stop_reason"\s*:\s*"tool_use"|max(?:imum)? turns?/iu.test(detail)
+  ) {
+    return {
+      message: `${command} reached its structured-output turn limit before returning validated JSON`,
+      diagnostic: detail,
+    };
+  }
+  if (/error_max_structured_output_retries/iu.test(detail)) {
+    return {
+      message: `${command} could not produce JSON matching the response schema`,
+      diagnostic: detail,
+    };
+  }
   if (/login|log in|not authenticated|unauthori[sz]ed|sign in/i.test(detail)) {
-    return `${command} requires an interactive login; run it once yourself to sign in, then retry`;
+    return {
+      message: `${command} requires an interactive login; run it once yourself to sign in, then retry`,
+      diagnostic: detail,
+    };
   }
   if (/rate limit|usage limit|quota|exhaust|too many requests/i.test(detail)) {
-    return `${command} reports its subscription allowance is exhausted; wait for the limit to reset or use a direct API provider`;
+    return {
+      message: `${command} reports its subscription allowance is exhausted; wait for the limit to reset or use a direct API provider`,
+      diagnostic: detail,
+    };
   }
   if (
     /unknown model|model .*(not found|not supported|unavailable)/i.test(detail)
   ) {
-    return `${command} does not support the configured model: ${short}`;
+    return {
+      message: `${command} does not support the configured model: ${short}`,
+      diagnostic: detail,
+    };
   }
-  return `${command} exited with code ${String(result.code)}: ${short}`;
+  return {
+    message: `${command} exited with code ${String(result.code)}${short === "" ? "" : `: ${short}`}`,
+    diagnostic: detail,
+  };
 };
+
+const oneLine = (value: string): string => value.replace(/\s+/gu, " ").trim();
 
 const extractJson = (command: string, stdout: string): unknown => {
   for (const candidate of jsonCandidates(stdout)) {
@@ -350,7 +466,9 @@ const extractJson = (command: string, stdout: string): unknown => {
     if (text !== undefined) return text;
   }
   throw new CliTransportError(
-    `${command} returned output that is not a JSON object: ${stdout.slice(0, 300)}`,
+    `${command} returned output that did not contain semantic JSON`,
+    false,
+    stdout,
   );
 };
 
@@ -418,6 +536,7 @@ const runProcess: CliRunner = async (command, args, input, options) =>
   new Promise((resolve) => {
     const child = spawn(command, [...args], {
       stdio: ["pipe", "pipe", "pipe"],
+      ...(options.cwd === undefined ? {} : { cwd: options.cwd }),
       ...(options.env === undefined ? {} : { env: options.env }),
       ...(options.signal === undefined ? {} : { signal: options.signal }),
     });

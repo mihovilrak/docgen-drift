@@ -10,6 +10,12 @@ export class ConfigError extends Error {
   }
 }
 
+/**
+ * Load and validate the project configuration, applying defaults when no configuration file exists.
+ * @param root Resolve the configuration path relative to this project root.
+ * @param configuredPath Use this explicit configuration file path instead of the default project configuration path.
+ * @returns Return the validated configuration.
+ */
 export const loadConfig = async (
   root: string,
   configuredPath?: string,

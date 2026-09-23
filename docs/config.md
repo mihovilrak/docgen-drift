@@ -62,6 +62,7 @@ The same schema is shipped in the npm package at
     },
     "callSites": { "max": 5, "lines": 2, "sampling": "moduleDiversity" },
     "bodyMaxLines": 120,
+    "shared": { "enabled": true, "budgetTokens": 1200, "minSymbols": 2 },
     "git": { "timeoutMs": 2000 }
   },
 
@@ -122,6 +123,8 @@ The same schema is shipped in the npm package at
 **`docs.preserveTags`** — tags docgen does not own and must never rewrite or drop when it updates a comment. Add your project's custom tags here before the first `--fix` run, not after.
 
 **`context.budgetTokens`** — per symbol, filled as a ranked knapsack in the order given in [ARCHITECTURE.md](../ARCHITECTURE.md#the-budget). Sources are dropped from the bottom when the budget runs out; disabling a source in `context.sources` removes it entirely regardless of budget.
+
+**`context.shared`** — when a file contributes at least `minSymbols` documented symbols, docgen builds one module outline for that file and sends it as a shared prompt prefix, which Anthropic can cache across the file's requests. The outline is charged against `context.budgetTokens`, not added to it: per-symbol context shrinks by the same amount, and same-file `referencedType` blocks the outline already renders are dropped. `budgetTokens` caps the outline itself. Set `enabled: false` to send fully independent per-symbol requests.
 
 **`context.callSites.sampling`** — `moduleDiversity` picks call sites from as many distinct modules as possible. `first` takes them in discovery order and is only there for reproducible tests; it produces noticeably worse context on hub functions.
 

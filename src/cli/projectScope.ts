@@ -1,9 +1,9 @@
 import type { DocgenConfig } from "../config/schema.js";
 
 /**
- * Preserve JSON paths and globs, map a directory to its tsconfig, or leave project discovery unchanged when no scope is given.
- * @param config The documentation-generation configuration to preserve or scope.
- * @param project An optional project directory, JSON configuration path, or glob pattern.
+ * Constrain workspace project discovery to the requested directory, file, or glob pattern.
+ * @param config The loaded documentation-generation configuration to preserve and update.
+ * @param project An optional project directory, JSON file, or glob expression used to scope workspace discovery.
  */
 export const scopeProjects = (
   config: DocgenConfig,

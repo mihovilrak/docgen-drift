@@ -30,9 +30,10 @@ export interface WorkspaceCheckResult {
 }
 
 /**
- * Create documentation baselines for all configured workspace projects.
- * @param root Workspace root to index and, when using a shared lockfile, the base path for the lockfile.
- * @param config Configuration defining the workspace projects, lockfile strategy, and symbol eligibility.
+ * Create lockfiles containing the current workspace symbol baseline.
+ * @param root Workspace root to index and use for shared lockfile placement.
+ * @param config Documentation configuration controlling workspace lockfile mode and symbol indexing policies.
+ * @returns A promise resolving to the number of baselined symbols and the paths of the lockfiles written.
  */
 export const runBaseline = async (
   root: string,
@@ -67,9 +68,9 @@ export const runBaseline = async (
 };
 
 /**
- * Classify documentation status for every eligible symbol in the configured workspace.
- * @param root Workspace root to index.
- * @param config Configuration controlling project scope, symbol eligibility, and lockfile mode.
+ * Compare current workspace symbols with configured lock files and report drift consistently for shared or per-project locking.
+ * @param root Workspace root used to index projects and locate lock files.
+ * @param config Documentation and workspace-lock configuration controlling project scope, symbol policies, and lockfile mode.
  */
 export const runCheck = async (
   root: string,
@@ -101,10 +102,10 @@ export const runCheck = async (
 };
 
 /**
- * Refresh persisted documentation locks for the symbols generated in the configured workspace.
+ * Persist updated symbol hashes in the configured shared or per-project workspace lockfiles.
  * @param root Workspace root used to index projects and resolve lockfile paths.
- * @param config Workspace and documentation configuration controlling indexing and lockfile scope.
- * @param generatedIds Stable identifiers of symbols whose lock entries should be refreshed.
+ * @param config Documentation configuration controlling workspace indexing and whether locks are shared or project-specific.
+ * @param generatedIds Identifiers of generated symbols whose current snapshots should be written to the lockfiles.
  */
 export const refreshLocks = async (
   root: string,

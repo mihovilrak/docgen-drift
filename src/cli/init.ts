@@ -17,6 +17,12 @@ export interface InitResult {
   readonly projects: readonly string[];
 }
 
+/**
+ * Create a schema-validated .docgenrc.json from interactive workspace settings.
+ * @param root Directory in which to create the configuration file.
+ * @param prompt Interactive prompt used to collect project, lockfile, and concurrency settings.
+ * @returns A promise resolving to the created configuration path and configured project paths.
+ */
 export const runInit = async (
   root: string,
   prompt: InitPrompt,

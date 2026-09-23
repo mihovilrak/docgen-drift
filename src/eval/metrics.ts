@@ -43,6 +43,11 @@ export interface CommentPromotionMetrics {
   readonly noiseRejectionRate: number;
 }
 
+/**
+ * Compute retention and error-rate metrics for judge verdicts against human usefulness labels.
+ * @param cases Evaluation cases containing the judge verdict and whether each case is human-useful.
+ * @returns Aggregate counts and rates for total cases, accepted cases, false keeps, and false rejects.
+ */
 export const judgeMetrics = (cases: readonly JudgeEvalCase[]): JudgeMetrics => {
   const kept = cases.filter((item) => item.judgeVerdict === "ACCEPT");
   const useful = cases.filter((item) => item.humanUseful);
@@ -74,6 +79,11 @@ export const ablationMetrics = (
   };
 };
 
+/**
+ * Measure useful-intent retention, noise rejection, and unsafe promotion across comment-promotion cases.
+ * @param cases Evaluation cases describing each source note's kind, acceptance, retained intent, and public-claim safety.
+ * @returns Returns the total case count and rates for useful-intent retention, unsafe promotion, and noise rejection.
+ */
 export const commentPromotionMetrics = (
   cases: readonly CommentPromotionEvalCase[],
 ): CommentPromotionMetrics => {

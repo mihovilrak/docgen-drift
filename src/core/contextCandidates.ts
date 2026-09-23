@@ -2,8 +2,8 @@ import type { AssembleContextOptions, ContextCandidate } from "./budget.js";
 import type { CallSite } from "./symbol.js";
 
 /**
- * Collect the enabled evidence sources for a symbol into an unranked list of context candidates for budget selection.
- * @param options Context assembly configuration specifying the target symbol, index data, enabled sources, and per-source limits.
+ * Assemble available source notes, tests, bodies, call sites, summaries, types, and commit metadata into context candidates for downstream selection.
+ * @param options Provide the symbol, indexes, graph, source-selection flags, truncation limits, and optional summaries or commit metadata used to build candidates.
  */
 export const contextCandidates = (
   options: AssembleContextOptions,
@@ -63,6 +63,7 @@ export const contextCandidates = (
   if (options.sources.referencedTypes) {
     for (const reference of options.index.referencedTypes.get(symbol.id) ??
       []) {
+      if (options.sharedDeclaredNames?.has(reference.name) === true) continue;
       result.push({
         source: "referencedType",
         text: `REFERENCED TYPE (fields only):\n${reference.declaration}`,

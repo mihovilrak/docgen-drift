@@ -13,9 +13,8 @@ export interface GitSubjectRequest {
 }
 
 /**
- * Resolve the git commit subject for a file's line range, memoizing the lookup (including in-flight requests) by root, path, line range, and timeout.
- * @param request Identifies the repository root, file path, line range, and timeout to look up the owning commit's subject for.
- * @returns The subject line of the commit that last touched the range, or undefined if none could be determined.
+ * Look up and cache the Git subject for the requested source line range.
+ * @param request Specify the repository root, file path, inclusive line range, and lookup timeout.
  */
 export const findGitSubject = async (
   request: GitSubjectRequest,
@@ -40,8 +39,8 @@ export const clearGitSubjectCache = (): void => {
 };
 
 /**
- * Check for tracked or untracked changes using porcelain status with a five-second timeout.
- * @param root Filesystem path to the Git repository to inspect.
+ * Check whether Git reports staged, unstaged, or untracked changes under the specified repository root.
+ * @param root Repository root to inspect.
  */
 export const isWorkingTreeDirty = async (root: string): Promise<boolean> => {
   try {

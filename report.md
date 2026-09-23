@@ -155,22 +155,27 @@ detail or throws. This avoids acceptance based on text that cannot reach the
 source file. Generation can still spend tokens producing disabled fields; a
 future prompt-version change should tell the model which fields are enabled.
 
-## Improvements recommended
+## Recommendation implementation
 
-1. Include granularity and enabled tags in the generation prompt, then increment
-   `GENERATION_PROMPT_VERSION`, so providers do not generate discarded fields.
-2. Detect Claude JSON-mode `tool_use` exits separately. If the installed CLI
-   exposes a stable structured-output completion mode that needs more than one
-   turn, adapt the invocation and add a conformance fixture before making these
-   failures retryable.
-3. Report provider failures without embedding large raw CLI usage objects in
-   normal stdout. Keep the raw diagnostic under `--verbose` or a diagnostic
-   file and show a short classified reason by default.
-4. Add per-stage timing and final generation/judge counts to machine-readable
-   output. Shell timing is sufficient for this report but should not be needed
-   for routine evaluation.
-5. Add an evaluation mode that records proposed semantic JSON, judge decisions,
-   rendered comments, and source identifiers without requiring log scraping.
+Implemented on 2026-09-16 without another Claude or Codex model request:
+
+1. Generation prompt version `2` names the active granularity and tags. Its
+   response schema requires disabled fields to be null or empty.
+2. Claude now receives a three-turn bound for schema completion. JSON
+   `tool_use` and maximum-turn exits have a dedicated, non-retryable
+   classification covered by a deterministic transport fixture.
+3. Normal progress contains a short classified provider error. Full subprocess
+   output is retained as a diagnostic and shown only by `--verbose`, JSON, or an
+   evaluation artifact.
+4. Machine-readable generation results include total duration and per-stage
+   requests, attempts, outcomes, and elapsed time.
+5. `--evaluation <path>` atomically records proposed semantic documentation,
+   judge decisions, rendered comments, edit status, source identifiers,
+   provider/model identities, prompt version, output policy, usage, and timing.
+
+The implementation has deterministic provider, prompt/schema, progress,
+metrics, and evaluation coverage. Live validation is intentionally deferred
+because the Claude allowance was exhausted and the Codex allowance was low.
 
 ## Source review and validation
 
@@ -193,3 +198,107 @@ git diff --check passed
 The final offline check reports 28 unchanged and 9 missing symbols in `src/cli`,
 plus 21 unchanged and 27 missing symbols in `src/core`. It reports no drifted or
 orphaned symbol in either directory.
+
+## Live model validation
+
+Run on 2026-09-22 after the user confirmed allowances. One Claude pass and two
+Codex passes were issued; the first Codex pass failed before any model produced
+text and is reported below as a defect, not as a model-quality result.
+
+### Claude pass — `src/llm/outputPolicy.ts`
+
+```text
+3 generation requests, 3 attempts, 0 skipped, 0 failed, 31.9s
+3 judge requests, 2 accepted, 1 rejected, 0 failed, 40.2s
+run duration 85.9s; 2 written, 1 not-selected
+```
+
+Checklist results: `promptVersion` is `2:1`; the artifact records `detail: false`
+and `throws: false` for standard granularity; stage counts match the three
+records; both accepted records report `editStatus: "written"` and the rejected
+record reports `"not-selected"` with no source change; no rendered comment
+contains a `@throws` or detail section. No request exited with `tool_use`, so
+the three-turn bound resolved the earlier schema-completion failures. Token
+counts are unavailable on the subscription allowance.
+
+### Codex pass — `src/cli/generationMetrics.ts`
+
+The first pass failed all five generation requests before any sampling, with
+HTTP 400 `invalid_json_schema`: `In context=('properties', 'throws', 'items'),
+schema must have a 'type' key`. Standard granularity disables `throws`, and the
+disabled-field branch emitted `{ type: "array", maxItems: 0, items: {} }`. An
+empty item schema is accepted by the Claude transport and rejected by OpenAI
+structured output, so recommendation 1 had shipped a provider-specific break
+that no deterministic test covered.
+
+The branch now reuses the Zod-derived item schema and only adds `maxItems: 0`.
+A regression test walks the portable schema for both `throws` settings and
+asserts every `items` subschema carries a `type`. The fixed schema was confirmed
+against the Codex validator with a throwaway request before the pass was
+repeated. `maxItems` itself is accepted. The prompt text is unchanged and the
+parser already forced `throws` empty under the policy, so the generation prompt
+version was deliberately not bumped: no model-visible instruction or accepted
+output space changed, and a bump would invalidate every stored hash.
+
+Second pass:
+
+```text
+5 generation requests, 5 attempts, 0 skipped, 0 failed, 52.8s
+5 judge requests, 1 accepted, 4 rejected, 0 failed, 30.0s
+run duration 96.9s; 1 written, 4 not-selected
+```
+
+`promptVersion` is `2:1`, the output policy matches standard granularity, stage
+counts match the five records, and the four rejected records left source
+unchanged.
+
+### Comment quality
+
+Claude's two accepted comments state non-obvious behavior: the `returnsValue`
+guard that suppresses the returns section, and the asymmetry by which disabled
+`params`/`throws` are emptied while disabled `detail`/`returns` are omitted.
+Both were verified against the bodies and kept.
+
+The judge rejected all three metrics interfaces in the Codex pass for restating
+field names, which is the correct call for those declarations. It accepted
+`addJudgeStages` while rejecting the structurally identical
+`addGenerationStages` for the same class of summary. The accepted comment is the
+weaker of the two outcomes and sits at the edge of the restatement bar; it was
+kept, but the pair is direct evidence that the judge is not stable across
+near-identical symbols. Judge determinism on sibling symbols is worth a
+follow-up before any bulk run.
+
+### Not a benchmark
+
+The two passes documented different files with different symbol mixes:
+`outputPolicy.ts` is one interface plus two functions with real branching, while
+`generationMetrics.ts` is three field-only interfaces plus two reducers. The
+acceptance rates (2/3 and 1/5) reflect that difference in symbol shape far more
+than any provider difference. These runs are transport and artifact validation,
+not a controlled model-quality comparison.
+
+### Final validation
+
+```text
+34 test files passed
+180 tests passed
+TypeScript typecheck passed
+ESLint and Prettier checks passed
+Production build passed
+git diff --check passed
+```
+
+The offline check moved from 12 unchanged / 175 missing to 15 unchanged /
+172 missing, with 42 drifted and 0 orphaned unchanged in both runs. The three
+newly documented symbols account for the whole difference.
+
+### Measured basis for bulk-run cost
+
+Per-symbol wall clock at `concurrency: 1`, generation plus judge: 28.6s
+(Claude/sonnet) and 19.4s (Codex/gpt-5.6-luna). The tool's own pre-run estimate
+is 5,100 input and 380 output tokens per symbol at a 2,000-token context budget
+with the judge enabled. Eight `claude -p` requests that surfaced raw usage
+reported a mean of 15,373 input tokens and $0.0695 per request, roughly three
+times the estimate, because the CLI transport adds its own system prompt and
+reasoning tokens. Metered-API runs should be costed from the estimator; CLI
+subscription runs report no monetary cost at all.

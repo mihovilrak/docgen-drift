@@ -11,6 +11,10 @@ export class HttpProviderError extends Error {
   }
 }
 
+/**
+ * Identify HTTP provider errors that warrant retrying, including network failures, request timeouts, conflicts, rate limits, and server errors.
+ * @param error The unknown error to evaluate.
+ */
 export const isRetryableHttpError = (error: unknown): boolean => {
   if (!(error instanceof HttpProviderError)) return false;
   if (error.network) return true;
@@ -70,6 +74,11 @@ export const postJson = async (
   }
 };
 
+/**
+ * Read a numeric field from an object, defaulting to zero when the field is absent or non-numeric.
+ * @param value Object containing the field to read.
+ * @param key Field name to inspect.
+ */
 export const numberAt = (
   value: Record<string, unknown>,
   key: string,

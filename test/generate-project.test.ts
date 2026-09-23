@@ -110,6 +110,54 @@ describe("project generation", () => {
     ).not.toContain(`CALLEE SUMMARY: ${leaf}`);
   });
 
+  it("sends one identical module outline as the prefix for every request", async () => {
+    const project = await loadProject({ tsconfigPath: fixtureRoot });
+    const symbols = extractSymbols(project);
+    const provider = recordingProvider();
+
+    await generateProject(
+      project,
+      new Set(
+        ["leaf", "mutualA", "mutualB", "orchestrate"].map((name) =>
+          symbolId(symbols, name),
+        ),
+      ),
+      configSchema.parse({ symbols: { minBodyLines: 0 } }),
+      { generation: provider },
+      false,
+    );
+
+    const prefixes = new Set(
+      provider.requests.map((request) => request.prefix),
+    );
+    expect(prefixes.size).toBe(1);
+    const prefix = [...prefixes][0];
+    expect(prefix).toContain("MODULE: src/service.ts");
+    expect(prefix).toContain("- function orchestrate(input: PaymentInput)");
+    expect(
+      provider.requests.filter((request) => request.prompt.includes("Judge"))
+        .length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("omits the outline when a file has a single documented symbol", async () => {
+    const project = await loadProject({ tsconfigPath: fixtureRoot });
+    const symbols = extractSymbols(project);
+    const provider = recordingProvider();
+
+    await generateProject(
+      project,
+      new Set([symbolId(symbols, "leaf")]),
+      configSchema.parse({ symbols: { minBodyLines: 0 } }),
+      { generation: provider },
+      false,
+    );
+
+    expect(
+      provider.requests.every((request) => request.prefix === undefined),
+    ).toBe(true);
+  });
+
   it("judges only documentation fields enabled for output", async () => {
     const project = await loadProject({ tsconfigPath: fixtureRoot });
     const symbols = extractSymbols(project);
