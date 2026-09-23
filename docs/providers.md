@@ -50,6 +50,10 @@ accounts separately for ordinary input, cache writes, cache reads, and output.
 
 The provider uses Chat Completions with strict `json_schema` response format.
 
+GPT-5 models spend part of `maxOutputTokens` on hidden reasoning. At the
+default 1200 the judge often returns no text and the symbol fails; use `4000`
+for both the generation and judge providers.
+
 ### Google Gemini
 
 ```json
@@ -60,12 +64,19 @@ The provider uses Chat Completions with strict `json_schema` response format.
       "apiKeyEnv": "GEMINI_API_KEY",
       "maxOutputTokens": 1200
     },
-    "model": "gemini-2.5-flash"
+    "model": "gemini-3.6-flash"
   }
 }
 ```
 
 The provider uses `generateContent` with `responseJsonSchema`.
+
+Tested on the free tier, which allows about 5 requests per minute and 20
+requests per day per model for current Flash models. Each symbol costs one
+generation and one judge request, so a free-tier day covers roughly 20 symbols
+per model pair.
+Use `concurrency: 1` and rerun `fix --missing` after `429` failures; completed
+symbols are not regenerated.
 
 ## Separate generation and judge providers
 
@@ -80,7 +91,7 @@ explicitly to keep generation and judging on different services or models:
   },
   "judge": {
     "provider": { "kind": "google" },
-    "model": "gemini-2.5-flash",
+    "model": "gemini-3.6-flash",
     "enabled": true
   }
 }
@@ -93,6 +104,9 @@ provider it had before the override so an unrelated judge model is not silently
 moved to another service.
 
 ## Local OpenAI-compatible servers
+
+Experimental: implemented and covered by stubbed tests, not yet exercised
+against a real codebase.
 
 Ollama, LM Studio, llama.cpp, vLLM, and other servers are supported through the
 same OpenAI-compatible transport:
@@ -148,6 +162,9 @@ Common base URLs:
 Confirm the URL and JSON Schema support against the installed server version.
 
 ## Subscription CLI transports
+
+The Claude and Codex CLI transports are tested. Gemini, OpenCode, and Pi CLI
+transports are experimental.
 
 CLI transports invoke only an executable already installed by the user and
 inherit its existing login. docgen never reads, copies, refreshes, or prints the

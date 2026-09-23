@@ -91,6 +91,19 @@ Claude, Codex, Gemini, OpenCode, and Pi CLI transports are also supported. See
 the [provider guide](docs/providers.md) for configuration, credential safety,
 CI guidance, and local-server requirements.
 
+| Provider | Status |
+| --- | --- |
+| Anthropic API (`anthropic`) | Tested |
+| OpenAI API (`openai`) | Tested |
+| Claude CLI (`cli`, `claude`) | Tested |
+| Codex CLI (`cli`, `codex`) | Tested |
+| Google Gemini API (`google`), free tier | Tested; free-tier rate limits apply |
+| OpenAI-compatible servers (Ollama, LM Studio, OpenRouter, vLLM, ...) | Experimental |
+| Gemini, OpenCode, and Pi CLI transports | Experimental |
+
+Experimental providers are implemented and covered by stubbed tests but have not
+been exercised against a real codebase.
+
 ## How drift detection works
 
 The lockfile stores a normalized implementation hash and documentation hash per

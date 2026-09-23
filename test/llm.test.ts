@@ -341,6 +341,34 @@ describe("LLM generation", () => {
     );
   });
 
+  it("omits maxItems from Anthropic structured-output schemas", async () => {
+    const create = vi.fn().mockResolvedValue({
+      content: [
+        { type: "text", text: JSON.stringify(okPayload("src/a.ts#a")) },
+      ],
+      usage: { input_tokens: 10, output_tokens: 2 },
+    });
+    const provider = new AnthropicProvider({
+      client: { messages: { create } } as unknown as Anthropic,
+    });
+    const responseSchema = generationResponseJsonSchemaFor(
+      symbol("a"),
+      generationOutputPolicy(configSchema.parse({}), symbol("a")),
+    );
+    expect(JSON.stringify(responseSchema)).toContain("maxItems");
+
+    await provider.complete({
+      model: "claude-sonnet-5",
+      system: "system",
+      prompt: "prompt",
+      responseSchema,
+    });
+
+    const sent = JSON.stringify(create.mock.calls[0]?.[0]);
+    expect(sent).toContain('"throws"');
+    expect(sent).not.toContain("maxItems");
+  });
+
   it("inlines a shared prefix for providers without cache controls", () => {
     expect(promptWithPrefix({ prompt: "prompt" })).toBe("prompt");
     expect(promptWithPrefix({ prefix: "", prompt: "prompt" })).toBe("prompt");

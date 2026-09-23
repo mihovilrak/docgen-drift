@@ -45,6 +45,19 @@ export const anthropicPrice = (model: string): ModelPrice | undefined => {
 };
 
 /**
+ * Anthropic structured output rejects array `maxItems`; the prompt and
+ * output projection still keep disabled sections empty.
+ */
+const anthropicSchema = (
+  schema: Readonly<Record<string, unknown>>,
+): Record<string, unknown> =>
+  JSON.parse(
+    JSON.stringify(schema, (key, value: unknown) =>
+      key === "maxItems" ? undefined : value,
+    ),
+  ) as Record<string, unknown>;
+
+/**
  * Split the shared prefix into its own cache-controlled block so a batch of
  * requests over the same module pays for it once and reads it thereafter.
  */
@@ -105,7 +118,10 @@ export class AnthropicProvider implements LlmProvider {
         ],
         messages: [{ role: "user", content: userContent(request) }],
         output_config: {
-          format: { type: "json_schema", schema: request.responseSchema },
+          format: {
+            type: "json_schema",
+            schema: anthropicSchema(request.responseSchema),
+          },
         },
       },
       request.signal === undefined ? undefined : { signal: request.signal },
