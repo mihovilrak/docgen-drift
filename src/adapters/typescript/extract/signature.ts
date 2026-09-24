@@ -64,8 +64,11 @@ export const renderTypeParameters = (
 export const getParameters = (
   declaration: CallableDeclaration,
 ): readonly Parameter[] =>
-  declaration.getParameters().map((parameter) => ({
-    name: parameter.getName(),
+  declaration.getParameters().map((parameter, index) => ({
+    // Destructured names have no identifier; use the eslint-plugin-jsdoc `rootN` convention.
+    name: Node.isIdentifier(parameter.getNameNode())
+      ? parameter.getName()
+      : `root${String(index)}`,
     text: parameter.getText(),
     optional: parameter.isOptional(),
     rest: parameter.isRestParameter(),

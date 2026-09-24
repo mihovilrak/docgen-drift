@@ -172,3 +172,19 @@ const getSymbol = (
   if (symbol === undefined) throw new Error(`Expected symbol ${name}`);
   return symbol;
 };
+
+describe("destructured parameters", () => {
+  it("names binding patterns rootN so they are valid schema keys and @param names", async () => {
+    const project = await loadProject({
+      tsconfigPath: resolve("test/fixtures/destructured"),
+    });
+    const [provider] = extractSymbols(project);
+
+    expect(provider?.parameters.map((parameter) => parameter.name)).toEqual([
+      "root0",
+      "root1",
+      "label",
+    ]);
+    expect(provider?.parameters[0]?.text).toContain("children");
+  });
+});
