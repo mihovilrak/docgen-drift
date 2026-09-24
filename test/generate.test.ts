@@ -17,6 +17,19 @@ const execFileAsync = promisify(execFile);
 const fixtureRoot = resolve("test/fixtures/generation");
 
 describe("generation commands", () => {
+  it("rejects a --path that include does not cover", async () => {
+    const root = await copyFixture();
+
+    await expect(
+      runGeneration(
+        root,
+        config(),
+        { mode: "missing", path: "scripts", dryRun: true },
+        provider(),
+      ),
+    ).rejects.toThrow(/--path narrows include and never extends it/u);
+  });
+
   it("produces a byte-identical unified dry-run diff without writing", async () => {
     const root = await copyFixture();
     const sourcePath = join(root, "src/api.ts");

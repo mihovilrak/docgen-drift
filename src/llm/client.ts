@@ -1,6 +1,12 @@
 import type { Symbol as DocumentationSymbol } from "../core/symbol.js";
+import {
+  mapConcurrent,
+  ProviderCaller,
+  ProviderFailure,
+  type ProviderErrorInfo,
+} from "./call.js";
 import type { ModelCapabilities } from "./capabilities.js";
-import { errorDiagnostic, errorMessage } from "./errors.js";
+import { errorMessage } from "./errors.js";
 import type { GenerationOutputPolicy } from "./outputPolicy.js";
 import {
   generationResponseJsonSchemaFor,
@@ -32,6 +38,8 @@ export interface LlmProvider {
   readonly id: string;
   complete(request: ProviderRequest): Promise<ProviderResponse>;
   isRetryable(error: unknown): boolean;
+  /** Status and server-requested wait of a failed request, for backoff and fail-fast. */
+  errorInfo?(error: unknown): ProviderErrorInfo;
   /** Model limits, structured-output support, and price. Optional: callers fall back to conservative defaults. */
   describe?(model: string): ModelCapabilities;
   /** Local tokenizer. Optional: callers fall back to `conservativeTokenCount`. */
@@ -75,21 +83,12 @@ export interface LlmClientOptions {
  * Coordinate concurrent LLM generation with retries, validation, usage aggregation, and result reporting.
  */
 export class LlmClient {
-  readonly #provider: LlmProvider;
-  readonly #options: LlmClientOptions &
-    Required<Pick<LlmClientOptions, "retryCount" | "baseDelayMs" | "sleep">>;
+  readonly #caller: ProviderCaller;
+  readonly #options: LlmClientOptions;
 
   constructor(provider: LlmProvider, options: LlmClientOptions) {
-    this.#provider = provider;
-    this.#options = {
-      ...options,
-      retryCount: options.retryCount ?? 2,
-      baseDelayMs: options.baseDelayMs ?? 250,
-      sleep:
-        options.sleep ??
-        ((milliseconds) =>
-          new Promise((resolve) => setTimeout(resolve, milliseconds))),
-    };
+    this.#options = options;
+    this.#caller = new ProviderCaller(provider, callOptions(options));
   }
 
   /**
@@ -128,7 +127,7 @@ export class LlmClient {
       validationAttempt++
     ) {
       try {
-        const response = await this.#completeWithRetry({
+        const response = await this.#caller.complete({
           model: request.model,
           system: request.system,
           ...(request.prefix === undefined ? {} : { prefix: request.prefix }),
@@ -177,69 +176,7 @@ export class LlmClient {
       attempts,
     };
   }
-
-  async #completeWithRetry(request: ProviderRequest): Promise<{
-    readonly response: ProviderResponse;
-    readonly attempts: number;
-  }> {
-    for (let attempt = 0; ; attempt++) {
-      try {
-        this.#options.signal?.throwIfAborted();
-        return {
-          response: await this.#provider.complete(request),
-          attempts: attempt + 1,
-        };
-      } catch (error) {
-        if (
-          this.#options.signal?.aborted === true ||
-          attempt >= this.#options.retryCount ||
-          !this.#provider.isRetryable(error)
-        ) {
-          throw new ProviderFailure(
-            errorMessage(error),
-            attempt + 1,
-            errorDiagnostic(error),
-          );
-        }
-        await this.#options.sleep(
-          this.#options.baseDelayMs * Math.pow(2, attempt),
-        );
-      }
-    }
-  }
 }
-
-class ProviderFailure extends Error {
-  readonly attempts: number;
-  readonly diagnostic?: string;
-
-  constructor(message: string, attempts: number, diagnostic?: string) {
-    super(message);
-    this.attempts = attempts;
-    if (diagnostic !== undefined) this.diagnostic = diagnostic;
-  }
-}
-
-const mapConcurrent = async <T, R>(
-  values: readonly T[],
-  concurrency: number,
-  visit: (value: T) => Promise<R>,
-): Promise<readonly R[]> => {
-  const results = new Array<R>(values.length);
-  let cursor = 0;
-  const workers = Array.from(
-    { length: Math.min(Math.max(1, concurrency), values.length) },
-    async () => {
-      while (cursor < values.length) {
-        const index = cursor++;
-        const value = values[index];
-        if (value !== undefined) results[index] = await visit(value);
-      }
-    },
-  );
-  await Promise.all(workers);
-  return results;
-};
 
 /**
  * Inline a shared prefix for providers without a cache-control mechanism of their own.
@@ -263,5 +200,24 @@ export const optionalRequestFields = (options: {
   ...(options.maxOutputTokens === undefined
     ? {}
     : { maxOutputTokens: options.maxOutputTokens }),
+  ...(options.signal === undefined ? {} : { signal: options.signal }),
+});
+
+/**
+ * Fill retry defaults shared by the generation and judge clients.
+ * @param options Client options with optional retry count, backoff base, sleep, and signal.
+ */
+export const callOptions = (options: {
+  readonly retryCount?: number;
+  readonly baseDelayMs?: number;
+  readonly sleep?: (milliseconds: number) => Promise<void>;
+  readonly signal?: AbortSignal;
+}): ConstructorParameters<typeof ProviderCaller>[1] => ({
+  retryCount: options.retryCount ?? 2,
+  baseDelayMs: options.baseDelayMs ?? 250,
+  sleep:
+    options.sleep ??
+    ((milliseconds) =>
+      new Promise((resolve) => setTimeout(resolve, milliseconds))),
   ...(options.signal === undefined ? {} : { signal: options.signal }),
 });

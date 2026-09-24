@@ -24,6 +24,15 @@ export type OpenAiProviderOptions = Omit<
   "id" | "baseUrl" | "price"
 > & { readonly baseUrl?: string };
 
+/**
+ * Build an OpenAI-compatible provider preconfigured for OpenAI, defaulting to
+ * the public OpenAI base URL and context window and using the
+ * max_completion_tokens limit field with OpenAI model pricing.
+ * @param options Optional provider settings such as apiKey, baseUrl, and
+ *   contextWindowTokens, passed through to the underlying provider. A missing
+ *   baseUrl or contextWindowTokens falls back to the OpenAI defaults, while the
+ *   id, token-limit field, and price lookup are fixed and cannot be overridden.
+ */
 export const createOpenAiProvider = (
   options: OpenAiProviderOptions = {},
 ): OpenAiCompatibleProvider =>

@@ -293,7 +293,7 @@ describe("provider failures", () => {
     });
   });
 
-  it("reports JSON Schema capability failures from local servers", async () => {
+  it("passes a local server's 400 through verbatim", async () => {
     const provider = new OpenAiCompatibleProvider({
       id: "local",
       baseUrl: "http://local.test/v1",
@@ -312,7 +312,9 @@ describe("provider failures", () => {
         prompt: "prompt",
         responseSchema: { type: "object" },
       }),
-    ).rejects.toThrow(/does not support JSON Schema constrained output/u);
+    ).rejects.toThrow(
+      "local returned 400: response_format json_schema is unsupported",
+    );
   });
 
   it("classifies CLI timeouts as retryable", async () => {

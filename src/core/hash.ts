@@ -2,6 +2,10 @@ import { createHash } from "node:crypto";
 
 import type { ExistingDoc, Symbol as DocumentationSymbol } from "./symbol.js";
 
+/**
+ * Describes the settings and version identifiers that determine how a content
+ * hash is computed, so changes to any of them alter the resulting hash.
+ */
 export interface HashRecipe {
   readonly includeSourceNotes: boolean;
   readonly contextRecipeVersion: string;

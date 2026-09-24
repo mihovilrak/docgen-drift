@@ -96,7 +96,9 @@ The same schema is shipped in the npm package at
 
 **`tests`** — these files are read but never documented. Test names are the highest-value non-local context source in the system (see [ADR-006](../DECISIONS.md#adr-006)), so getting this glob right matters more than it looks. If your tests live outside `include`, list them here anyway.
 
-**`workspace.projects`** — one or more `tsconfig.json` paths or globs, relative to the workspace root. Each match is loaded as a separate compiler program. For example, a large monorepo can use `["packages/*/tsconfig.json", "apps/*/tsconfig.json"]`. Duplicate source-file ownership is a configuration error. Use `--project <path-or-glob>` to restrict an individual run.
+**`workspace.projects`** — one or more `tsconfig.json` paths or globs, relative to the workspace root. Each match is loaded as a separate compiler program. For example, a large monorepo can use `["packages/*/tsconfig.json", "apps/*/tsconfig.json"]`. Duplicate source-file ownership is a configuration error. Use `--project <path-or-glob>` to restrict an individual run; it replaces this list for that run.
+
+**`include` and `--path`** — `include` decides which files are checked at all. `fix -p <path>` then narrows generation to results under that path; it never adds files `include` excludes. A path with no checked symbols is an error rather than an empty run, so widen `include` first when backfilling a new directory.
 
 **`workspace.lockfile`** — `shared` writes one root `.docgen/lock.json` with workspace-relative ids. `perProject` writes a lockfile beside each project and is usually the better choice for independently owned monorepo packages.
 

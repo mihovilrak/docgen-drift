@@ -31,7 +31,7 @@ export const renderEstimate = (estimate: GenerationEstimate): string => {
   const budget = estimate.contextBudgetReduced
     ? ` Context budget reduced to ${String(estimate.contextBudgetTokens)} tokens to fit the generation model window.`
     : "";
-  return `Estimated LLM use for ${String(estimate.symbols)} ${plural(estimate.symbols, "symbol")}: ${String(estimate.inputTokens)} input tokens, ${String(estimate.outputTokens)} output tokens, ${estimatedCost(estimate)}${estimate.includesJudge ? ", including the judge" : ""}; retries not included.${budget}\n`;
+  return `Estimated LLM use for ${String(estimate.symbols)} ${plural(estimate.symbols, "symbol")}: ${String(estimate.inputTokens)} input tokens, ${String(estimate.outputTokens)} output tokens, ${estimatedCost(estimate)}${estimate.includesJudge ? ", including the judge" : ""}; retries not included.${budget}${estimate.selfJudged ? " The judge uses the generation model; a different judge model catches more." : ""}\n`;
 };
 
 const renderUsage = (usage: GenerationRunResult["usage"]): string =>

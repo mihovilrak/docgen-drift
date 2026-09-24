@@ -75,8 +75,37 @@ Tested on the free tier, which allows about 5 requests per minute and 20
 requests per day per model for current Flash models. Each symbol costs one
 generation and one judge request, so a free-tier day covers roughly 20 symbols
 per model pair.
-Use `concurrency: 1` and rerun `fix --missing` after `429` failures; completed
-symbols are not regenerated.
+Set `requestsPerMinute` and `requestsPerDay` on the provider to stay inside
+the tier; completed symbols are not regenerated on a rerun.
+
+## Rate limits and failures
+
+Every provider accepts optional `requestsPerMinute` and `requestsPerDay`.
+docgen spaces request starts to the per-minute limit and stops the run once the
+per-day count is reached. The daily count is per run and is not persisted, so
+set it to what remains of the provider's quota. A shared generation/judge
+provider shares one budget.
+
+```json
+{
+  "generate": {
+    "provider": {
+      "kind": "google",
+      "requestsPerMinute": 5,
+      "requestsPerDay": 20
+    },
+    "model": "gemini-3-flash"
+  }
+}
+```
+
+Transient failures (`408`, `409`, `429`, `5xx`, network) are retried with
+exponential backoff, or after the server's `Retry-After` when it sends one. A
+requested wait above 60 seconds fails instead of blocking the run. That, a
+`401`, `403` or `404`, or three consecutive `400`/`422` responses stop the run:
+remaining symbols fail with `Not sent after an earlier provider error` rather
+than repeating a request that cannot succeed. Provider error text is shown
+verbatim.
 
 ## Separate generation and judge providers
 
@@ -96,6 +125,10 @@ explicitly to keep generation and judging on different services or models:
   }
 }
 ```
+
+Prefer a judge model different from the generation model. A model grading its
+own output shares its blind spots and accepts filler it would have written;
+`fix` notes this in the estimate line when both models are the same.
 
 `--provider` and `--model` are generation-only per-run overrides. They are
 accepted only by `fix` and `check --fix`; configuration remains authoritative
@@ -282,9 +315,10 @@ span.
 environment variable is absent. Set it in the current process or choose a CLI
 transport.
 
-`does not support JSON Schema constrained output` means the local server or
-selected model rejected strict structured output. Choose a compatible model or
-server version; docgen will not silently weaken the contract.
+`<provider> returned 400: …` is the server's own error, unedited. For a local
+server this usually means the model or server version rejects strict
+structured output; choose a compatible one. docgen will not silently weaken the
+contract.
 
 `is not installed or not on PATH` means `docgen auth` or the transport could not
 resolve the executable. Set `command` only when the binary has a different name

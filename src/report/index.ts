@@ -7,6 +7,11 @@ export interface ReportSummary {
   readonly orphaned: number;
 }
 
+/**
+ * Tally check results into per-status counts for unchanged, drifted, missing,
+ * and orphaned entries.
+ * @param results All check results to count, before any filtering of reportable issues.
+ */
 export const summarize = (results: readonly CheckResult[]): ReportSummary => ({
   unchanged: count(results, "unchanged"),
   drifted: count(results, "drifted"),

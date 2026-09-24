@@ -34,6 +34,9 @@ export const findGitSubject = async (
   return pending;
 };
 
+/**
+ * Discard all memoized git subject lookups so later requests query git again.
+ */
 export const clearGitSubjectCache = (): void => {
   subjectCache.clear();
 };

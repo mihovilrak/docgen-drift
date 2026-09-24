@@ -15,6 +15,11 @@ import { extractSymbols } from "./extract/index.js";
 import type { TypeScriptProjectHandle } from "./loadProject.js";
 import { renderConfiguredDoc } from "./renderDoc.js";
 
+/**
+ * Describes a single documentation edit to apply, pairing a target symbol with
+ * its generated doc and the file and anchor hashes expected at planning time so
+ * stale edits can be detected.
+ */
 export interface PlannedDocEdit {
   readonly symbol: DocumentationSymbol;
   readonly doc: GeneratedDoc;

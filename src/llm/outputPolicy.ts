@@ -4,6 +4,11 @@ import type {
   Symbol as DocumentationSymbol,
 } from "../core/symbol.js";
 
+/**
+ * Describe which documentation sections and how much detail the generator
+ * should produce for a symbol, including an optional note carried over from
+ * replaced source documentation.
+ */
 export interface GenerationOutputPolicy {
   readonly granularity: "minimal" | "standard" | "detailed";
   readonly detail: boolean;

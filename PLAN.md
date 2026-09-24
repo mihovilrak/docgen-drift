@@ -187,8 +187,8 @@ Finish the provider and command-line seams before adding another language. The d
 - [x] Write a concise Markdown quick guide for later web publication, covering installation, first configuration, subscription and API authentication, dry runs, applying changes, baselining, and CI checks
 - [x] Write a complete Markdown tutorial for later web publication, organized into reusable pages with examples, expected output, safety notes, provider choices, troubleshooting, and an end-to-end adoption workflow
 - [x] Add entry-point-aware public-surface filtering so `exportedOnly` can distinguish package API from implementation exports; retain syntactic-export mode as an explicit policy
-- [ ] Dogfood `fix --missing` on this repository in reviewable path-bounded batches, starting with the public modules; commit and validate the resulting lockfile
-- [ ] Run `baseline` then `check` on the dogfooded repository and verify that one symbol edit produces exactly one drift finding
+- [x] Dogfood `fix --missing` on this repository in reviewable path-bounded batches, starting with the public modules; commit and validate the resulting lockfile (generated and baselined; commit pending)
+- [x] Run `baseline` then `check` on the dogfooded repository and verify that one symbol edit produces exactly one drift finding
 - [x] Remove intermittent test timeouts and run build, test, lint, and typecheck successfully in the release environment
 - [ ] Reconcile the package version with release state, publish v1.0.0, and mark the release in the changelog
 

@@ -72,6 +72,15 @@ export const usdUsage = (
   costBasis: "usd",
 });
 
+/**
+ * Produce a human-readable description of the cost of a usage record based on
+ * its cost basis.
+ * @param usage Provider usage whose costBasis selects the wording; costUsd is
+ *   read only when the basis is "usd" and is treated as 0 if missing.
+ * @returns A phrase such as \"no model calls\", a dollar amount with six
+ *   decimal places (e.g. \"$0.001234\"), \"subscription allowance (no monetary
+ *   cost available)\", or \"cost unavailable\".
+ */
 export const formatCost = (usage: ProviderUsage): string => {
   switch (usage.costBasis) {
     case "none":

@@ -84,6 +84,16 @@ interface EvaluationRecordOptions {
   readonly write: boolean;
 }
 
+/**
+ * Build a per-symbol evaluation record combining symbol metadata, generation
+ * outcome, optional judge result, and, when generation succeeded, the projected
+ * doc with its rendered comment and edit status.
+ * @param options Symbol, generation result, optional judgment, provider and
+ *   model identifiers, output policy, config, and planned/applied/write flags
+ *   used to assemble the record.
+ * @returns A record whose judge section is present only when a judgment exists
+ *   and whose output section is present only when generation returned an OK verdict.
+ */
 export const evaluationRecord = (
   options: EvaluationRecordOptions,
 ): GenerationEvaluationRecord => {

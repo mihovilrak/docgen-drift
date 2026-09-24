@@ -66,6 +66,15 @@ export const judgeMetrics = (cases: readonly JudgeEvalCase[]): JudgeMetrics => {
   };
 };
 
+/**
+ * Compare average quality scores of signature-only versus full-context
+ * documentation across evaluation cases.
+ * @param cases Evaluation cases, each holding a signature-only score and a
+ *   full-context score for the same item.
+ * @returns Case count, the mean score for each mode, and the mean improvement
+ *   (full-context mean minus signature-only mean); the improvement is negative
+ *   when full context scores worse.
+ */
 export const ablationMetrics = (
   cases: readonly AblationEvalCase[],
 ): AblationMetrics => {

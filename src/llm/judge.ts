@@ -4,11 +4,11 @@ import type {
   GeneratedDoc,
   Symbol as DocumentationSymbol,
 } from "../core/symbol.js";
+import { mapConcurrent, ProviderCaller, ProviderFailure } from "./call.js";
 import {
+  callOptions,
   optionalRequestFields,
   type LlmProvider,
-  type ProviderRequest,
-  type ProviderResponse,
 } from "./client.js";
 import {
   DEFAULT_OUTPUT_POLICY,
@@ -17,7 +17,7 @@ import {
 import { judgePrompt, judgeSystemPrompt } from "./prompt/index.js";
 import { portableJsonSchema } from "./schema.js";
 import { addUsage, EMPTY_USAGE, type ProviderUsage } from "./usage.js";
-import { errorDiagnostic, errorMessage } from "./errors.js";
+import { errorMessage } from "./errors.js";
 
 const judgeResponseSchema = z
   .object({
@@ -71,21 +71,12 @@ export interface JudgeClientOptions {
  * Evaluate generated documentation concurrently against a language-model provider with retries and response validation.
  */
 export class JudgeClient {
-  readonly #provider: LlmProvider;
-  readonly #options: JudgeClientOptions &
-    Required<Pick<JudgeClientOptions, "retryCount" | "baseDelayMs" | "sleep">>;
+  readonly #caller: ProviderCaller;
+  readonly #options: JudgeClientOptions;
 
   constructor(provider: LlmProvider, options: JudgeClientOptions) {
-    this.#provider = provider;
-    this.#options = {
-      ...options,
-      retryCount: options.retryCount ?? 2,
-      baseDelayMs: options.baseDelayMs ?? 250,
-      sleep:
-        options.sleep ??
-        ((milliseconds) =>
-          new Promise((resolve) => setTimeout(resolve, milliseconds))),
-    };
+    this.#options = options;
+    this.#caller = new ProviderCaller(provider, callOptions(options));
   }
 
   /**
@@ -122,7 +113,7 @@ export class JudgeClient {
       validationAttempt++
     ) {
       try {
-        const completed = await this.#completeWithRetry({
+        const completed = await this.#caller.complete({
           model: request.model,
           system: judgeSystemPrompt,
           ...(request.prefix === undefined ? {} : { prefix: request.prefix }),
@@ -161,7 +152,7 @@ export class JudgeClient {
           attempts,
         };
       } catch (error) {
-        if (error instanceof JudgeProviderFailure) {
+        if (error instanceof ProviderFailure) {
           attempts += error.attempts;
           return {
             symbolId: request.symbol.id,
@@ -190,47 +181,6 @@ export class JudgeClient {
     }
     throw new Error("Unreachable judge state");
   }
-
-  async #completeWithRetry(request: ProviderRequest): Promise<{
-    readonly response: ProviderResponse;
-    readonly attempts: number;
-  }> {
-    for (let attempt = 0; ; attempt++) {
-      try {
-        this.#options.signal?.throwIfAborted();
-        return {
-          response: await this.#provider.complete(request),
-          attempts: attempt + 1,
-        };
-      } catch (error) {
-        if (
-          this.#options.signal?.aborted === true ||
-          attempt >= this.#options.retryCount ||
-          !this.#provider.isRetryable(error)
-        ) {
-          throw new JudgeProviderFailure(
-            errorMessage(error),
-            attempt + 1,
-            errorDiagnostic(error),
-          );
-        }
-        await this.#options.sleep(
-          this.#options.baseDelayMs * Math.pow(2, attempt),
-        );
-      }
-    }
-  }
-}
-
-class JudgeProviderFailure extends Error {
-  readonly attempts: number;
-  readonly diagnostic?: string;
-
-  constructor(message: string, attempts: number, diagnostic?: string) {
-    super(message);
-    this.attempts = attempts;
-    if (diagnostic !== undefined) this.diagnostic = diagnostic;
-  }
 }
 
 const appendValidationFeedback = (
@@ -241,24 +191,3 @@ const appendValidationFeedback = (
   attempt === 1
     ? prompt
     : `${prompt}\n\nYour previous response was invalid: ${error}. Return a corrected JSON object.`;
-
-const mapConcurrent = async <T, R>(
-  values: readonly T[],
-  concurrency: number,
-  visit: (value: T) => Promise<R>,
-): Promise<readonly R[]> => {
-  const results = new Array<R>(values.length);
-  let cursor = 0;
-  const workers = Array.from(
-    { length: Math.min(Math.max(1, concurrency), values.length) },
-    async () => {
-      while (cursor < values.length) {
-        const index = cursor++;
-        const value = values[index];
-        if (value !== undefined) results[index] = await visit(value);
-      }
-    },
-  );
-  await Promise.all(workers);
-  return results;
-};

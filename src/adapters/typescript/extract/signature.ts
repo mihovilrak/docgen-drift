@@ -61,6 +61,15 @@ export const renderTypeParameters = (
     ? ""
     : `<${parameters.map((parameter) => parameter.getText()).join(", ")}>`;
 
+/**
+ * Convert a callable declaration's parameters into simple descriptors carrying
+ * each one's name, source text, optionality, and rest status.
+ * @param declaration Function, method, constructor, accessor, or arrow/function
+ *   expression whose parameters are read in declaration order.
+ * @returns Parameter descriptors in declaration order. Destructured parameters,
+ *   which have no identifier, are named `root0`, `root1`, and so on, using
+ *   their zero-based position.
+ */
 export const getParameters = (
   declaration: CallableDeclaration,
 ): readonly Parameter[] =>

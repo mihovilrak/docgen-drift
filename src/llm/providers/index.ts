@@ -7,6 +7,7 @@ import {
   type ModelCapabilities,
 } from "../capabilities.js";
 import type { LlmProvider } from "../client.js";
+import { pacedProvider } from "../pacing.js";
 import {
   ANTHROPIC_CONTEXT_WINDOW_TOKENS,
   AnthropicProvider,
@@ -41,6 +42,18 @@ export interface ProviderStatus {
 export const providerId = (config: ProviderConfig): string =>
   config.kind === "cli" ? `cli:${config.tool}` : config.kind;
 
+/**
+ * Report whether a provider's credentials are available without contacting the
+ * provider or reading credential files.
+ * @param config Provider configuration to inspect; its kind and API key
+ *   environment variable name determine the credential state.
+ * @param env Environment variables used to check whether the configured API key
+ *   variable is set and non-empty; defaults to process.env.
+ * @returns A ProviderStatus with the provider id, kind, a credentials state
+ *   ("external" for CLI tools, "none" for keyless OpenAI-compatible endpoints,
+ *   otherwise "present" or "missing" based on the API key variable), and a
+ *   human-readable detail message.
+ */
 export const providerStatus = (
   config: ProviderConfig,
   env: Env = process.env,
@@ -82,6 +95,17 @@ export const createProvider = (
   config: ProviderConfig,
   env: Env = process.env,
 ): LlmProvider => {
+  const provider = baseProvider(config, env);
+  const { requestsPerMinute, requestsPerDay } = config;
+  return requestsPerMinute === undefined && requestsPerDay === undefined
+    ? provider
+    : pacedProvider(provider, {
+        ...(requestsPerMinute === undefined ? {} : { requestsPerMinute }),
+        ...(requestsPerDay === undefined ? {} : { requestsPerDay }),
+      });
+};
+
+const baseProvider = (config: ProviderConfig, env: Env): LlmProvider => {
   switch (config.kind) {
     case "anthropic":
       return new AnthropicProvider({

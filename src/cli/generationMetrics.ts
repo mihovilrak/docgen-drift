@@ -16,6 +16,10 @@ export interface JudgeStageMetrics {
   readonly durationMs: number;
 }
 
+/**
+ * Describe the timing and per-stage outcome counts for a single generation run,
+ * combining the generation and judge stages under one total duration.
+ */
 export interface GenerationRunMetrics {
   readonly durationMs: number;
   readonly generation: GenerationStageMetrics;
@@ -40,6 +44,14 @@ export const EMPTY_JUDGE_STAGE: JudgeStageMetrics = {
   durationMs: 0,
 };
 
+/**
+ * Aggregate per-project generation stage metrics into a single combined total
+ * by summing every counter and the duration.
+ * @param stages Generation stage metrics to sum, such as one entry per project;
+ *   an empty list yields the empty (all-zero) stage.
+ * @returns A new metrics object whose requests, attempts, candidates, skipped,
+ *   failed, and durationMs are the sums across all stages.
+ */
 export const addGenerationStages = (
   stages: readonly GenerationStageMetrics[],
 ): GenerationStageMetrics =>

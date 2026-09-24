@@ -22,5 +22,5 @@
     "model": "sonnet",
     "concurrency": 1
   },
-  "judge": { "enabled": true, "model": "sonnet" }
+  "judge": { "enabled": true, "model": "haiku" }
 }

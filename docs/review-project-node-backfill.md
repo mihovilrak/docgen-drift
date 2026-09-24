@@ -86,14 +86,14 @@ Fixed during the run:
 3. **GPT-5 judge output was empty.** Reasoning consumed `max_completion_tokens` at 1200, so 40 of 55 judge calls failed. This is fixed in config with `maxOutputTokens: 4000`, and documented in `docs/providers.md`.
 4. **Destructured parameters broke generation.** Their raw binding text (`{ children }`) was used as the parameter name. That broke OpenAI strict schemas (`\n` in property keys) and made Anthropic write `@param {` tags. They are now named `rootN`, following the eslint-plugin-jsdoc convention (`extract/signature.ts`, with fixture `test/fixtures/destructured`). The four broken tags already written in project-node were fixed by hand.
 
-Open:
-1. **Misleading error.** The OpenAI 400 schema error was reported as "provider does not support JSON Schema constrained output". The raw provider error should be shown.
-2. **No fail-fast on deterministic errors.** Errors such as 400 or 404 are retried like transient ones, so re-runs repeat the same failure. They should be classified as non-retryable.
-3. **`Retry-After` is ignored.** On 429, backoff does not honor the header. With Gemini's quota, this wastes the remaining requests.
-4. **No cost table for `gemini-3.x`.** It reports "cost unavailable". That is correct for the free tier but will be wrong on paid keys.
-5. **`include` semantics are unclear.** It was not obvious whether `-p` narrows the configured `include` or replaces it.
-6. **No quota-aware pacing.** A per-provider requests-per-minute and requests-per-day setting would make the free tier usable for small, incremental runs, which is what `check`-driven CI needs anyway.
-7. **Self-judging.** Using the same model for both generate and judge should probably trigger a warning, or the docs should recommend a cross-model judge.
+Fixed after the run:
+1. **Misleading error.** Provider error text is now shown verbatim (`openaiCompatible.ts`).
+2. **No fail-fast on deterministic errors.** 400 and 404 were already not retried, but every remaining symbol still sent the same failing request. Now a `401`/`403`/`404` or three consecutive `400`/`422` responses stop the run, and remaining symbols fail with `Not sent after an earlier provider error` (`src/llm/call.ts`).
+3. **`Retry-After` is ignored.** Retries now wait for `Retry-After` or Gemini's `retryDelay`. A wait over 60 seconds fails and stops the run instead of spending the quota.
+4. **No cost table for `gemini-3.x`.** Added prices for 3.5 Flash/Flash-Lite, 3.1 Pro/Flash-Lite, 3 Pro and 3 Flash.
+5. **`include` semantics are unclear.** `-p` narrows `include` and never extends it. A path with no checked symbols is now an error. Documented in `docs/config.md`.
+6. **No quota-aware pacing.** Added per-provider `requestsPerMinute` and per-run `requestsPerDay` (`src/llm/pacing.ts`).
+7. **Self-judging.** The estimate line now notes when the judge uses the generation model. `docs/providers.md` recommends a cross-model judge.
 
 ## Takeaways
 

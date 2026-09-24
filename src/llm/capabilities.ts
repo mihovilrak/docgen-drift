@@ -5,6 +5,10 @@ export interface ModelPrice {
   readonly outputUsdPerMillion: number;
 }
 
+/**
+ * Describe a model's token limits, structured-output support, and optional
+ * pricing used to budget context and estimate cost.
+ */
 export interface ModelCapabilities {
   readonly model: string;
   readonly contextWindowTokens: number;

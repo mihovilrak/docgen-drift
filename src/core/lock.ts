@@ -20,6 +20,10 @@ export interface LockFile {
 
 export type LockErrorCode = "invalid" | "unsupported-version" | "io";
 
+/**
+ * Describe a failure encountered while reading, parsing, or writing a lock
+ * file, including its category, the file involved, and a human-readable explanation.
+ */
 export interface LockError {
   readonly code: LockErrorCode;
   readonly path: string;

@@ -5,6 +5,7 @@ import { renderEstimate, renderGeneration } from "../src/cli/render.js";
 import { configSchema } from "../src/config/schema.js";
 import { costFromPrice } from "../src/llm/capabilities.js";
 import { anthropicPrice } from "../src/llm/providers/anthropic.js";
+import { googlePrice } from "../src/llm/providers/google.js";
 
 describe("generation cost estimation", () => {
   it("aggregates generation and judge estimates across symbols", () => {
@@ -18,9 +19,31 @@ describe("generation cost estimation", () => {
       costUsd: 0.108,
       costBasis: "usd",
       includesJudge: true,
+      selfJudged: false,
       contextBudgetTokens: 2000,
       contextBudgetReduced: false,
     });
+  });
+
+  it("notes when the judge runs the generation model", () => {
+    const config = configSchema.parse({
+      generate: { model: "gemini-3-flash" },
+      judge: { model: "gemini-3-flash" },
+    });
+    const estimate = estimateGeneration(config, 1, true);
+
+    expect(estimate.selfJudged).toBe(true);
+    expect(renderEstimate(estimate)).toContain("a different judge model");
+    expect(estimateGeneration(config, 1, false).selfJudged).toBe(false);
+  });
+
+  it("prices Gemini 3.x models by their longest matching name", () => {
+    expect(googlePrice("gemini-3.5-flash-lite-preview")).toEqual({
+      inputUsdPerMillion: 0.3,
+      outputUsdPerMillion: 2.5,
+    });
+    expect(googlePrice("gemini-3.5-flash")?.inputUsdPerMillion).toBe(1.5);
+    expect(googlePrice("gemini-3-flash-preview")?.inputUsdPerMillion).toBe(0.5);
   });
 
   it("reports an unknown price as unknown rather than zero", () => {

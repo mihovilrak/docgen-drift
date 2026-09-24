@@ -229,6 +229,16 @@ interface SourceNoteOwner {
   readonly sourceNote: { readonly replacementEligible: boolean } | null;
 }
 
+/**
+ * Decide whether a symbol's leading source note should be replaced by the
+ * generated documentation comment.
+ * @param config Docgen configuration; replacement applies only when its
+ *   leading-comments onGenerate setting is "replace".
+ * @param symbol Symbol to check; it must have no existing doc comment and a
+ *   source note marked as eligible for replacement.
+ * @returns true when the configuration and symbol state both call for the
+ *   source note to be replaced, otherwise false.
+ */
 export const replacesSourceNote = (
   config: DocgenConfig,
   symbol: SourceNoteOwner,

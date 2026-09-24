@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Honor `Retry-After` (and Gemini `retryDelay`) when retrying; fail requests
+  whose requested wait exceeds 60 seconds.
+- Stop a run after `401`/`403`/`404`, an over-long rate-limit wait, or three
+  consecutive `400`/`422` responses; remaining symbols are not sent.
+- Show provider error text verbatim instead of rewording `400` responses.
+- Add per-provider `requestsPerMinute` and per-run `requestsPerDay` pacing.
+- Add Gemini 3.x prices.
+- Note in the estimate when the judge uses the generation model.
+- Reject `fix -p` paths outside `include`.
+
 - Wrap rendered JSDoc at `docs.lineWidth` (default 80), letting a paragraph
   tail run to `docs.maxLineWidth` (default 90).
 - Add direct OpenAI, Google Gemini, OpenAI-compatible, and subscription CLI

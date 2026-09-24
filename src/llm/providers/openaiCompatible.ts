@@ -5,6 +5,7 @@ import {
   type ModelCapabilities,
   type ModelPrice,
 } from "../capabilities.js";
+import type { ProviderErrorInfo } from "../call.js";
 import {
   promptWithPrefix,
   type LlmProvider,
@@ -14,6 +15,7 @@ import {
 import { usdUsage, type ProviderUsage } from "../usage.js";
 import {
   HttpProviderError,
+  httpErrorInfo,
   isRetryableHttpError,
   numberAt,
   postJson,
@@ -43,6 +45,15 @@ export class OpenAiCompatibleProvider implements LlmProvider {
     this.#options = options;
   }
 
+  /**
+   * Send a strict JSON-schema chat completion request to the configured
+   * OpenAI-compatible endpoint and return the parsed content with token usage.
+   * @param request Provider request supplying the model, system prompt, prompt
+   *   (with optional prefix), response JSON schema, an optional output-token
+   *   cap that overrides the provider default, and an optional abort signal.
+   * @returns Response whose value is the model's message content extracted from
+   *   the completion payload and whose usage is the token usage reported by the server.
+   */
   async complete(request: ProviderRequest): Promise<ProviderResponse> {
     const maxTokens =
       request.maxOutputTokens ??
@@ -64,25 +75,20 @@ export class OpenAiCompatibleProvider implements LlmProvider {
         },
       },
     };
-    let payload: Record<string, unknown>;
-    try {
-      payload = await postJson({
-        url: `${trimSlash(this.#options.baseUrl)}/chat/completions`,
-        headers:
-          this.#options.apiKey === undefined
-            ? {}
-            : { authorization: `Bearer ${this.#options.apiKey}` },
-        body,
-        timeoutMs: this.#options.timeoutMs ?? 120_000,
-        ...(request.signal === undefined ? {} : { signal: request.signal }),
-        label: this.id,
-        ...(this.#options.fetchImpl === undefined
+    const payload = await postJson({
+      url: `${trimSlash(this.#options.baseUrl)}/chat/completions`,
+      headers:
+        this.#options.apiKey === undefined
           ? {}
-          : { fetchImpl: this.#options.fetchImpl }),
-      });
-    } catch (error) {
-      throw schemaSupportError(error, this.id);
-    }
+          : { authorization: `Bearer ${this.#options.apiKey}` },
+      body,
+      timeoutMs: this.#options.timeoutMs ?? 120_000,
+      ...(request.signal === undefined ? {} : { signal: request.signal }),
+      label: this.id,
+      ...(this.#options.fetchImpl === undefined
+        ? {}
+        : { fetchImpl: this.#options.fetchImpl }),
+    });
     return { value: contentOf(payload, this.id), usage: this.#usage(payload) };
   }
 
@@ -92,6 +98,18 @@ export class OpenAiCompatibleProvider implements LlmProvider {
    */
   isRetryable(error: unknown): boolean {
     return isRetryableHttpError(error);
+  }
+
+  /**
+   * Extract HTTP status, retry delay, and fatality hints from a failed request
+   * error using the shared HTTP error parser.
+   * @param error The error thrown by a failed provider call, of any type;
+   *   inspected for HTTP error details.
+   * @returns Error metadata with the optional HTTP status, retry-after delay in
+   *   milliseconds, and fatal flag.
+   */
+  errorInfo(error: unknown): ProviderErrorInfo {
+    return httpErrorInfo(error);
   }
 
   /**
@@ -148,22 +166,4 @@ const contentOf = (payload: Record<string, unknown>, id: string): string => {
     throw new HttpProviderError(`${id} returned no text response`);
   }
   return content;
-};
-
-/**
- * Servers that cannot constrain output reject the request rather than silently
- * returning prose, so a 400 mentioning the schema fields is reported as a
- * capability failure instead of a generic HTTP error.
- */
-const schemaSupportError = (error: unknown, id: string): unknown => {
-  if (!(error instanceof HttpProviderError) || error.status !== 400) {
-    return error;
-  }
-  if (!/json_schema|response_format|structured/i.test(error.message)) {
-    return error;
-  }
-  return new HttpProviderError(
-    `${id} does not support JSON Schema constrained output for this model; choose a model or server that supports response_format json_schema. Server said: ${error.message}`,
-    error.status,
-  );
 };

@@ -10,12 +10,14 @@ import {
   type ModelCapabilities,
   type ModelPrice,
 } from "../capabilities.js";
+import type { ProviderErrorInfo } from "../call.js";
 import type {
   LlmProvider,
   ProviderRequest,
   ProviderResponse,
 } from "../client.js";
 import { usdUsage, type ProviderUsage } from "../usage.js";
+import { parseRetryAfterMs } from "./http.js";
 
 export interface AnthropicProviderOptions {
   readonly apiKey?: string;
@@ -171,6 +173,36 @@ export class AnthropicProvider implements LlmProvider {
     );
   }
 
+  /**
+   * Extract the HTTP status and retry-after delay from an Anthropic SDK API
+   * error for use in retry handling.
+   * @param error Value thrown by a request; only Anthropic APIError instances
+   *   yield information.
+   * @returns Error info with the numeric status when present and retryAfterMs
+   *   when a valid retry-after header exists; an empty object for non-API
+   *   errors or when neither is available.
+   */
+  errorInfo(error: unknown): ProviderErrorInfo {
+    if (!(error instanceof APIError)) return {};
+    const status: unknown = error.status;
+    const headers: unknown = error.headers;
+    const retryAfterMs = parseRetryAfterMs(
+      headers instanceof Headers ? headers.get("retry-after") : undefined,
+    );
+    return {
+      ...(typeof status === "number" ? { status } : {}),
+      ...(retryAfterMs === undefined ? {} : { retryAfterMs }),
+    };
+  }
+
+  /**
+   * Report the capabilities of an Anthropic model, combining the fixed
+   * Anthropic context window, this provider's configured maximum output tokens,
+   * and any known pricing for the model.
+   * @param model Anthropic model identifier to look up pricing and capabilities for.
+   * @returns Capabilities for the model, including its price when one is known
+   *   for that model.
+   */
   describe(model: string): ModelCapabilities {
     return pricedCapabilities(
       model,

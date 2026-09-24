@@ -4,6 +4,7 @@ import {
   type ModelCapabilities,
   type ModelPrice,
 } from "../capabilities.js";
+import type { ProviderErrorInfo } from "../call.js";
 import {
   promptWithPrefix,
   type LlmProvider,
@@ -13,6 +14,7 @@ import {
 import { usdUsage, type ProviderUsage } from "../usage.js";
 import {
   HttpProviderError,
+  httpErrorInfo,
   isRetryableHttpError,
   numberAt,
   postJson,
@@ -23,7 +25,20 @@ export const GOOGLE_BASE_URL =
 
 export const GOOGLE_CONTEXT_WINDOW_TOKENS = 1_000_000;
 
+/** Prefix match: list a longer name before any name it starts with. Pro rates are the <=200k-context tier. */
 const PRICES: readonly (readonly [string, ModelPrice])[] = [
+  [
+    "gemini-3.5-flash-lite",
+    { inputUsdPerMillion: 0.3, outputUsdPerMillion: 2.5 },
+  ],
+  ["gemini-3.5-flash", { inputUsdPerMillion: 1.5, outputUsdPerMillion: 9 }],
+  [
+    "gemini-3.1-flash-lite",
+    { inputUsdPerMillion: 0.25, outputUsdPerMillion: 1.5 },
+  ],
+  ["gemini-3.1-pro", { inputUsdPerMillion: 2, outputUsdPerMillion: 12 }],
+  ["gemini-3-pro", { inputUsdPerMillion: 2, outputUsdPerMillion: 12 }],
+  ["gemini-3-flash", { inputUsdPerMillion: 0.5, outputUsdPerMillion: 3 }],
   [
     "gemini-2.5-flash-lite",
     { inputUsdPerMillion: 0.1, outputUsdPerMillion: 0.4 },
@@ -43,6 +58,11 @@ export interface GoogleProviderOptions {
   readonly fetchImpl?: typeof fetch;
 }
 
+/**
+ * Provide an LLM provider that sends JSON-schema-constrained prompts to
+ * Google's Gemini generateContent API and reports text output, token usage,
+ * retry behavior, and model capabilities.
+ */
 export class GoogleProvider implements LlmProvider {
   readonly id = "google";
   readonly #options: GoogleProviderOptions;
@@ -93,6 +113,26 @@ export class GoogleProvider implements LlmProvider {
     return isRetryableHttpError(error);
   }
 
+  /**
+   * Extract HTTP status, retry delay, and fatality details from a failed Google
+   * API call using the shared HTTP error parser.
+   * @param error The value thrown or rejected by a failed request, of unknown type.
+   * @returns Error metadata with optional HTTP status, retry-after delay in
+   *   milliseconds, and a fatal flag.
+   */
+  errorInfo(error: unknown): ProviderErrorInfo {
+    return httpErrorInfo(error);
+  }
+
+  /**
+   * Report the context window, output token limit, and pricing capabilities for
+   * a Google model.
+   * @param model Google model identifier used to look up pricing and echoed in
+   *   the returned capabilities.
+   * @returns Capabilities using the fixed Google context window, the provider's
+   *   configured maxOutputTokens (or the default when unset), and the model's
+   *   price if one is known.
+   */
   describe(model: string): ModelCapabilities {
     return pricedCapabilities(
       model,

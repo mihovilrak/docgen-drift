@@ -19,7 +19,7 @@ export const PROJECT: OptionSpec = [
 ];
 export const PATH: OptionSpec = [
   "-p, --path <path>",
-  "Restrict backfill to this path",
+  "Restrict backfill to this path within include",
 ];
 export const SINCE: OptionSpec = [
   "-s, --since <ref>",

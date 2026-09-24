@@ -4,6 +4,16 @@ import type { SourceFile } from "ts-morph";
 
 import type { SourceRange } from "../../../core/symbol.js";
 
+/**
+ * Build a SourceRange from two character offsets in a source file, adding the
+ * line and column positions for each offset.
+ * @param sourceFile Source file used to convert the offsets into line and
+ *   column positions.
+ * @param start Character offset where the range begins.
+ * @param end Character offset where the range ends.
+ * @returns A SourceRange holding the original start and end offsets plus the
+ *   line and column for each, as reported by the source file.
+ */
 export const sourceRange = (
   sourceFile: SourceFile,
   start: number,
@@ -21,6 +31,14 @@ export const sourceRange = (
   };
 };
 
+/**
+ * Compute the zero-based character offset at which each line of the text
+ * begins, for use in position-to-line lookups.
+ * @param text Source text to scan for line feed (\n) characters.
+ * @returns Ascending offsets, starting with 0 for the first line, followed by
+ *   the offset just after each line feed. A trailing newline produces a final
+ *   entry equal to the text length.
+ */
 export const getLineStarts = (text: string): readonly number[] => {
   const starts = [0];
   for (let index = 0; index < text.length; index++) {
@@ -29,6 +47,16 @@ export const getLineStarts = (text: string): readonly number[] => {
   return starts;
 };
 
+/**
+ * Locate the zero-based line containing a character offset by binary searching
+ * the sorted line start offsets.
+ * @param lineStarts Ascending character offsets at which each line begins, as
+ *   produced by getLineStarts.
+ * @param position Zero-based character offset in the source text to locate.
+ * @returns Zero-based index of the line containing the position; positions
+ *   before the first line start resolve to 0, and positions past the last line
+ *   start resolve to the last line.
+ */
 export const findLineIndex = (
   lineStarts: readonly number[],
   position: number,

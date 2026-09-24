@@ -63,6 +63,8 @@ export interface GenerationEstimate {
   readonly costUsd?: number;
   readonly costBasis: CostBasis;
   readonly includesJudge: boolean;
+  /** The judge runs the generation model, so it shares that model's blind spots. */
+  readonly selfJudged: boolean;
   readonly contextBudgetTokens: number;
   readonly contextBudgetReduced: boolean;
 }
@@ -114,6 +116,15 @@ export const runGeneration = async (
   }
 
   const check = await runCheck(root, config);
+  const { path } = options;
+  if (
+    path !== undefined &&
+    !check.results.some((result) => withinPath(result.filePath, path))
+  ) {
+    throw new ConfigError(
+      `No checked symbols under ${path}; --path narrows include and never extends it`,
+    );
+  }
   const targetIds = new Set(
     check.results
       .filter(
@@ -307,6 +318,7 @@ export const estimateGeneration = (
     ...(total.costUsd === undefined ? {} : { costUsd: total.costUsd }),
     costBasis: total.costBasis,
     includesJudge: judgeEnabled,
+    selfJudged: judgeEnabled && config.judge.model === config.generate.model,
     contextBudgetTokens: contextBudget.effective,
     contextBudgetReduced: contextBudget.reduced,
   };

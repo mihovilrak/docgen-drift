@@ -41,6 +41,11 @@ export interface ExistingDoc {
 
 export type SourceNoteBlockReason = "directive" | "license" | "triple-slash";
 
+/**
+ * Describe a non-documentation comment found next to a symbol declaration,
+ * including its source location and whether it may be replaced by generated
+ * documentation.
+ */
 export interface SourceNote {
   readonly text: string;
   readonly raw: string;

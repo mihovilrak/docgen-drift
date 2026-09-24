@@ -29,6 +29,10 @@ export interface Workspace {
   readonly projectConcurrency: number;
 }
 
+/**
+ * Signal that a single source file was claimed by more than one workspace
+ * project, exposing the offending file path and the projects that own it.
+ */
 export class DuplicateSourceOwnershipError extends Error {
   readonly filePath: string;
   readonly projects: readonly string[];

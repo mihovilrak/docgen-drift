@@ -29,6 +29,19 @@ import {
   isDeclarationExported,
 } from "./visibility.js";
 
+/**
+ * Build a documentation symbol for a function, method, accessor, or method
+ * signature by collecting its signature, body, parameters, async and return
+ * status, visibility, export state, and any existing doc comment.
+ * @param handle Project handle used to build the symbol's id and file path.
+ * @param declaration Function-like declaration node to describe, which is not
+ *   an arrow function.
+ * @param name Name recorded for the symbol, such as the method or accessor name.
+ * @param kind Symbol kind to assign, which excludes variable-based kinds. A
+ *   "setter" is always recorded as returning no value.
+ * @returns A symbol for the declaration. For overloaded functions and methods,
+ *   its existing doc is taken from the first declaration or overload that has one.
+ */
 export const callableSymbol = (
   handle: TypeScriptProjectHandle,
   declaration: NonArrowCallable,
@@ -65,6 +78,19 @@ export const callableSymbol = (
   });
 };
 
+/**
+ * Build a documentation symbol for a variable initialized with an arrow
+ * function or function expression, synthesizing a signature from the
+ * declaration keyword, name, type parameters, parameters, and any explicit return type.
+ * @param handle Project handle used to build the symbol's identity and location.
+ * @param statement Variable statement that supplies the declaration keyword,
+ *   export status, existing documentation, and source note.
+ * @param declaration Variable declaration whose name becomes the symbol name.
+ * @param initializer Arrow function or function expression whose type
+ *   parameters, parameters, return type, body, and async status describe the callable.
+ * @returns A symbol of kind "variable-function", public when the statement is
+ *   exported and package-visible otherwise.
+ */
 export const variableFunctionSymbol = (
   handle: TypeScriptProjectHandle,
   statement: VariableStatement,

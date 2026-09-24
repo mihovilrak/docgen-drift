@@ -8,6 +8,10 @@ import { contextCandidates } from "./contextCandidates.js";
 
 export { sampleCallSites } from "./contextCandidates.js";
 
+/**
+ * Identify the category of evidence a context candidate contributes when
+ * assembling a token-budgeted prompt for documenting a symbol.
+ */
 export type ContextSource =
   | "sourceNote"
   | "testName"
@@ -18,6 +22,10 @@ export type ContextSource =
   | "gitSubject"
   | "calleeBody";
 
+/**
+ * Describe one piece of context text, tagged with its origin, that competes for
+ * space in the token budget when assembling a documentation prompt.
+ */
 export interface ContextCandidate {
   readonly source: ContextSource;
   readonly text: string;
