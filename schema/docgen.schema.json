@@ -171,6 +171,18 @@
           ],
           "type": "array",
           "items": { "type": "string" }
+        },
+        "lineWidth": {
+          "default": 80,
+          "type": "integer",
+          "minimum": 40,
+          "maximum": 9007199254740991
+        },
+        "maxLineWidth": {
+          "default": 90,
+          "type": "integer",
+          "minimum": 40,
+          "maximum": 9007199254740991
         }
       },
       "required": [
@@ -179,7 +191,9 @@
         "emitTypes",
         "leadingComments",
         "tags",
-        "preserveTags"
+        "preserveTags",
+        "lineWidth",
+        "maxLineWidth"
       ],
       "additionalProperties": false
     },

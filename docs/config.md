@@ -46,7 +46,9 @@ The same schema is shipped in the npm package at
       "onGenerate": "preserve"
     },
     "tags": { "params": true, "returns": true, "throws": true, "example": false },
-    "preserveTags": ["deprecated", "example", "see", "internal", "since", "template"]
+    "preserveTags": ["deprecated", "example", "see", "internal", "since", "template"],
+    "lineWidth": 80,
+    "maxLineWidth": 90
   },
 
   "context": {
@@ -121,6 +123,8 @@ The same schema is shipped in the npm package at
 `detailed` produces more text, not more information. Use it for a published API surface; `standard` everywhere else.
 
 **`docs.preserveTags`** — tags docgen does not own and must never rewrite or drop when it updates a comment. Add your project's custom tags here before the first `--fix` run, not after.
+
+**`docs.lineWidth` / `docs.maxLineWidth`** — rendered JSDoc is wrapped at `lineWidth` characters, counting indentation and the ` * ` prefix. A paragraph's remaining words may run to `maxLineWidth` instead of starting a short final line. Tag descriptions continue with a two-space indent. Fenced and indented code lines and preserved tags are never reflowed, and a single word longer than the width is not split. Wrapping is deterministic and does not affect prompts or generation.
 
 **`context.budgetTokens`** — per symbol, filled as a ranked knapsack in the order given in [ARCHITECTURE.md](../ARCHITECTURE.md#the-budget). Sources are dropped from the bottom when the budget runs out; disabling a source in `context.sources` removes it entirely regardless of budget.
 

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Wrap rendered JSDoc at `docs.lineWidth` (default 80), letting a paragraph
+  tail run to `docs.maxLineWidth` (default 90).
 - Add direct OpenAI, Google Gemini, OpenAI-compatible, and subscription CLI
   provider transports with separate generation and judge selection.
 - Add provider inspection, authentication preflight, short CLI flags, honest

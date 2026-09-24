@@ -16,6 +16,7 @@ describe("configuration", () => {
         ignorePragmas: ["@docgen-ignore", "@internal"],
       },
       check: { reportMissing: false, reportOrphaned: true },
+      docs: { lineWidth: 80, maxLineWidth: 90 },
     });
 
     await writeFile(
@@ -39,6 +40,19 @@ describe("configuration", () => {
 
     await expect(loadConfig(root)).rejects.toThrow(
       /must be true when docs\.leadingComments\.onGenerate is replace/u,
+    );
+  });
+
+  it("rejects a max line width below the line width", async () => {
+    const root = await mkdtemp(join(tmpdir(), "docgen-config-width-"));
+    await writeFile(
+      join(root, ".docgenrc.json"),
+      JSON.stringify({ docs: { lineWidth: 100, maxLineWidth: 90 } }),
+      "utf8",
+    );
+
+    await expect(loadConfig(root)).rejects.toThrow(
+      /must be greater than or equal to docs\.lineWidth/u,
     );
   });
 });

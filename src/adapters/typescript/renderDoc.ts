@@ -4,6 +4,7 @@ import type {
   Symbol as DocumentationSymbol,
 } from "../../core/symbol.js";
 import { type DocgenConfig, replacesSourceNote } from "../../config/schema.js";
+import { type WrapWidth, wrapWords } from "../../core/wrap.js";
 
 export interface RenderDocOptions {
   readonly indentation?: string;
@@ -13,6 +14,8 @@ export interface RenderDocOptions {
   readonly emitReturns?: boolean;
   readonly emitThrows?: boolean;
   readonly preserveTags?: readonly string[];
+  readonly lineWidth?: number;
+  readonly maxLineWidth?: number;
 }
 
 /**
@@ -28,15 +31,18 @@ export const renderDoc = (
 ): string => {
   const indentation = options.indentation ?? "";
   const eol = options.eol ?? "\n";
-  const lines = ["/**", ...docLines(doc.summary)];
+  const limits = wrapLimits(options, indentation);
+  const tagLines = (head: string, text: string | undefined) =>
+    wrapWords(safeText(text ?? ""), `${head} `, TAG_CONTINUATION, limits);
+  const lines = ["/**", ...docLines(doc.summary, limits)];
 
   if (options.emitDetail !== false && doc.detail !== undefined) {
-    lines.push(" *", ...docLines(doc.detail));
+    lines.push(" *", ...docLines(doc.detail, limits));
   }
   if (options.emitParams !== false) {
     for (const parameter of symbol.parameters) {
       lines.push(
-        ` * @param ${parameter.name}${tagDescription(doc.params[parameter.name])}`,
+        ...tagLines(` * @param ${parameter.name}`, doc.params[parameter.name]),
       );
     }
   }
@@ -45,11 +51,11 @@ export const renderDoc = (
     symbol.returnsValue === true &&
     doc.returns !== undefined
   ) {
-    lines.push(` * @returns${tagDescription(doc.returns)}`);
+    lines.push(...tagLines(" * @returns", doc.returns));
   }
   if (options.emitThrows !== false) {
     for (const item of doc.throws) {
-      lines.push(` * @throws ${item.type}${tagDescription(item.when)}`);
+      lines.push(...tagLines(` * @throws ${item.type}`, item.when));
     }
   }
   for (const tag of preservedTags(symbol, options.preserveTags ?? [])) {
@@ -82,19 +88,46 @@ export const renderConfiguredDoc = (
     emitReturns: standard && config.docs.tags.returns,
     emitThrows: detailed && config.docs.tags.throws,
     preserveTags: config.docs.preserveTags,
+    lineWidth: config.docs.lineWidth,
+    maxLineWidth: config.docs.maxLineWidth,
   });
 };
 
-const docLines = (text: string): readonly string[] =>
-  safeText(text)
-    .split(/\r?\n/u)
-    .map((line) => ` *${line === "" ? "" : ` ${line}`}`);
+const TAG_CONTINUATION = " *   ";
+const LIST_MARKER = /^(?:[-*+]|\d+[.)])\s+/u;
 
-const tagDescription = (text: string | undefined): string => {
-  const value = safeText(text ?? "")
-    .replace(/\s+/gu, " ")
-    .trim();
-  return value === "" ? "" : ` ${value}`;
+const wrapLimits = (
+  options: RenderDocOptions,
+  indentation: string,
+): WrapWidth => {
+  const width = options.lineWidth ?? Number.POSITIVE_INFINITY;
+  return {
+    width: width - indentation.length,
+    maxWidth:
+      Math.max(width, options.maxLineWidth ?? width) - indentation.length,
+  };
+};
+
+// Fenced and indented lines are code; reflowing them would change meaning.
+const docLines = (text: string, limits: WrapWidth): readonly string[] => {
+  let fenced = false;
+  return safeText(text)
+    .split(/\r?\n/u)
+    .flatMap((line) => {
+      const verbatim = [` *${line === "" ? "" : ` ${line}`}`];
+      if (/^\s*```/u.test(line)) {
+        fenced = !fenced;
+        return verbatim;
+      }
+      if (fenced || line === "" || /^\s/u.test(line)) return verbatim;
+      const marker = LIST_MARKER.exec(line)?.[0] ?? "";
+      return wrapWords(
+        line.slice(marker.length),
+        ` * ${marker}`,
+        ` * ${" ".repeat(marker.length)}`,
+        limits,
+      );
+    });
 };
 
 const safeText = (text: string): string => text.replaceAll("*/", "*\\/");

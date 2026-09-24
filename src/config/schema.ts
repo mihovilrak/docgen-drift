@@ -83,6 +83,8 @@ const docsSchema = z
         "since",
         "template",
       ]),
+    lineWidth: z.number().int().min(40).default(80),
+    maxLineWidth: z.number().int().min(40).default(90),
   })
   .strict();
 
@@ -193,6 +195,13 @@ export const configSchema = z
         code: "custom",
         path: ["judge", "enabled"],
         message: "must be true when docs.leadingComments.onGenerate is replace",
+      });
+    }
+    if (config.docs.maxLineWidth < config.docs.lineWidth) {
+      context.addIssue({
+        code: "custom",
+        path: ["docs", "maxLineWidth"],
+        message: "must be greater than or equal to docs.lineWidth",
       });
     }
     if (

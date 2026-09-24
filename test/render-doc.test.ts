@@ -42,6 +42,50 @@ describe("JSDoc rendering", () => {
     expect(result).not.toContain("Old parameter text");
   });
 
+  it("wraps prose and tag descriptions at the line width, counting indentation", () => {
+    const long =
+      "Resolve the configured provider for this run and fall back to the generation provider when the judge has none of its own.";
+    const result = renderDoc(
+      {
+        ...doc(),
+        summary: long,
+        detail: `${long}\n- ${long}\n\n\`\`\`ts\n${long}\n\`\`\``,
+        params: { value: long },
+      },
+      symbol(),
+      { indentation: "    ", lineWidth: 60, maxLineWidth: 70 },
+    );
+    const lines = result.split("\n");
+    const prose = lines.filter((line) => !line.includes("fall back to the"));
+
+    expect(prose.every((line) => line.length <= 60)).toBe(true);
+    expect(lines).toContain(`     * ${long}`);
+    expect(lines).toContain(
+      "     * - Resolve the configured provider for this run and",
+    );
+    expect(lines).toContain(
+      "     *   fall back to the generation provider when the judge",
+    );
+    expect(lines).toContain(
+      "     * @param value Resolve the configured provider for this",
+    );
+    expect(lines).toContain(
+      "     *   run and fall back to the generation provider when",
+    );
+    expect(lines).toContain("     *   the judge has none of its own.");
+  });
+
+  it("lets a paragraph's last words run to the max line width", () => {
+    const result = renderDoc(
+      { ...doc(), summary: "a".repeat(20) + " tail", params: {} },
+      symbol(),
+      { lineWidth: 20, maxLineWidth: 30 },
+    );
+
+    expect(result).toContain(` * ${"a".repeat(20)} tail`);
+    expect(result).toContain(" * @param value\n");
+  });
+
   it("escapes comment terminators from semantic model text", () => {
     expect(
       renderDoc({ ...doc(), summary: "Avoid */ termination." }, symbol()),
