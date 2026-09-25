@@ -6,8 +6,8 @@ CI. `check` is read-only, requires no API key, and should run on pull requests.
 ## GitHub Actions with SARIF
 
 This workflow limits checks to files changed from the target branch and uploads
-findings to GitHub code scanning. Full history is required so `origin/main` can
-be resolved.
+findings to GitHub code scanning. Full history makes the pull request base
+commit available; the workflow reads that commit through an environment variable.
 
 ```yaml
 name: Documentation drift
@@ -34,7 +34,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - id: docgen
         continue-on-error: true
-        run: pnpm exec docgen check --since origin/main --sarif > docgen.sarif
+        env:
+          DOCGEN_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: pnpm exec docgen check --since "$DOCGEN_BASE_SHA" --sarif > docgen.sarif
       - if: always() && hashFiles('docgen.sarif') != ''
         uses: github/codeql-action/upload-sarif@v4
         with:
@@ -56,7 +58,8 @@ pnpm install --frozen-lockfile
 pnpm exec docgen check --since origin/main
 ```
 
-Omit `--since` for a full-repository check. Use `--json` when another tool will
+The plain example assumes the target is main; substitute the actual base
+branch for other targets. Omit `--since` for a full-repository check. Use `--json` when another tool will
 consume the report. `--json` and `--sarif` are mutually exclusive.
 
 Do not put provider credentials in the drift-check job. They are not needed,

@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { extractSymbols } from "../src/adapters/typescript/extract/index.js";
+import { enrichReturns } from "../src/adapters/typescript/extract/enrich.js";
 import { loadProject } from "../src/adapters/typescript/loadProject.js";
 import type { Symbol as DocumentationSymbol } from "../src/core/symbol.js";
 
@@ -63,7 +64,15 @@ describe("TypeScript symbol extraction", () => {
 
   it("unwraps async Promise<void> and computes declaration visibility", async () => {
     const project = await loadProject({ tsconfigPath: fixtureRoot });
-    const symbols = extractSymbols(project);
+    const extracted = extractSymbols(project);
+    expect(
+      getSymbol(extracted, "completesAsynchronously").returnsValue,
+    ).toBeUndefined();
+    const symbols = enrichReturns(
+      project,
+      extracted,
+      new Set(extracted.map((symbol) => symbol.id)),
+    );
 
     expect(getSymbol(symbols, "completesAsynchronously").returnsValue).toBe(
       false,

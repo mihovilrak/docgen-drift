@@ -12,7 +12,7 @@ import {
 } from "../src/core/lock.js";
 
 describe("lockfiles", () => {
-  it("treats an absent lockfile as empty and round-trips schema v1", async () => {
+  it("treats an absent lockfile as empty and round-trips the current schema", async () => {
     const root = await mkdtemp(join(tmpdir(), "docgen-lock-"));
     const path = join(root, ".docgen", "lock.json");
 
@@ -37,11 +37,11 @@ describe("lockfiles", () => {
     });
     await expect(readLock(path)).resolves.toEqual({ ok: true, value: lock });
     expect(JSON.parse(await readFile(path, "utf8"))).toMatchObject({
-      schemaVersion: 1,
+      schemaVersion: LOCK_SCHEMA_VERSION,
     });
   });
 
-  it("migrates unversioned snake-case entries and rejects future schemas", async () => {
+  it("requires explicit rebaselining for previous hashes and rejects future schemas", async () => {
     const legacy = {
       symbols: {
         "src/api.ts#read": { symbol_hash: "symbol", doc_hash: "doc" },
@@ -49,17 +49,16 @@ describe("lockfiles", () => {
     };
     const migrated = await importLock(legacy);
     expect(migrated).toMatchObject({
-      ok: true,
-      value: {
-        schemaVersion: 1,
-        symbols: {
-          "src/api.ts#read": { filePath: "src/api.ts", startLine: 1 },
-        },
+      ok: false,
+      error: {
+        code: "unsupported-version",
       },
     });
+    if (!migrated.ok)
+      expect(migrated.error.message).toContain("docgen baseline");
 
     await expect(
-      importLock({ schemaVersion: 2, symbols: {} }),
+      importLock({ schemaVersion: LOCK_SCHEMA_VERSION + 1, symbols: {} }),
     ).resolves.toMatchObject({
       ok: false,
       error: { code: "unsupported-version" },

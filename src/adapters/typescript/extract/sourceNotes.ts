@@ -4,7 +4,8 @@ import type {
   SourceNote,
   SourceNoteBlockReason,
 } from "../../../core/symbol.js";
-import { findLineIndex, getLineStarts, sourceRange } from "./range.js";
+import { findLineIndex, sourceRange } from "./range.js";
+import { sourceLines } from "../sourceLines.js";
 import { DIRECTIVE_PATTERN, LICENSE_PATTERN } from "./types.js";
 
 /**
@@ -20,7 +21,7 @@ export const extractSourceNote = (
   const sourceText = sourceFile.getFullText();
   const anchor = getCommentAnchor(declaration);
   const anchorPosition = anchor.getStart();
-  const lineStarts = getLineStarts(sourceText);
+  const lineStarts = sourceLines(sourceFile).starts;
   const anchorLine = findLineIndex(lineStarts, anchorPosition);
   const anchorLineStart = lineStarts[anchorLine] ?? 0;
 

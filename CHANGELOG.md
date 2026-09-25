@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- Require explicit reviewed rebaselining for lockfile schema 2. Syntax hashes
+  preserve regex contents, statement boundaries, async callables, and declared
+  callable types; static and instance members have distinct IDs.
+- Restrict shared-lock orphan reports to selected projects, and reject ambiguous
+  multi-declaration or overlapping documentation edits.
+- Resolve return types only for rendering targets, cache source-line data, build
+  dependency levels from component adjacency, and refresh locks from edited files.
+- Bound Git-context subprocesses and skip generation work for targetless projects.
+- Share fatal provider state across generation, judging, and projects; retry HTTP
+  body-read failures and clean up CLI sessions in their original workspace.
+- Correct provider examples, preview/apply instructions, and cost/context claims;
+  use one runnable tutorial example and document JavaScript setup and upgrades.
+
 - Honor `Retry-After` (and Gemini `retryDelay`) when retrying; fail requests
   whose requested wait exceeds 60 seconds.
 - Stop a run after `401`/`403`/`404`, an over-long rate-limit wait, or three

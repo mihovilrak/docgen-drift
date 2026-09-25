@@ -4,6 +4,7 @@ import {
   ProviderCaller,
   ProviderFailure,
   type ProviderErrorInfo,
+  type ProviderFailureState,
 } from "./call.js";
 import type { ModelCapabilities } from "./capabilities.js";
 import { errorMessage } from "./errors.js";
@@ -19,6 +20,8 @@ export type { CostBasis, ProviderUsage } from "./usage.js";
 export { addUsage, EMPTY_USAGE, formatCost, usdUsage } from "./usage.js";
 
 export interface ProviderRequest {
+  /** Queueing transports recheck run state immediately before sending. */
+  readonly beforeSend?: () => void;
   readonly model: string;
   readonly system: string;
   /** Content shared by a batch of requests, sent ahead of the prompt so providers can cache it. */
@@ -70,6 +73,7 @@ export interface GenerationBatchResult {
 }
 
 export interface LlmClientOptions {
+  readonly failureState?: ProviderFailureState;
   readonly concurrency: number;
   readonly retryCount?: number;
   readonly baseDelayMs?: number;
@@ -208,11 +212,15 @@ export const optionalRequestFields = (options: {
  * @param options Client options with optional retry count, backoff base, sleep, and signal.
  */
 export const callOptions = (options: {
+  readonly failureState?: ProviderFailureState;
   readonly retryCount?: number;
   readonly baseDelayMs?: number;
   readonly sleep?: (milliseconds: number) => Promise<void>;
   readonly signal?: AbortSignal;
 }): ConstructorParameters<typeof ProviderCaller>[1] => ({
+  ...(options.failureState === undefined
+    ? {}
+    : { failureState: options.failureState }),
   retryCount: options.retryCount ?? 2,
   baseDelayMs: options.baseDelayMs ?? 250,
   sleep:

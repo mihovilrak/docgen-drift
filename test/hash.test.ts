@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { hashRecipe } from "../src/cli/workspace.js";
 import { configSchema } from "../src/config/schema.js";
-import { hashSymbol, normalizeCode } from "../src/core/hash.js";
+import { hashSymbol } from "../src/core/hash.js";
+import { canonicalCode } from "../src/adapters/typescript/canonicalCode.js";
 import { makeSymbolId, workspaceSymbolId } from "../src/core/id.js";
 import type { Symbol as DocumentationSymbol } from "../src/core/symbol.js";
 import { PROMPT_VERSION } from "../src/llm/prompt/index.js";
@@ -22,18 +23,20 @@ describe("symbol hashing", () => {
   });
 
   it("ignores comments and formatting without joining tokens", () => {
-    expect(normalizeCode("return foo /* note */ +  bar; // tail")).toBe(
-      "return foo+bar;",
+    expect(canonicalCode("return foo /* note */ +  bar; // tail")).toBe(
+      canonicalCode("return foo+bar;"),
     );
-    expect(normalizeCode('return "http://example.test/*";')).toBe(
-      'return "http://example.test/*";',
+    expect(canonicalCode('return "http://example.test/*";')).not.toBe(
+      canonicalCode('return "http:";'),
     );
-    expect(normalizeCode("const template = `// literal`;")).toBe(
-      "const template=`// literal`;",
+    expect(canonicalCode("const template = `// literal`;")).toBe(
+      canonicalCode("const template=`// literal`;"),
     );
-    expect(normalizeCode("return left + +right;")).toBe("return left+ +right;");
-    expect(normalizeCode("return `value: ${item /* note */ .value}`;")).toBe(
-      "return `value: ${item.value}`;",
+    expect(canonicalCode("return left + +right;")).not.toBe(
+      canonicalCode("return left++ +right;"),
+    );
+    expect(canonicalCode("return `value: ${item /* note */ .value}`;")).toBe(
+      canonicalCode("return `value: ${item.value}`;"),
     );
   });
 
@@ -74,12 +77,26 @@ describe("symbol hashing", () => {
     };
     const edited = { ...original, body: "{\n  return value.length + 1;\n}" };
 
-    expect(hashSymbol(reformatted, recipe).symbolHash).toBe(
-      hashSymbol(original, recipe).symbolHash,
-    );
-    expect(hashSymbol(edited, recipe).symbolHash).not.toBe(
-      hashSymbol(original, recipe).symbolHash,
-    );
+    expect(
+      hashSymbol(
+        {
+          ...reformatted,
+          canonicalCode: canonicalCode(
+            reformatted.signature + reformatted.body,
+          ),
+        },
+        recipe,
+      ).symbolHash,
+    ).toBe(hashSymbol(original, recipe).symbolHash);
+    expect(
+      hashSymbol(
+        {
+          ...edited,
+          canonicalCode: canonicalCode(edited.signature + edited.body),
+        },
+        recipe,
+      ).symbolHash,
+    ).not.toBe(hashSymbol(original, recipe).symbolHash);
   });
 });
 
@@ -104,6 +121,7 @@ const makeTestSymbol = (
   filePath: "src/example.ts",
   signature,
   body,
+  canonicalCode: canonicalCode(signature + body),
   parameters: [],
   asynchronous: false,
   exported: true,

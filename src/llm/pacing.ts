@@ -40,7 +40,9 @@ export const pacedProvider = (
   let sent = 0;
   let queue: Promise<void> = Promise.resolve();
 
-  const acquire = async (): Promise<void> => {
+  const acquire = async (request: ProviderRequest): Promise<void> => {
+    request.signal?.throwIfAborted();
+    request.beforeSend?.();
     const { requestsPerMinute: perMinute, requestsPerDay: perDay } = limits;
     if (perDay !== undefined && sent >= perDay) {
       throw new RequestQuotaError(
@@ -54,6 +56,8 @@ export const pacedProvider = (
         const oldest = starts[0];
         if (starts.length < perMinute || oldest === undefined) break;
         await clock.sleep(MINUTE_MS - (now - oldest));
+        request.signal?.throwIfAborted();
+        request.beforeSend?.();
       }
       starts.push(clock.now());
     }
@@ -63,9 +67,13 @@ export const pacedProvider = (
   return {
     id: inner.id,
     complete: async (request: ProviderRequest): Promise<ProviderResponse> => {
-      const slot = queue.then(acquire);
+      request.signal?.throwIfAborted();
+      request.beforeSend?.();
+      const slot = queue.then(() => acquire(request));
       queue = slot.catch(() => undefined);
       await slot;
+      request.signal?.throwIfAborted();
+      request.beforeSend?.();
       return inner.complete(request);
     },
     isRetryable: (error) =>

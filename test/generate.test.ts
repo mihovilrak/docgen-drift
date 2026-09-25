@@ -17,6 +17,35 @@ const execFileAsync = promisify(execFile);
 const fixtureRoot = resolve("test/fixtures/generation");
 
 describe("generation commands", () => {
+  it("retains targets brought into a project through imports", async () => {
+    const root = await copyFixture();
+    await writeFile(
+      join(root, "src/index.ts"),
+      'export { leaf, caller } from "./api.js";\n',
+      "utf8",
+    );
+    await writeFile(
+      join(root, "tsconfig.json"),
+      JSON.stringify({
+        compilerOptions: {
+          target: "ES2022",
+          module: "NodeNext",
+          moduleResolution: "NodeNext",
+        },
+        files: ["src/index.ts"],
+        include: [],
+      }),
+      "utf8",
+    );
+    const result = await runGeneration(
+      root,
+      config(),
+      { mode: "missing", path: "src/api.ts", dryRun: true },
+      provider(),
+    );
+    expect(result.requested).toBe(2);
+    expect(result.generated).toHaveLength(2);
+  });
   it("rejects a --path that include does not cover", async () => {
     const root = await copyFixture();
 
@@ -338,14 +367,17 @@ describe("generation commands", () => {
 
   it("normalizes --project directory, file, and glob scopes", () => {
     const base = config();
-    expect(scopeProjects(base, "packages/alpha").workspace.projects).toEqual([
+    expect(scopeProjects(base, "packages/alpha").workspace.projects).toEqual(
+      base.workspace.projects,
+    );
+    expect(scopeProjects(base, "packages/alpha").projectSelection).toEqual([
       "packages/alpha/tsconfig.json",
     ]);
     expect(
-      scopeProjects(base, "packages/alpha/tsconfig.build.json").workspace
-        .projects,
+      scopeProjects(base, "packages/alpha/tsconfig.build.json")
+        .projectSelection,
     ).toEqual(["packages/alpha/tsconfig.build.json"]);
-    expect(scopeProjects(base, "packages/*").workspace.projects).toEqual([
+    expect(scopeProjects(base, "packages/*").projectSelection).toEqual([
       "packages/*",
     ]);
   });

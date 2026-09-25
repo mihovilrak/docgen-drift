@@ -6,12 +6,13 @@ import { format, resolveConfig } from "prettier";
 import { ts } from "ts-morph";
 
 import { type DocgenConfig, replacesSourceNote } from "../../config/schema.js";
-import { hashText, normalizeCode } from "../../core/hash.js";
+import { hashText, symbolCode } from "../../core/hash.js";
 import type {
   GeneratedDoc,
   Symbol as DocumentationSymbol,
 } from "../../core/symbol.js";
 import { extractSymbols } from "./extract/index.js";
+import { enrichReturns } from "./extract/enrich.js";
 import type { TypeScriptProjectHandle } from "./loadProject.js";
 import { renderConfiguredDoc } from "./renderDoc.js";
 
@@ -39,6 +40,7 @@ export interface FailedEdit {
 }
 
 export interface ApplyEditsResult {
+  readonly updatedSymbols: readonly DocumentationSymbol[];
   readonly applied: readonly string[];
   readonly failed: readonly FailedEdit[];
   readonly files: readonly ChangedFile[];
@@ -53,8 +55,7 @@ export type SourceWriter = (path: string, source: string) => Promise<void>;
 export const symbolAnchorHash = (symbol: DocumentationSymbol): string =>
   hashText(
     [
-      normalizeCode(symbol.signature),
-      normalizeCode(symbol.body),
+      symbolCode(symbol),
       symbol.existingDoc?.raw ?? "",
       symbol.sourceNote?.raw ?? "",
     ].join("\0"),
@@ -85,18 +86,28 @@ export const applyEdits = async (
   const applied: string[] = [];
   const failed: FailedEdit[] = [];
   const files: ChangedFile[] = [];
+  const updatedSymbols: DocumentationSymbol[] = [];
   for (const [relativePath, filePlans] of grouped) {
     const fileApplied: string[] = [];
     const filePath = resolve(handle.root, relativePath);
     const before = await readFile(filePath, "utf8");
-    const symbols = currentSymbols(
-      handle,
-      filePath,
-      before,
-      filePlans.some((plan) => plan.expectedFileHash !== hashText(before)),
-      config,
+    const fileHash = hashText(before);
+    const changed = filePlans.some(
+      (plan) => plan.expectedFileHash !== fileHash,
     );
-    const resolvedPlans = resolvePlans(filePlans, symbols, failed);
+    const symbols = changed
+      ? currentSymbols(handle, filePath, before, changed, config)
+      : enrichReturns(
+          handle,
+          filePlans.map((plan) => plan.symbol),
+          new Set(filePlans.map((plan) => plan.symbol.id)),
+        );
+    const resolvedPlans = nonOverlappingPlans(
+      resolvePlans(filePlans, symbols, failed),
+      before,
+      config,
+      failed,
+    );
     let after = before;
     for (const plan of [...resolvedPlans].sort(
       (left, right) =>
@@ -115,7 +126,13 @@ export const applyEdits = async (
       applied.push(plan.symbol.id);
       fileApplied.push(plan.symbol.id);
     }
-    if (after === before) continue;
+    if (after === before) {
+      const selected = new Set(fileApplied);
+      updatedSymbols.push(
+        ...symbols.filter((symbol) => selected.has(symbol.id)),
+      );
+      continue;
+    }
 
     try {
       after = await formatIfConfigured(filePath, after, eolOf(before));
@@ -151,8 +168,20 @@ export const applyEdits = async (
       }
     }
     files.push({ filePath, before, after });
+    const sourceFile = handle.project.getSourceFile(filePath);
+    if (sourceFile !== undefined) {
+      sourceFile.replaceWithText(after);
+      const selected = new Set(fileApplied);
+      updatedSymbols.push(
+        ...extractSymbols(
+          { ...handle, sourceFiles: [sourceFile] },
+          extractOptions(config),
+        ).filter((symbol) => selected.has(symbol.id)),
+      );
+      if (!write) sourceFile.replaceWithText(before);
+    }
   }
-  return { applied, failed, files };
+  return { applied, failed, files, updatedSymbols };
 };
 
 const currentSymbols = (
@@ -162,11 +191,16 @@ const currentSymbols = (
   refresh: boolean,
   config: DocgenConfig,
 ): readonly DocumentationSymbol[] => {
-  if (!refresh) return extractSymbols(handle, extractOptions(config));
   const sourceFile = handle.project.getSourceFile(filePath);
   if (sourceFile === undefined) return [];
-  sourceFile.replaceWithText(source);
-  return extractSymbols(handle, extractOptions(config));
+  if (refresh) sourceFile.replaceWithText(source);
+  const local = { ...handle, sourceFiles: [sourceFile] };
+  const symbols = extractSymbols(local, extractOptions(config));
+  return enrichReturns(
+    local,
+    symbols,
+    new Set(symbols.map((symbol) => symbol.id)),
+  );
 };
 
 const resolvePlans = (
@@ -178,7 +212,12 @@ const resolvePlans = (
   const result: PlannedDocEdit[] = [];
   for (const plan of plans) {
     const current = byId.get(plan.symbol.id);
-    if (current === undefined) {
+    if (plan.symbol.editBlockedReason !== undefined) {
+      failed.push({
+        symbolId: plan.symbol.id,
+        reason: plan.symbol.editBlockedReason,
+      });
+    } else if (current === undefined) {
       failed.push({
         symbolId: plan.symbol.id,
         reason: "Symbol disappeared before the edit was applied",
@@ -193,6 +232,39 @@ const resolvePlans = (
     }
   }
   return result;
+};
+
+const nonOverlappingPlans = (
+  plans: readonly PlannedDocEdit[],
+  source: string,
+  config: DocgenConfig,
+  failed: FailedEdit[],
+): readonly PlannedDocEdit[] => {
+  const spans = plans
+    .map((plan) => ({ plan, ...buildEdit(plan, source, config) }))
+    .sort((a, b) => a.start - b.start);
+  const blocked = new Set<PlannedDocEdit>();
+  for (let index = 0; index < spans.length; index++) {
+    const left = spans[index];
+    if (left === undefined) continue;
+    for (let next = index + 1; next < spans.length; next++) {
+      const right = spans[next];
+      if (
+        right === undefined ||
+        (right.start > left.start && right.start >= left.end)
+      )
+        break;
+      blocked.add(left.plan);
+      blocked.add(right.plan);
+    }
+  }
+  for (const plan of blocked)
+    failed.push({
+      symbolId: plan.symbol.id,
+      reason:
+        "Documentation edits overlap; split declarations before generating",
+    });
+  return plans.filter((plan) => !blocked.has(plan));
 };
 
 const buildEdit = (

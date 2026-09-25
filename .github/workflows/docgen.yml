@@ -32,7 +32,11 @@ jobs:
       - name: Check documentation drift
         id: docgen
         continue-on-error: true
-        run: node ./dist/cli.js check --since origin/main --sarif > docgen.sarif
+        env:
+          DOCGEN_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run:
+          node ./dist/cli.js check --since "$DOCGEN_BASE_SHA" --sarif >
+          docgen.sarif
 
       - name: Upload SARIF
         if: always() && hashFiles('docgen.sarif') != ''

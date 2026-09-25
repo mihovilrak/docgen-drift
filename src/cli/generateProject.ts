@@ -10,6 +10,9 @@ import {
   type PlannedDocEdit,
 } from "../adapters/typescript/applyEdits.js";
 import { extractSymbols } from "../adapters/typescript/extract/index.js";
+import { enrichReturns } from "../adapters/typescript/extract/enrich.js";
+import { createTaskLimiter } from "../core/concurrency.js";
+import { mapConcurrent, type ProviderFailureState } from "../llm/call.js";
 import { buildGraph } from "../adapters/typescript/graph.js";
 import type { TypeScriptProjectHandle } from "../adapters/typescript/loadProject.js";
 import type { DocgenConfig } from "../config/schema.js";
@@ -52,10 +55,21 @@ import {
 } from "./evaluation.js";
 
 export interface GenerationProviders {
+  readonly runtime?: GenerationRuntime;
   readonly generation: LlmProvider;
   /** Defaults to `generation`; a separate judge provider is supported. */
   readonly judge?: LlmProvider;
 }
+
+export interface GenerationRuntime {
+  readonly failureState: ProviderFailureState;
+  readonly contextTask: ReturnType<typeof createTaskLimiter>;
+}
+
+export const generationRuntime = (concurrency: number): GenerationRuntime => ({
+  failureState: {},
+  contextTask: createTaskLimiter(concurrency),
+});
 
 export interface ProjectGenerationProgress {
   readonly stage: "generation" | "judge";
@@ -110,10 +124,30 @@ export const generateProject = async (
   onProgress?: (event: ProjectGenerationProgress) => void,
   captureEvaluation = false,
 ): Promise<ProjectGenerationResult> => {
-  const symbols = extractSymbols(handle, {
-    includeNonFunctionVariables: config.symbols.kinds.includes("variable"),
-  });
-  const targets = symbols.filter((symbol) => targetIds.has(symbol.id));
+  if (targetIds.size === 0) return emptyProjectResult();
+  const runtime =
+    providers.runtime ?? generationRuntime(config.generate.concurrency);
+  const symbols = enrichReturns(
+    handle,
+    extractSymbols(handle, {
+      includeNonFunctionVariables: config.symbols.kinds.includes("variable"),
+    }),
+    targetIds,
+  );
+  const targets = symbols.filter(
+    (symbol) =>
+      targetIds.has(symbol.id) && symbol.editBlockedReason === undefined,
+  );
+  const blocked = symbols
+    .filter(
+      (symbol) =>
+        targetIds.has(symbol.id) && symbol.editBlockedReason !== undefined,
+    )
+    .map((symbol) => ({
+      id: symbol.id,
+      reason: symbol.editBlockedReason ?? "Ambiguous documentation owner",
+    }));
+  if (targets.length === 0) return { ...emptyProjectResult(), failed: blocked };
   const testFilePaths = new Set(
     (
       await glob(config.tests, {
@@ -134,7 +168,9 @@ export const generateProject = async (
   const generated: SymbolId[] = [];
   const skipped: { id: SymbolId; reason: string }[] = [];
   const rejected: { id: SymbolId; reason: string }[] = [];
-  const failed: { id: SymbolId; reason: string; diagnostic?: string }[] = [];
+  const failed: { id: SymbolId; reason: string; diagnostic?: string }[] = [
+    ...blocked,
+  ];
   const plans: PlannedDocEdit[] = [];
   const evaluationInputs: {
     readonly symbol: DocumentationSymbol;
@@ -146,6 +182,7 @@ export const generateProject = async (
   let generationMetrics = EMPTY_GENERATION_STAGE;
   let judgeMetrics = EMPTY_JUDGE_STAGE;
   const client = new LlmClient(providers.generation, {
+    failureState: runtime.failureState,
     concurrency: config.generate.concurrency,
     ...(onProgress === undefined
       ? {}
@@ -156,6 +193,7 @@ export const generateProject = async (
         }),
   });
   const judge = new JudgeClient(providers.judge ?? providers.generation, {
+    failureState: runtime.failureState,
     concurrency: config.generate.concurrency,
     ...(onProgress === undefined
       ? {}
@@ -184,9 +222,27 @@ export const generateProject = async (
       .map((id) => byId.get(id))
       .filter(isDefined);
     if (levelTargets.length === 0) continue;
+    if (runtime.failureState.reason !== undefined) {
+      for (const symbol of levelTargets) {
+        const reason = `Not sent after an earlier provider error: ${runtime.failureState.reason}`;
+        failed.push({ id: symbol.id, reason });
+        onProgress?.({
+          stage: "generation",
+          symbolId: symbol.id,
+          provider: providers.generation.id,
+          model: config.generate.model,
+          outcome: "FAILED",
+          attempts: 0,
+          reason,
+        });
+      }
+      continue;
+    }
 
-    const contexts = await Promise.all(
-      levelTargets.map(async (symbol) => {
+    const contexts = await mapConcurrent(
+      levelTargets,
+      config.generate.concurrency,
+      async (symbol) => {
         const shared = fileContexts.get(symbol.filePath);
         return {
           symbol,
@@ -217,10 +273,12 @@ export const generateProject = async (
             ...(shared === undefined
               ? {}
               : { sharedDeclaredNames: shared.declaredNames }),
-            ...(await gitSubject(handle, symbol, config)),
+            ...(await runtime.contextTask(() =>
+              gitSubject(handle, symbol, config),
+            )),
           }),
         };
-      }),
+      },
     );
     const generationStarted = performance.now();
     const generationResults: GenerationResult[] = [];
@@ -351,6 +409,17 @@ export const generateProject = async (
     ),
   };
 };
+
+const emptyProjectResult = (): ProjectGenerationResult => ({
+  generated: [],
+  skipped: [],
+  rejected: [],
+  failed: [],
+  usage: EMPTY_USAGE,
+  edits: { applied: [], failed: [], files: [], updatedSymbols: [] },
+  metrics: { generation: EMPTY_GENERATION_STAGE, judge: EMPTY_JUDGE_STAGE },
+  evaluation: [],
+});
 
 const addGenerationBatchMetrics = (
   current: typeof EMPTY_GENERATION_STAGE,

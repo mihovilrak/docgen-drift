@@ -12,6 +12,7 @@ import {
   type CheckResult,
 } from "../core/plan.js";
 import type { DocgenConfig } from "../config/schema.js";
+import { ConfigError } from "../config/load.js";
 import {
   canonicalId,
   currentSymbols,
@@ -27,6 +28,10 @@ export interface BaselineResult {
 
 export interface WorkspaceCheckResult {
   readonly results: readonly CheckResult[];
+  readonly projects: readonly {
+    readonly path: string;
+    readonly symbolIds: readonly string[];
+  }[];
 }
 
 /**
@@ -77,6 +82,12 @@ export const runCheck = async (
   config: DocgenConfig,
 ): Promise<WorkspaceCheckResult> => {
   const projects = await indexWorkspace(root, config);
+  const projectTargets = projects.map((project) => ({
+    path: project.projectPath ?? "tsconfig.json",
+    symbolIds: project.eligible.map((symbol) =>
+      canonicalId(project, symbol.id, true),
+    ),
+  }));
   if (config.workspace.lockfile === "shared") {
     const lock = await loadLock(sharedLockPath(root));
     const current = projects.flatMap((project) =>
@@ -85,7 +96,22 @@ export const runCheck = async (
     const known = new Set(
       projects.flatMap((project) => [...knownSymbolIds(project, true)]),
     );
-    return { results: classifySymbols(current, known, lock) };
+    const selected = new Set(projects.map((project) => project.projectPath));
+    const scopedLock =
+      config.projectSelection === undefined
+        ? lock
+        : {
+            ...lock,
+            symbols: Object.fromEntries(
+              Object.entries(lock.symbols).filter(([, entry]) =>
+                selected.has(entry.project),
+              ),
+            ),
+          };
+    return {
+      results: classifySymbols(current, known, scopedLock),
+      projects: projectTargets,
+    };
   }
 
   const results: CheckResult[] = [];
@@ -98,7 +124,7 @@ export const runCheck = async (
     );
     results.push(...local.map((result) => workspaceResult(project, result)));
   }
-  return { results: results.sort(compareResults) };
+  return { results: results.sort(compareResults), projects: projectTargets };
 };
 
 /**
@@ -111,8 +137,9 @@ export const refreshLocks = async (
   root: string,
   config: DocgenConfig,
   generatedIds: ReadonlySet<string>,
+  updatedProjects?: readonly ProjectIndex[],
 ): Promise<void> => {
-  const projects = await indexWorkspace(root, config);
+  const projects = updatedProjects ?? (await indexWorkspace(root, config));
   if (config.workspace.lockfile === "shared") {
     const path = sharedLockPath(root);
     const previous = await loadLock(path);
@@ -144,7 +171,7 @@ export const refreshLocks = async (
 
 const loadLock = async (path: string): Promise<LockFile> => {
   const result = await readLock(path);
-  if (!result.ok) throw new Error(result.error.message);
+  if (!result.ok) throw new ConfigError(result.error.message);
   return result.value;
 };
 

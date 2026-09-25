@@ -4,10 +4,8 @@ import type { Symbol as DocumentationSymbol, SymbolId } from "./symbol.js";
 
 export type CheckStatus = "unchanged" | "drifted" | "missing" | "orphaned";
 
-/**
- * Bundle a symbol's freshly extracted data with its current hashes for comparison against a stored baseline.
- */
 export interface CurrentSymbol {
+  readonly project?: string;
   readonly id: SymbolId;
   readonly symbol: DocumentationSymbol;
   readonly hashes: SymbolHashes;
@@ -83,6 +81,7 @@ export const lockEntries = (
     current.map((item) => [
       item.id,
       {
+        ...(item.project === undefined ? {} : { project: item.project }),
         symbolHash: item.hashes.symbolHash,
         docHash: item.hashes.docHash,
         filePath: item.id.slice(0, item.id.indexOf("#")),

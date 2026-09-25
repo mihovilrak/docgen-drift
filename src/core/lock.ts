@@ -4,9 +4,10 @@ import { dirname } from "node:path";
 import type { Result } from "./result.js";
 import type { SymbolId } from "./symbol.js";
 
-export const LOCK_SCHEMA_VERSION = 1;
+export const LOCK_SCHEMA_VERSION = 2;
 
 export interface LockEntry {
+  readonly project?: string;
   readonly symbolHash: string;
   readonly docHash: string;
   readonly filePath: string;
@@ -113,6 +114,13 @@ const parseLock = (
       `Lockfile schema version ${String(version)} is newer than supported version ${String(LOCK_SCHEMA_VERSION)}`,
     );
   }
+  if (version < LOCK_SCHEMA_VERSION) {
+    return failure(
+      "unsupported-version",
+      path,
+      `Lockfile ${path} uses the previous hash and symbol ID format. Review existing documentation, then run docgen baseline to create schema ${String(LOCK_SCHEMA_VERSION)}. No baseline was changed.`,
+    );
+  }
   if (!isRecord(value.symbols)) {
     return failure("invalid", path, "Lockfile symbols must be an object");
   }
@@ -137,7 +145,15 @@ const parseLock = (
     ) {
       return failure("invalid", path, `Lock entry ${id} has invalid fields`);
     }
-    symbols[id] = { symbolHash, docHash, filePath, startLine };
+    if (entry.project !== undefined && typeof entry.project !== "string")
+      return failure("invalid", path, `Lock entry ${id} has invalid project`);
+    symbols[id] = {
+      symbolHash,
+      docHash,
+      filePath,
+      startLine,
+      ...(typeof entry.project === "string" ? { project: entry.project } : {}),
+    };
   }
 
   return {

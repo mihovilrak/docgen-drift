@@ -116,8 +116,7 @@ The unit of change detection is the symbol, not the file.
 
 ```text
 symbol_hash = sha256(
-  normalized_signature   +  // whitespace-collapsed, comments stripped, param names kept
-  normalized_body        +  // whitespace-collapsed, comments stripped
+  canonical_code         +  // adapter-owned syntax data; preserves literals and statement boundaries
   normalized_source_notes + // attached leading comments, only when enabled as context
   context_recipe_version +  // which context sources fed this doc
   prompt_version         +
@@ -127,7 +126,7 @@ symbol_hash = sha256(
 doc_hash = sha256(normalized_docstring_text)
 ```
 
-Both are stored in `.docgen/lock.json`, keyed by a stable symbol id (`<repo-relative-path>#<container>.<name>`), never by line number.
+Both are stored in schema 2 `.docgen/lock.json`, keyed by a stable symbol id (`<repo-relative-path>#<container>.<name>`), never by line number. Static members add `:static` (after any accessor discriminator). Entries record project ownership for scoped orphan detection. Earlier schemas require an explicit reviewed rebaseline; see ADR-014.
 
 **Drift** is:
 

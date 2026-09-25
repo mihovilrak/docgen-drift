@@ -14,7 +14,6 @@ import type { TypeScriptProjectHandle } from "./loadProject.js";
 import {
   declarationLookup,
   enclosingFunctionName,
-  enclosingSymbol,
   enclosingTestNames,
   resolveCallee,
   sourceWindow,
@@ -50,6 +49,9 @@ export const buildGraph = (
   for (const sourceFile of handle.sourceFiles) {
     const filePath = toProjectPath(handle, sourceFile);
     const fileSymbols = symbolsByFile.get(filePath) ?? [];
+    const byStart = new Map(
+      fileSymbols.map((symbol) => [symbol.declaration.start, symbol]),
+    );
     const isTest =
       options.testFilePaths?.has(resolve(sourceFile.getFilePath())) === true;
     for (const call of sourceFile.getDescendantsOfKind(
@@ -57,7 +59,16 @@ export const buildGraph = (
     )) {
       const callee = resolveCallee(call, handle, symbolByDeclaration);
       if (callee === undefined) continue;
-      const caller = enclosingSymbol(call.getStart(), fileSymbols);
+      let ancestor = call.getParent();
+      let caller: DocumentationSymbol | undefined;
+      while (
+        ancestor !== undefined &&
+        ancestor.getKind() !== SyntaxKind.SourceFile &&
+        caller === undefined
+      ) {
+        caller = byStart.get(ancestor.getStart());
+        ancestor = ancestor.getParent();
+      }
 
       if (caller !== undefined) {
         const key = `${caller.id}\0${callee.id}`;
@@ -80,15 +91,14 @@ export const buildGraph = (
           });
         }
       } else {
+        const enclosingFunction = enclosingFunctionName(call);
         pushMap(callSites, callee.id, {
           callee: callee.id,
           ...(caller === undefined ? {} : { caller: caller.id }),
           filePath,
           modulePath: filePath,
           line: sourceFile.getLineAndColumnAtPos(call.getStart()).line,
-          ...(enclosingFunctionName(call) === undefined
-            ? {}
-            : { enclosingFunction: enclosingFunctionName(call) }),
+          ...(enclosingFunction === undefined ? {} : { enclosingFunction }),
           text: sourceWindow(
             sourceFile,
             call.getStart(),

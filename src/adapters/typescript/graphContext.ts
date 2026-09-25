@@ -10,6 +10,7 @@ import {
 
 import type { Symbol as DocumentationSymbol } from "../../core/symbol.js";
 import type { TypeScriptProjectHandle } from "./loadProject.js";
+import { sourceLines } from "./sourceLines.js";
 
 /**
  * Resolve a call expression to its uniquely matching documented declaration.
@@ -31,7 +32,13 @@ export const resolveCallee = (
     if (candidates.length === 1) return candidates[0];
     const container = declarationContainer(declaration);
     const matched = candidates.find(
-      (candidate) => candidate.containerName === container,
+      (candidate) =>
+        candidate.containerName === container &&
+        (candidate.static === true) ===
+          ((Node.isMethodDeclaration(declaration) ||
+            Node.isGetAccessorDeclaration(declaration) ||
+            Node.isSetAccessorDeclaration(declaration)) &&
+            declaration.isStatic()),
     );
     if (matched !== undefined) return matched;
   }
@@ -55,29 +62,6 @@ export const declarationLookup = (
   }
   return result;
 };
-
-/**
- * Find the innermost symbol whose declaration contains the specified position.
- * @param position Source position to locate within the declarations.
- * @param symbols Symbols to search for a containing declaration.
- * @returns The smallest enclosing symbol, or undefined when no declaration contains the position.
- */
-export const enclosingSymbol = (
-  position: number,
-  symbols: readonly DocumentationSymbol[],
-): DocumentationSymbol | undefined =>
-  symbols
-    .filter(
-      (symbol) =>
-        symbol.declaration.start <= position &&
-        symbol.declaration.end >= position,
-    )
-    .sort(
-      (left, right) =>
-        left.declaration.end -
-        left.declaration.start -
-        (right.declaration.end - right.declaration.start),
-    )[0];
 
 /**
  * Find the nearest enclosing function-like declaration and return its declared name, including names obtained from variable declarations.
@@ -144,7 +128,7 @@ export const sourceWindow = (
   position: number,
   radius: number,
 ): string => {
-  const lines = sourceFile.getFullText().split(/\r?\n/u);
+  const lines = sourceLines(sourceFile).lines;
   const line = sourceFile.getLineAndColumnAtPos(position).line;
   const start = Math.max(0, line - radius - 1);
   const end = Math.min(lines.length, line + radius);

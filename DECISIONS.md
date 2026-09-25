@@ -196,6 +196,36 @@ Cross-project graph edges are optional context, not a prerequisite for correctne
 
 ---
 
+## ADR-014 — Adapter-owned syntax hashes and explicit baseline replacement
+
+**Status:** accepted
+
+**Context.** Character-based whitespace removal erased regex spaces and ASI
+boundaries. Variable callable signatures also omitted async and declared type
+changes. Static and instance members could share an ID, and multiple variable
+declarators shared an editable documentation span.
+
+**Decision.** The TypeScript adapter supplies canonical syntax data, preserving
+literal contents, operators, modifiers, and statement structure. Core hashes that
+data without importing a parser. Instance IDs stay stable; static members add a
+`:static` discriminator after any accessor discriminator. Multi-declaration
+statements remain checkable but cannot receive automatic documentation edits.
+Application also rejects overlapping edit spans and duplicate insertion points.
+
+Lockfile schema 2 records project ownership for scoped orphan detection. Previous
+schemas are rejected with instructions for an explicit reviewed rebaseline;
+hashes and IDs are not silently migrated. `--project` selects within configured
+projects and does not extend discovery. The complete configured workspace still
+undergoes ownership validation.
+
+**Consequences.** Existing users must review documentation before running
+`baseline` on upgrade. Extraction no longer computes callable return types until
+generation or rendering needs them. Post-edit lock entries come from final
+formatted source while its bounded project is still loaded. These changes fix
+TypeScript correctness without introducing the Phase 7 adapter framework.
+
+---
+
 ## Sources
 
 - [Mintlify Writer](https://github.com/mintlify/writer) — archived 2026-06-12

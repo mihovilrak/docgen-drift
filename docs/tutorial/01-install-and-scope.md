@@ -1,111 +1,99 @@
 # 1. Install, scope, and inspect
 
-Start with the deterministic part of docgen. This page makes no model request.
+This tutorial follows one function through selection, optional generation, and
+a deliberate documentation drift. Commands use pnpm and require Node.js 20 or
+newer. Start in a Git repository containing a TypeScript project, or create a
+small scratch repository for the example.
 
-## Prerequisites
-
-- Node.js 20 or newer
-- a TypeScript or JavaScript project described by `tsconfig.json`
-- pnpm for the commands below; npm and Yarn users can invoke the installed
-  `docgen` binary through their equivalent package runner
-
-Install the package locally:
+## Install and create the example
 
 ```bash
 pnpm add -D docgen-drift
-```
-
-## Create the config
-
-```bash
 pnpm exec docgen init
 ```
 
-A single-project repository can accept the defaults:
+For a single project, accept `tsconfig.json`, shared lockfiles, and project
+concurrency `1`. Your TypeScript configuration must include `src/**/*.ts`.
 
-```text
-TypeScript projects, comma-separated [tsconfig.json]:
-Lockfile mode, shared or perProject [shared]:
-Project concurrency [1]:
-Created /workspace/project/.docgenrc.json for 1 project.
+Create `src/public-api.ts`:
+
+```ts
+// Empty input has no maximum; keep zero as the display fallback.
+export const highestScore = (scores: readonly number[]): number => {
+  if (scores.length === 0) return 0;
+  return Math.max(...scores);
+};
 ```
 
-For a monorepo, enter comma-separated project globs such as
-`packages/*/tsconfig.json, apps/*/tsconfig.json`. Start with concurrency `1`;
-each concurrent project keeps a compiler program resident in memory. The
-[monorepo guide](../monorepos.md) explains project selection and lockfile
-placement.
-
-## Define the public surface
-
-The default policy considers syntactically exported declarations with bodies of
-at least three lines. That is appropriate for an application. A library usually
-benefits from entry-point-aware filtering:
+Use this `.docgenrc.json` to keep the tutorial limited to that file:
 
 ```json
 {
   "$schema": "https://unpkg.com/docgen-drift@1/schema/docgen.schema.json",
+  "include": ["src/public-api.ts"],
   "symbols": {
     "exportedOnly": true,
-    "publicSurface": "entryPoints",
-    "entryPoints": ["src/index.ts"],
-    "minBodyLines": 3
+    "publicSurface": "syntacticExports",
+    "minBodyLines": 0
   }
 }
 ```
 
-This follows exports and re-exports from the listed package entry points instead
-of treating every internal module export as public API. Keep
-`symbols.publicSurface: "syntacticExports"` when internal module exports are
-intentionally part of the documentation policy.
+Commit the dependency files, config, and example before applying generated
+changes. Dry runs can inspect an uncommitted tree.
 
-## Inspect extraction
+For a library, `symbols.publicSurface: "entryPoints"` with
+`symbols.entryPoints: ["src/index.ts"]` restricts eligibility to exports reachable
+from those entry points. For multiple projects, see the
+[monorepo guide](../monorepos.md).
 
-Count the extracted symbols:
-
-```bash
-pnpm exec docgen extract
-```
-
-```text
-Extracted 140 symbols.
-```
-
-Use JSON when auditing exactly what the policy found:
+## Inspect the effective policy
 
 ```bash
-pnpm exec docgen extract --json > docgen-symbols.json
+pnpm exec docgen check --json
 ```
 
-Check a representative function, arrow function, class, interface, method, and
-accessor. If the selection is noisy, adjust `include`, `exclude`, `symbols`, or
-entry points before baselining. Do not use the baseline to hide a bad scope.
+In this isolated example, the summary contains one missing symbol and no drift.
+Missing documentation does not fail the check by default. Inspect `results` for
+the ID `src/public-api.ts#highestScore`.
 
-Exported non-function variables are excluded by default. To inspect them without
-changing policy:
+`docgen extract --json` is a lower-level diagnostic: it shows raw declarations,
+including test symbols and symbols excluded by visibility, public-surface, or
+minimum-body policy. Use `check --json` to evaluate those policy settings.
+
+## Inspect available context
 
 ```bash
-pnpm exec docgen extract --include-variables --json > docgen-symbols.json
+pnpm exec docgen explain 'src/public-api.ts#highestScore'
 ```
 
-## Inspect generation context without generating
+The output includes the source note and implementation. It is offline context
+inspection, not an exact generation prompt: generation can add a shared module
+outline and newly generated callee summaries, and adjust the budget for the
+provider. No credential is needed for this command.
 
-Choose a symbol id from extraction and run:
+## JavaScript projects
 
-```bash
-pnpm exec docgen explain 'src/billing/settle.ts#settleInvoice'
+Use a `tsconfig.json` with `allowJs: true` and your JavaScript paths in
+`include`. For example:
+
+```json
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true
+  },
+  "include": ["src/**/*.js"]
+}
 ```
 
-The output can contain labelled source notes, test names, the symbol body, call
-sites, referenced type fields, and a Git subject. It is assembled within the
-configured token budget and does not construct a provider.
+Set docgen's `include` and `tests` globs too; its defaults select TypeScript.
+For example, `include: ["src/**/*.{js,jsx}"]` and
+`tests: ["**/*.{test,spec}.{js,jsx}"]`. Keep `docs.emitTypes: false` to omit
+JSDoc type annotations. Enable it deliberately when you want annotations in
+JavaScript; `checkJs` controls TypeScript's checking and does not automatically
+change docgen's output policy.
 
-If the context is insufficient for a human to describe the behavior, improve
-tests, source notes, project boundaries, or context configuration before using a
-larger model. Generation cannot recover facts absent from the assembled input.
-
-## Decide whether to generate
-
-You can skip generation and continue directly to
-[baseline and CI](03-baseline-and-ci.md). To backfill a small public area first,
-continue to [generate a batch](02-generate-a-batch.md).
+Continue to [generate a batch](02-generate-a-batch.md), or write the JSDoc
+yourself and proceed to [baseline and CI](03-baseline-and-ci.md).

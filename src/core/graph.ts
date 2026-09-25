@@ -139,12 +139,17 @@ export const reverseTopologicalLevels = (
 
   const levelByComponent = new Map<number, number>();
   const levels: StronglyConnectedComponent[][] = [];
+  const dependenciesByComponent = new Map<number, Set<number>>();
+  for (const edge of graph.forward) {
+    const from = componentBySymbol.get(edge.from);
+    const to = componentBySymbol.get(edge.to);
+    if (from === undefined || to === undefined || from === to) continue;
+    const dependencies = dependenciesByComponent.get(from) ?? new Set<number>();
+    dependencies.add(to);
+    dependenciesByComponent.set(from, dependencies);
+  }
   components.forEach((component, index) => {
-    const dependencies = graph.forward
-      .filter((edge) => component.members.includes(edge.from))
-      .map((edge) => componentBySymbol.get(edge.to))
-      .filter(isDefined)
-      .filter((dependency) => dependency !== index);
+    const dependencies = [...(dependenciesByComponent.get(index) ?? [])];
     const level =
       dependencies.length === 0
         ? 0

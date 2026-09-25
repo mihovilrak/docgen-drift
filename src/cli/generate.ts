@@ -27,6 +27,7 @@ import { refreshLocks, runCheck } from "./run.js";
 import { type ProjectIndex } from "./workspace.js";
 import {
   generateProject,
+  generationRuntime,
   type GenerationProviders,
   type ProjectGenerationProgress,
   type ProjectGenerationResult,
@@ -151,7 +152,10 @@ export const runGeneration = async (
     );
   }
 
-  const providers = resolveProviders(config, judgeEnabled, injectedProvider);
+  const providers = {
+    ...resolveProviders(config, judgeEnabled, injectedProvider),
+    runtime: generationRuntime(config.generate.concurrency),
+  };
   const projectResults = await loadWorkspace(
     {
       root,
@@ -159,14 +163,26 @@ export const runGeneration = async (
       projectConcurrency: config.workspace.projectConcurrency,
       include: [...config.include, ...config.tests],
       exclude: config.exclude,
+      ...(config.projectSelection === undefined
+        ? {}
+        : { selection: config.projectSelection }),
+      targetProjects: new Set(
+        check.projects
+          .filter((project) =>
+            project.symbolIds.some((id) => targetIds.has(id)),
+          )
+          .map((project) => resolve(root, project.path)),
+      ),
     },
     async (
       project,
     ): Promise<{
       readonly workspacePath: string;
+      readonly index: ProjectIndex;
       readonly result: ProjectGenerationResult;
     }> => {
       const projectIndex: ProjectIndex = {
+        projectPath: relative(root, project.tsconfigPath).replaceAll("\\", "/"),
         root: project.root,
         workspacePath: workspacePath(root, project.root),
         symbols: [],
@@ -176,6 +192,7 @@ export const runGeneration = async (
         [...targetIds].map((id) => localId(projectIndex, id)).filter(isDefined),
       );
       return {
+        index: projectIndex,
         workspacePath: projectIndex.workspacePath,
         result: await generateProject(
           project,
@@ -230,7 +247,16 @@ export const runGeneration = async (
     ),
   );
   if (options.dryRun !== true && generated.length > 0) {
-    await refreshLocks(root, config, new Set(generated));
+    await refreshLocks(
+      root,
+      config,
+      new Set(generated),
+      projectResults.map(({ index, result }) => ({
+        ...index,
+        symbols: result.edits.updatedSymbols,
+        eligible: result.edits.updatedSymbols,
+      })),
+    );
   }
   return {
     requested: targetIds.size,

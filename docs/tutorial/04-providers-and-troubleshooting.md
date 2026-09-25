@@ -119,9 +119,10 @@ when testing a generation/judge pair.
 ## Capture a diagnostic run
 
 ```bash
+preview_dir=$(mktemp -d)
 pnpm exec docgen fix -m -p src/public-api.ts -n --verbose \
-  --evaluation docgen-evaluation.json \
-  > docgen-preview.diff 2> docgen-preview.log
+  --evaluation "$preview_dir/evaluation.json" \
+  > "$preview_dir/preview.txt" 2> "$preview_dir/progress.log"
 ```
 
 Record:

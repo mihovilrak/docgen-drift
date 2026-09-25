@@ -69,6 +69,10 @@ export interface Symbol {
   readonly filePath: string;
   readonly signature: string;
   readonly body: string;
+  /** Adapter-owned syntax serialization; excludes comments and formatting. */
+  readonly canonicalCode?: string;
+  readonly static?: boolean;
+  readonly editBlockedReason?: string;
   readonly parameters: readonly Parameter[];
   readonly returnsValue?: boolean;
   readonly asynchronous: boolean;

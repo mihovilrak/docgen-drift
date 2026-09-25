@@ -4,7 +4,12 @@ import type {
   GeneratedDoc,
   Symbol as DocumentationSymbol,
 } from "../core/symbol.js";
-import { mapConcurrent, ProviderCaller, ProviderFailure } from "./call.js";
+import {
+  mapConcurrent,
+  ProviderCaller,
+  ProviderFailure,
+  type ProviderFailureState,
+} from "./call.js";
 import {
   callOptions,
   optionalRequestFields,
@@ -58,6 +63,7 @@ export interface JudgeBatchResult {
 }
 
 export interface JudgeClientOptions {
+  readonly failureState?: ProviderFailureState;
   readonly concurrency: number;
   readonly retryCount?: number;
   readonly baseDelayMs?: number;

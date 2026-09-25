@@ -13,7 +13,6 @@ import type {
 import type { TypeScriptProjectHandle } from "../loadProject.js";
 import { findDocOwner, parseExistingDoc } from "./jsdoc.js";
 import {
-  callableReturnsValue,
   getCallableBody,
   getParameters,
   hasAsyncModifier,
@@ -23,6 +22,7 @@ import {
 } from "./signature.js";
 import { extractSourceNote } from "./sourceNotes.js";
 import { makeSymbol } from "./symbolFactory.js";
+import { canonicalNode } from "../canonicalCode.js";
 import {
   getContainerName,
   getVisibility,
@@ -66,10 +66,8 @@ export const callableSymbol = (
     signature: renderCallableSignature(declaration, name, kind),
     body: getCallableBody(declaration),
     parameters: getParameters(declaration),
-    returnsValue:
-      kind === "setter"
-        ? false
-        : callableReturnsValue(declaration, asynchronous),
+    ...(kind === "setter" ? { returnsValue: false } : {}),
+    static: "isStatic" in declaration && declaration.isStatic(),
     asynchronous,
     exported: isDeclarationExported(declaration, visibility),
     visibility,
@@ -105,8 +103,11 @@ export const variableFunctionSymbol = (
     .map((parameter) => parameter.getText())
     .join(", ");
   const returnType = initializer.getReturnTypeNode()?.getText();
-  const signature = `${declarationKind} ${name}${typeParameters}(${parameters})${returnType === undefined ? "" : `: ${returnType}`}`;
   const asynchronous = initializer.isAsync();
+  const generator =
+    Node.isFunctionExpression(initializer) && initializer.isGenerator();
+  const annotation = declaration.getTypeNode()?.getText();
+  const signature = `${declarationKind} ${name}${annotation === undefined ? "" : `: ${annotation} =`}${asynchronous ? " async" : ""}${generator ? " function*" : ""}${typeParameters}(${parameters})${returnType === undefined ? "" : `: ${returnType}`}`;
 
   return makeSymbol(handle, statement, {
     name,
@@ -114,7 +115,8 @@ export const variableFunctionSymbol = (
     signature,
     body: getCallableBody(initializer),
     parameters: getParameters(initializer),
-    returnsValue: callableReturnsValue(initializer, asynchronous),
+    canonicalCode: `${declarationKind}:${canonicalNode(declaration)}`,
+    ...variableEditPolicy(statement),
     asynchronous,
     exported: statement.isExported(),
     visibility: statement.isExported() ? "public" : "package",
@@ -142,6 +144,8 @@ export const variableSymbol = (
     kind: "variable",
     signature: `${statement.getDeclarationKind()} ${name}${typeNode === undefined ? "" : `: ${typeNode.getText()}`}`,
     body: initializer?.getText() ?? "",
+    canonicalCode: `${statement.getDeclarationKind()}:${canonicalNode(declaration)}`,
+    ...variableEditPolicy(statement),
     parameters: [],
     asynchronous: false,
     exported: statement.isExported(),
@@ -150,3 +154,13 @@ export const variableSymbol = (
     sourceNote: extractSourceNote(statement.getSourceFile(), statement),
   });
 };
+
+const variableEditPolicy = (
+  statement: VariableStatement,
+): { readonly editBlockedReason?: string } =>
+  statement.getDeclarations().length > 1
+    ? {
+        editBlockedReason:
+          "Split this multi-declaration statement before generating documentation",
+      }
+    : {};

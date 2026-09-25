@@ -41,10 +41,11 @@ accounts separately for ordinary input, cache writes, cache reads, and output.
       "kind": "openai",
       "apiKeyEnv": "OPENAI_API_KEY",
       "baseUrl": "https://api.openai.com/v1",
-      "maxOutputTokens": 1200
+      "maxOutputTokens": 4000
     },
     "model": "gpt-5-mini"
-  }
+  },
+  "judge": { "model": "gpt-5-mini" }
 }
 ```
 
@@ -65,16 +66,16 @@ for both the generation and judge providers.
       "maxOutputTokens": 1200
     },
     "model": "gemini-3.6-flash"
-  }
+  },
+  "judge": { "model": "gemini-3.6-flash" }
 }
 ```
 
 The provider uses `generateContent` with `responseJsonSchema`.
 
-Tested on the free tier, which allows about 5 requests per minute and 20
-requests per day per model for current Flash models. Each symbol costs one
-generation and one judge request, so a free-tier day covers roughly 20 symbols
-per model pair.
+Limits vary by model and account. Each accepted candidate normally needs one
+generation request and one judge request, plus any retries. When both stages
+share a model and a 20-request budget, at most 10 such symbols fit before retries.
 Set `requestsPerMinute` and `requestsPerDay` on the provider to stay inside
 the tier; completed symbols are not regenerated on a rerun.
 
@@ -95,7 +96,8 @@ provider shares one budget.
       "requestsPerDay": 20
     },
     "model": "gemini-3-flash"
-  }
+  },
+  "judge": { "model": "gemini-3-flash" }
 }
 ```
 
@@ -109,7 +111,9 @@ verbatim.
 
 ## Separate generation and judge providers
 
-The judge inherits `generate.provider` when `judge.provider` is omitted. Set it
+The judge inherits `generate.provider` when `judge.provider` is omitted, but
+`judge.model` has its own default. Always set a compatible judge model when
+changing provider families. Set the judge provider
 explicitly to keep generation and judging on different services or models:
 
 ```json

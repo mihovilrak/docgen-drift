@@ -1,114 +1,85 @@
 # 3. Baseline and enforce drift checks
 
-The baseline accepts the repository's current documentation state. It does not
-generate documentation or modify source files.
+Continue after reviewing the JSDoc on `highestScore`. If you skipped generation,
+add the sample JSDoc from page 2 manually.
 
-## Create and review the baseline
+## Accept the reviewed state
 
 ```bash
 pnpm exec docgen baseline
+pnpm exec docgen check
 ```
 
-Expected output:
+With only the tutorial file selected and documented:
 
 ```text
-Baselined 140 symbols in 1 lockfile.
+Baselined 1 symbols in 1 lockfile.
+0 drifted, 0 missing, 0 orphaned, 1 unchanged.
 ```
 
-With a shared lockfile, review `.docgen/lock.json`. With
-`workspace.lockfile: "perProject"`, review the lockfile beside every selected
-project. Entries are keyed by stable symbol id, not line number.
+Baseline records the state of existing documentation; it does not evaluate its
+accuracy. Review and commit the config, source, and `.docgen/lock.json` together.
+See [upgrading lockfiles](../upgrading.md) if an earlier release created yours.
 
-Immediately verify the state:
+## Produce one drift finding
+
+Change only the empty-input branch:
+
+```ts
+if (scores.length === 0) return -1;
+```
+
+Leave the comment saying “zero,” then run:
 
 ```bash
 pnpm exec docgen check
 ```
 
-```text
-0 drifted, 87 missing, 0 orphaned, 53 unchanged.
-```
+The report identifies `src/public-api.ts#highestScore` as drifted, summarizes
+`1 drifted, 0 missing, 0 orphaned, 0 unchanged.`, and exits with code `1`.
+The reported line depends on the comment generated or written on page 2.
 
-Missing docs are counted but do not fail by default. This allows incremental
-adoption without requiring a repository-wide backfill. Enable
-`check.reportMissing` only after the selected scope is intentionally complete.
+Update the comment to say “minus one.” Run `check` again; it no longer reports
+unchanged documentation against changed code. Review both changes, then run
+`baseline` to record the new accepted state. Do not baseline merely to silence
+a finding.
 
-Commit the reviewed config, lockfile, and any accepted documentation together.
+For an optional model-assisted fix, use `check --fix --dry-run` and then
+`check --fix`. As on page 2, applying makes another generation run.
 
-## See one drift finding
+## Add CI
 
-Change the body or a parameter name of a documented symbol without changing its
-JSDoc, then run:
+A full check is the simplest CI command:
 
 ```bash
 pnpm exec docgen check
 ```
 
-Example:
-
-```text
-src/billing/settle.ts:18 drifted src/billing/settle.ts#settleInvoice
-1 drifted, 87 missing, 0 orphaned, 52 unchanged.
-```
-
-The process exits with code `1`. Reformatting and moving a symbol within a file
-are normalized away; semantic body changes and parameter renames are not.
-
-To fix the finding manually, update its JSDoc and rerun `baseline` only when you
-intend to accept the complete current state. For a generated proposal:
-
-```bash
-pnpm exec docgen check --fix --dry-run > docgen-drift-preview.diff
-pnpm exec docgen check --fix
-```
-
-`check --fix` targets drifted symbols only. Missing-doc backfill remains the
-separate `fix --missing --path ...` workflow.
-
-## Add a pull-request check
-
-The normal CI command is:
+To limit findings to a pull request's changes, use `--since` with its fetched
+base reference. For a PR targeting main, that might be:
 
 ```bash
 pnpm exec docgen check --since origin/main
 ```
 
-`--since` filters the report to symbols touched in the Git diff. Fetch enough
-history for the reference to resolve. Omit it for a full-repository check.
+Substitute the actual target branch. `--since` filters the report; it does not
+promise that only changed files will be loaded. No model credentials belong in
+this job.
 
-Exit codes are stable:
-
-| Code | Meaning |
+| Exit code | Meaning |
 | ---: | --- |
 | 0 | clean |
-| 1 | documentation drift or another configured reportable issue |
-| 2 | invalid configuration or command usage |
+| 1 | drift or another configured reportable issue |
+| 2 | configuration or usage error |
 | 3 | internal failure |
 
-Do not provide LLM credentials to this job. `check` never constructs a provider
-and never writes source files.
+See [CI recipes](../ci.md) for a complete workflow with SARIF upload.
 
-For GitHub code scanning, use SARIF:
+## Maintain the baseline
 
-```bash
-pnpm exec docgen check --since origin/main --sarif > docgen.sarif
-```
-
-The complete workflow, including preserving the failing exit status after
-upload, is in [CI recipes](../ci.md).
-
-## Handle lockfile changes
-
-When source and JSDoc intentionally change together, docgen still needs the new
-accepted hashes. Run `baseline` after reviewing those changes and include the
-lockfile update in the same pull request.
-
-For a shared-lockfile merge conflict:
-
-1. Resolve source and JSDoc conflicts first.
-2. Merge entries by symbol id; line numbers are metadata.
-3. Inspect any entry changed on both branches.
-4. Baseline only the final state you intend to accept.
-5. Run a full `docgen check` before committing the resolution.
+When code and documentation change together, review them before updating the
+baseline. For a shared-lockfile conflict, resolve source and documentation first,
+then review and baseline the final state. Per-project lockfiles use the same
+acceptance rule; see [monorepos](../monorepos.md).
 
 Next: [provider operation and troubleshooting](04-providers-and-troubleshooting.md).

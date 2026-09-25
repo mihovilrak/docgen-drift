@@ -222,7 +222,10 @@ export type ProviderConfig = z.infer<typeof providerSchema>;
 export const judgeProviderConfig = (config: DocgenConfig): ProviderConfig =>
   config.judge.provider ?? config.generate.provider;
 
-export type DocgenConfig = z.infer<typeof configSchema>;
+export type DocgenConfig = z.infer<typeof configSchema> & {
+  /** CLI-only selection; never extends configured project discovery. */
+  readonly projectSelection?: readonly string[];
+};
 
 interface SourceNoteOwner {
   readonly existingDoc: unknown;

@@ -1,153 +1,102 @@
 # 2. Generate a reviewable first batch
 
-Generation is a fix path, not a prerequisite for drift checking. Start with one
-file or a narrow public directory.
+Continue with `src/public-api.ts#highestScore` from page 1. Generation is optional;
+it sends selected source context to the configured provider.
 
-## Select a provider
+## Configure generation and judging
 
-Direct APIs are the predictable choice for CI or shared runners. Subscription
-CLIs are convenient for a developer's local, attended run. Local models keep
-source on the configured machine but must support JSON Schema constrained
-output and should be evaluated for quality.
-
-| Choice | Best fit | Cost reporting | Main caveat |
-| --- | --- | --- | --- |
-| Anthropic, OpenAI, or Google API | repeatable and unattended runs | estimated and actual USD for known models | requires an API credential |
-| Claude, Codex, Gemini, OpenCode, or Pi CLI | local use with an existing login | subscription allowance | model access and limits depend on the installed CLI and account |
-| OpenAI-compatible local server | controlled local deployment | unavailable | schema support, model quality, and context limits vary |
-
-See the [provider guide](../providers.md) for complete configurations.
-
-### Example: Claude subscription
-
-```json
-{
-  "generate": {
-    "provider": { "kind": "cli", "tool": "claude" },
-    "model": "sonnet",
-    "concurrency": 1,
-    "maxSymbolsPerRun": 25
-  },
-  "judge": {
-    "enabled": true,
-    "model": "sonnet",
-    "strictLeaves": true
-  }
-}
-```
-
-Sign in with the upstream CLI, then inspect docgen's effective configuration:
-
-```bash
-claude
-pnpm exec docgen providers
-pnpm exec docgen auth
-```
-
-`auth` checks only whether the executable exists. It deliberately does not read
-CLI credentials or spend allowance. A successful result therefore does not
-guarantee that the configured model is available; the one-symbol dry run below
-is the final compatibility check.
-
-### Example: direct Anthropic API
+Merge these fields into the tutorial config for a direct Anthropic connection:
 
 ```json
 {
   "generate": {
     "provider": { "kind": "anthropic" },
     "model": "claude-sonnet-5",
-    "maxSymbolsPerRun": 25
+    "concurrency": 1,
+    "maxSymbolsPerRun": 5
+  },
+  "judge": {
+    "enabled": true,
+    "model": "claude-haiku-4-5-20251001",
+    "strictLeaves": true
   }
 }
 ```
 
 ```bash
 export ANTHROPIC_API_KEY="..."
+pnpm exec docgen providers
 pnpm exec docgen auth
 ```
 
-The judge inherits the generation provider when `judge.provider` is omitted.
-Configure it explicitly to use another service. Per-run `--provider` and
-`--model` overrides affect generation only; the judge remains on its resolved
-provider.
+Keep credentials out of configuration and version control. `auth` checks
+credential presence, not validity or model access. Use models available to your
+account. The [provider guide](../providers.md) covers other APIs, subscription
+CLIs, and local servers, including explicit judge configuration.
 
-## Inspect one symbol's context
+Commit the configuration before the applying step below.
 
-```bash
-pnpm exec docgen explain 'src/core/diff.ts#unifiedDiff'
-```
+## Preview
 
-This is the prompt evidence, not the generated result. Confirm that it contains
-the behavior a useful JSDoc should capture.
-
-## Capture a one-file dry run
+These Bash commands keep diagnostic artifacts outside the repository:
 
 ```bash
-pnpm exec docgen fix --missing --path src/core/diff.ts --dry-run --verbose \
-  --evaluation docgen-evaluation.json \
-  > docgen-preview.diff 2> docgen-preview.log
+preview_dir=$(mktemp -d)
+pnpm exec docgen fix -m -p src/public-api.ts -n --verbose \
+  --evaluation "$preview_dir/evaluation.json" \
+  > "$preview_dir/preview.txt" 2> "$preview_dir/progress.log"
 ```
 
-The three files have separate purposes:
+Open the files in `$preview_dir`. The preview contains the proposed diff plus
+outcomes and counts. The log contains the estimate and progress. The evaluation
+JSON records symbol IDs, proposed semantic documentation, judge decisions,
+rendered comments, and aggregate stage metrics. It does not record complete
+model prompts.
 
-- `docgen-preview.diff` contains rejection/failure details, the proposed unified
-  diff, and the final count.
-- `docgen-preview.log` contains the estimate and generation/judge progress.
-- `docgen-evaluation.json` contains source identifiers, semantic documentation,
-  judge decisions, rendered comments, edit status, and stage timings.
+The estimate assumes typical output lengths and excludes retries; it is not a
+spending cap. A preview makes real model calls even though it does not write
+source files.
 
-The evaluation file is written atomically. In a dry run, an accepted comment
-has `editStatus: "proposed"`; a real write uses `"written"`. Rejected output is
-`"not-selected"`, while a validated candidate that could not be edited is
-`"edit-failed"`.
+For this example, a useful proposal might be:
 
-An accepted run resembles:
-
-```text
-Estimated LLM use for 1 symbol: 5100 input tokens, 380 output tokens, drawn from a subscription allowance, no monetary cost available, including the judge; retries not included.
-[generation 1/1] src/core/diff.ts#unifiedDiff via cli:claude/sonnet: OK after 1 attempt
-[judge 1] src/core/diff.ts#unifiedDiff via cli:claude/sonnet: ACCEPT after 1 attempt — Adds behavioral information beyond the signature.
+```ts
+// Empty input has no maximum; keep zero as the display fallback.
+/** Return the highest score, or zero when no scores are available. */
+export const highestScore = (scores: readonly number[]): number => {
+  if (scores.length === 0) return 0;
+  return Math.max(...scores);
+};
 ```
 
-The diff file ends with a count similar to:
+Wording and judge decisions vary. Confirm the comment describes the empty-input
+behavior; reject claims such as ignoring invalid numbers that the code does not
+implement. Ordinary source notes are preserved by default.
+
+An accepted run ends with a line similar to:
 
 ```text
 1 generated, 0 skipped, 0 rejected, 0 failed in 1 file; ...
 ```
 
-For CLI subscriptions, docgen can estimate prompt size but the upstream CLI may
-not expose actual token counts or a monetary cost. Treat the account's own usage
-page as authoritative.
+`SKIP` and judge rejection are valid outcomes. If neither produces documentation,
+you can write the example comment manually and continue.
 
-## Review the proposal
+## Generate and apply
 
-Reject documentation that:
-
-- restates the symbol name, parameters, or return type;
-- claims behavior not supported by the body, tests, call sites, or source notes;
-- exposes implementation details with no caller value;
-- turns TODOs or temporary mechanics into API promises;
-- is too long for the behavior it describes.
-
-`SKIP` is a valid result. A missing comment is better than a fluent comment that
-adds no information.
-
-## Apply the same bounded batch
-
-Ensure the working tree is clean, then remove `--dry-run`:
+Check that the working tree is clean, then run:
 
 ```bash
-pnpm exec docgen fix --missing --path src/core/diff.ts --verbose
+git status --short
+pnpm exec docgen fix -m -p src/public-api.ts --verbose
 ```
 
-docgen reparses edited files and reverts an edit that introduces a syntax error.
-It preserves ordinary comments by default. If
-`docs.leadingComments.onGenerate` is `replace`, only structurally eligible
-attached comments can be replaced, and only when the judge accepts the new
-JSDoc in the same validated edit.
+This generates again; it does not apply the saved preview. It makes another
+set of model calls and may produce different wording or decisions. Review the
+actual source diff and run your project's checks before accepting it.
 
-Review the real source diff and run the project's formatter, typecheck, and
-tests. Repeat with another narrow path only after accepting the first batch's
-quality.
+Edits must parse successfully. Ordinary comments are replaced only when
+`docs.leadingComments.onGenerate: "replace"` is explicitly configured and the
+replacement passes the required judge and structural checks. See the
+[configuration reference](../config.md) for that opt-in behavior.
 
 Next: [baseline and enforce drift checks](03-baseline-and-ci.md).

@@ -71,10 +71,6 @@ export const GENERATION: readonly OptionSpec[] = [
   QUIET,
 ];
 
-/**
- * Reject configurations that enable both verbose and quiet logging modes.
- * @param options Logging flags to validate for mutual exclusivity.
- */
 export const assertCompatibleLoggingOptions = (options: {
   readonly verbose?: boolean;
   readonly quiet?: boolean;

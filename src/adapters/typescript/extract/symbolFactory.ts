@@ -4,6 +4,7 @@ import type { Node } from "ts-morph";
 
 import type { Symbol as DocumentationSymbol } from "../../../core/symbol.js";
 import { makeSymbolId } from "../../../core/id.js";
+import { canonicalNode } from "../canonicalCode.js";
 import type { TypeScriptProjectHandle } from "../loadProject.js";
 import { sourceRange, toPosixPath } from "./range.js";
 
@@ -22,10 +23,16 @@ export const makeSymbol = (
     relative(handle.root, declaration.getSourceFile().getFilePath()),
   );
   const discriminator =
-    data.kind === "getter" || data.kind === "setter" ? data.kind : undefined;
+    [
+      data.kind === "getter" || data.kind === "setter" ? data.kind : undefined,
+      data.static === true ? "static" : undefined,
+    ]
+      .filter(Boolean)
+      .join(":") || undefined;
 
   return {
     ...data,
+    canonicalCode: data.canonicalCode ?? canonicalNode(declaration),
     id: makeSymbolId(filePath, data.name, data.containerName, discriminator),
     filePath,
     declaration: sourceRange(

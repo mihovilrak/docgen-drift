@@ -14,9 +14,6 @@ interface LineRange {
   readonly end: number;
 }
 
-/**
- * Preserve a distinct error identity for failures reported by the since command.
- */
 export class SinceError extends Error {
   constructor(message: string) {
     super(message);

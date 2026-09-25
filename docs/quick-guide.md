@@ -70,12 +70,18 @@ are covered in the [provider guide](providers.md).
 
 ## Preview a small generation
 
+For the Bash examples, create an artifact directory outside the repository:
+
+```bash
+preview_dir=$(mktemp -d)
+```
+
 Pick one public file or narrow directory. Missing-doc generation requires
 `--path` and prints an estimate before the first model request.
 
 ```bash
 pnpm exec docgen fix --missing --path src/public-api.ts --dry-run \
-  > docgen-preview.diff
+  > "$preview_dir/docgen-preview.txt"
 ```
 
 Progress and the estimate go to stderr; the proposed unified diff goes to the
@@ -83,7 +89,7 @@ file. Review both. Use `--verbose` when diagnosing a provider or judge result:
 
 ```bash
 pnpm exec docgen fix -m -p src/public-api.ts -n --verbose \
-  > docgen-preview.diff
+  > "$preview_dir/docgen-preview.txt"
 ```
 
 A successful final line resembles:
@@ -97,7 +103,9 @@ run never writes source files.
 
 ## Apply and review
 
-Run the same command without `--dry-run`:
+Commit dependency and configuration changes first. Running without `--dry-run`
+generates again; it does not apply the saved preview. Expect another set of
+model calls and potentially different output:
 
 ```bash
 pnpm exec docgen fix -m -p src/public-api.ts
@@ -145,12 +153,12 @@ Preview and then apply only the symbols whose implementation changed without a
 matching JSDoc change:
 
 ```bash
-pnpm exec docgen check --fix --dry-run > docgen-drift-preview.diff
+pnpm exec docgen check --fix --dry-run > "$preview_dir/docgen-drift-preview.txt"
 pnpm exec docgen check --fix
 ```
 
-Before generating, inspect a symbol's exact deterministic context without an
-LLM call:
+Before generating, inspect a symbol's available context without an LLM call.
+This offline view omits shared outlines and summaries produced during generation:
 
 ```bash
 pnpm exec docgen explain 'src/public-api.ts#lookupAccount'

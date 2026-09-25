@@ -7,10 +7,29 @@ import { describe, expect, it } from "vitest";
 
 import { configSchema, type DocgenConfig } from "../src/config/schema.js";
 import { runBaseline, runCheck } from "../src/cli/run.js";
+import { scopeProjects } from "../src/cli/projectScope.js";
 
 const fixtureRoot = resolve("test/fixtures/monorepo");
 
 describe("baseline and check", () => {
+  it("scopes shared-lock orphans by project while retaining real deletions", async () => {
+    const root = await copyFixture();
+    await removeOverlappingOwnership(root);
+    const all = config("shared", 1);
+    await runBaseline(root, all);
+    const scoped = scopeProjects(all, "packages/alpha");
+    expect((await runCheck(root, scoped)).results.map(statusPair)).toEqual([
+      ["packages/alpha/src/index.ts#alpha", "unchanged"],
+    ]);
+    await writeFile(
+      join(root, "packages/alpha/src/index.ts"),
+      "export {};\n",
+      "utf8",
+    );
+    expect((await runCheck(root, scoped)).results.map(statusPair)).toEqual([
+      ["packages/alpha/src/index.ts#alpha", "orphaned"],
+    ]);
+  });
   it(
     "classifies shared and per-project locks identically without changing source",
     { timeout: 60_000 },

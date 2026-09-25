@@ -15,6 +15,8 @@ export interface WorkspaceOptions {
   readonly projectConcurrency?: number;
   readonly include?: readonly string[];
   readonly exclude?: readonly string[];
+  readonly selection?: readonly string[];
+  readonly targetProjects?: ReadonlySet<string>;
 }
 
 export interface WorkspaceProject {
@@ -79,7 +81,19 @@ export const resolveWorkspace = async (
   }));
 
   rejectDuplicateOwnership(root, projects);
-  return { root, projects, projectConcurrency };
+  if (options.selection === undefined)
+    return { root, projects, projectConcurrency };
+  const selectedPaths = new Set(
+    (await glob(options.selection, { absolute: true, cwd: root })).map((path) =>
+      resolve(path),
+    ),
+  );
+  const selected = projects.filter((project) =>
+    selectedPaths.has(resolve(project.tsconfigPath)),
+  );
+  if (selected.length === 0)
+    throw new Error("--project did not match any configured projects");
+  return { root, projects: selected, projectConcurrency };
 };
 
 /**
@@ -92,7 +106,15 @@ export const loadWorkspace = async <T>(
   options: WorkspaceOptions,
   visit: (project: TypeScriptProjectHandle) => Promise<T> | T,
 ): Promise<readonly T[]> => {
-  const workspace = await resolveWorkspace(options);
+  const resolved = await resolveWorkspace(options);
+  const workspace = {
+    ...resolved,
+    projects: resolved.projects.filter(
+      (project) =>
+        options.targetProjects === undefined ||
+        options.targetProjects.has(resolve(project.tsconfigPath)),
+    ),
+  };
   const results = new Array<T>(workspace.projects.length);
   let cursor = 0;
 

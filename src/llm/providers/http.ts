@@ -92,6 +92,7 @@ export const postJson = async (
       : AbortSignal.any([request.signal, timeout]);
   const send = request.fetchImpl ?? fetch;
   let response: Response;
+  let text: string;
   try {
     response = await send(request.url, {
       method: "POST",
@@ -99,6 +100,7 @@ export const postJson = async (
       body: JSON.stringify(request.body),
       signal,
     });
+    text = await response.text();
   } catch (error) {
     if (request.signal?.aborted === true) throw error;
     throw new HttpProviderError(
@@ -107,7 +109,6 @@ export const postJson = async (
       true,
     );
   }
-  const text = await response.text();
   if (!response.ok) {
     throw new HttpProviderError(
       `${request.label} returned ${String(response.status)}: ${text.slice(0, 500)}`,

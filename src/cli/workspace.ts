@@ -14,6 +14,7 @@ import type {
 } from "../core/symbol.js";
 
 export interface ProjectIndex {
+  readonly projectPath?: string;
   readonly root: string;
   readonly workspacePath: string;
   readonly symbols: readonly DocumentationSymbol[];
@@ -44,6 +45,9 @@ export const indexWorkspace = async (
       projectConcurrency: config.workspace.projectConcurrency,
       include: includes,
       exclude: config.exclude,
+      ...(config.projectSelection === undefined
+        ? {}
+        : { selection: config.projectSelection }),
     },
     async (project) => {
       const symbols = extractSymbols(project, {
@@ -81,6 +85,7 @@ export const indexWorkspace = async (
             )
           : undefined;
       return {
+        projectPath: toPosix(relative(root, project.tsconfigPath)),
         root: project.root,
         workspacePath: toPosix(relative(root, project.root)),
         symbols,
@@ -108,6 +113,9 @@ export const currentSymbols = (
 ): readonly CurrentSymbol[] => {
   const recipe = hashRecipe(config);
   return project.eligible.map((symbol) => ({
+    ...(project.projectPath === undefined
+      ? {}
+      : { project: project.projectPath }),
     id: canonicalId(project, symbol.id, shared),
     symbol,
     hashes: hashSymbol(symbol, recipe),
@@ -139,7 +147,7 @@ export const canonicalId = (
  */
 export const hashRecipe = (config: DocgenConfig): HashRecipe => ({
   includeSourceNotes: config.docs.leadingComments.includeInContext,
-  contextRecipeVersion: "2",
+  contextRecipeVersion: "3",
   promptVersion: PROMPT_VERSION,
   configFingerprint: hashText(
     JSON.stringify({

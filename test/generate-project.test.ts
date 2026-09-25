@@ -4,7 +4,10 @@ import { describe, expect, it } from "vitest";
 
 import { extractSymbols } from "../src/adapters/typescript/extract/index.js";
 import { loadProject } from "../src/adapters/typescript/loadProject.js";
-import { generateProject } from "../src/cli/generateProject.js";
+import {
+  generateProject,
+  generationRuntime,
+} from "../src/cli/generateProject.js";
 import { configSchema } from "../src/config/schema.js";
 import type { GeneratedDoc } from "../src/core/symbol.js";
 import type { LlmProvider, ProviderRequest } from "../src/llm/client.js";
@@ -12,6 +15,54 @@ import type { LlmProvider, ProviderRequest } from "../src/llm/client.js";
 const fixtureRoot = resolve("test/fixtures/graph");
 
 describe("project generation", () => {
+  it("stops later generation levels and projects after a fatal judge failure", async () => {
+    const project = await loadProject({ tsconfigPath: fixtureRoot });
+    const symbols = extractSymbols(project);
+    const targets = new Set([
+      symbolId(symbols, "leaf"),
+      symbolId(symbols, "orchestrate"),
+    ]);
+    const generation = recordingProvider();
+    let judgeCalls = 0;
+    const providers = {
+      generation,
+      judge: {
+        id: "judge",
+        complete: () => {
+          judgeCalls++;
+          return Promise.reject(new Error("invalid judge credential"));
+        },
+        isRetryable: () => false,
+        errorInfo: () => ({ fatal: true }),
+      },
+      runtime: generationRuntime(1),
+    };
+    const config = configSchema.parse({
+      symbols: { minBodyLines: 0 },
+      context: { sources: { gitSubject: false } },
+      generate: { concurrency: 1 },
+    });
+    const first = await generateProject(
+      project,
+      targets,
+      config,
+      providers,
+      false,
+    );
+    expect(first.failed).toHaveLength(2);
+    expect(generation.requests).toHaveLength(1);
+    expect(judgeCalls).toBe(1);
+    const second = await generateProject(
+      project,
+      targets,
+      config,
+      providers,
+      false,
+    );
+    expect(second.failed).toHaveLength(2);
+    expect(generation.requests).toHaveLength(1);
+    expect(judgeCalls).toBe(1);
+  });
   it("generates by dependency level and feeds callee summaries to callers", async () => {
     const project = await loadProject({ tsconfigPath: fixtureRoot });
     const symbols = extractSymbols(project);

@@ -22,7 +22,8 @@ The calibration mix contains 75 useful candidates grounded in the reference docu
 | False-keep rate | 2.8% (2/72 kept) |
 | False-reject rate | 6.7% (5/75 useful) |
 
-The false-keep rate is below the Phase 5 threshold of 10%. The rate denominator is kept documentation because that is the material reviewers see. False-reject rate uses all human-useful candidates as its denominator.
+This recorded calibration set has a false-keep rate below 10%; it does not
+establish the quality of the current prompt or any currently configured model. The rate denominator is kept documentation because that is the material reviewers see. False-reject rate uses all human-useful candidates as its denominator.
 
 ## Context ablation
 
@@ -34,7 +35,8 @@ Each case has a manually recorded 1–5 quality score for a signature-only candi
 | Full context | 3.77 |
 | Improvement | +2.67 |
 
-The difference is visible across all three repositories and supports retaining the Phase 3 context assembler.
+These are recorded scores, not a rerun of the current context assembler.
+A current-model ablation requires new candidates and independent review.
 
 ## Comment promotion
 
@@ -48,4 +50,6 @@ The 16-case promotion set covers eight intent notes, three TODO/FIXME notes, two
 
 Deterministic extraction blocks directives before generation. The recorded decisions also reject TODOs and implementation narration; accepted intent cases retain the source note's behavioral constraint.
 
-Run `pnpm eval:phase5` to validate the corpus and recompute all tables. This offline regression run does not call Anthropic. A live model re-sampling run is intentionally separate from the test suite and requires `ANTHROPIC_API_KEY`.
+Run `pnpm eval:phase5` to validate the corpus and recompute all tables. This offline regression run does not call Anthropic. Current quality claims require a separate live evaluation with recorded model,
+prompt version, inputs, outputs, and independent labels. That evaluation is not
+performed by this script and should remain outside credential-free tests.

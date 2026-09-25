@@ -15,6 +15,7 @@ import {
   type ProviderResponse,
 } from "../client.js";
 import type { ProviderUsage } from "../usage.js";
+import type { ProviderErrorInfo } from "../call.js";
 
 export type CliTool = "claude" | "codex" | "gemini" | "opencode" | "pi";
 
@@ -166,20 +167,38 @@ export class CliTransportProvider implements LlmProvider {
           ...cliEnvironment(this.#options.tool),
         },
       );
-    const result = await withCliWorkspace(
+    const { result, cleanupError } = await withCliWorkspace(
       this.#options.tool,
       request.responseSchema,
-      execute,
+      async (workspace) => {
+        const result = await execute(workspace);
+        const cleanupError =
+          this.#options.tool === "opencode"
+            ? await cleanupOpenCodeSession(
+                command,
+                result,
+                run,
+                this.#options,
+                workspace.cwd,
+              )
+            : this.#options.tool === "gemini"
+              ? await cleanupGeminiSession(
+                  command,
+                  result,
+                  run,
+                  this.#options,
+                  workspace.cwd,
+                )
+              : undefined;
+        return { result, cleanupError };
+      },
     );
-    const cleanupError =
-      this.#options.tool === "opencode"
-        ? await cleanupOpenCodeSession(command, result, run, this.#options)
-        : this.#options.tool === "gemini"
-          ? await cleanupGeminiSession(command, result, run, this.#options)
-          : undefined;
     if (result.spawnError?.code === "ENOENT") {
       throw new CliTransportError(
         `${command} is not installed or not on PATH; install it and sign in, or configure a direct API provider`,
+        false,
+        undefined,
+        true,
       );
     }
     if (request.signal?.aborted === true) {
@@ -195,7 +214,12 @@ export class CliTransportProvider implements LlmProvider {
     }
     if (result.code !== 0) {
       const failure = classify(command, result, this.#options.tool);
-      throw new CliTransportError(failure.message, false, failure.diagnostic);
+      throw new CliTransportError(
+        failure.message,
+        false,
+        failure.diagnostic,
+        failure.fatal === true,
+      );
     }
     if (cleanupError !== undefined) throw cleanupError;
     return {
@@ -210,6 +234,10 @@ export class CliTransportProvider implements LlmProvider {
    */
   isRetryable(error: unknown): boolean {
     return error instanceof CliTransportError && error.retryable;
+  }
+
+  errorInfo(error: unknown): ProviderErrorInfo {
+    return error instanceof CliTransportError ? { fatal: error.fatal } : {};
   }
 
   /**
@@ -231,12 +259,19 @@ export class CliTransportProvider implements LlmProvider {
  * Represent a CLI transport failure and expose whether retrying may succeed.
  */
 export class CliTransportError extends Error {
+  readonly fatal: boolean;
   readonly retryable: boolean;
   readonly diagnostic?: string;
 
-  constructor(message: string, retryable = false, diagnostic?: string) {
+  constructor(
+    message: string,
+    retryable = false,
+    diagnostic?: string,
+    fatal = false,
+  ) {
     super(message);
     this.retryable = retryable;
+    this.fatal = fatal;
     if (diagnostic !== undefined) this.diagnostic = diagnostic;
   }
 }
@@ -328,6 +363,7 @@ const cleanupGeminiSession = async (
   result: CliRunResult,
   run: CliRunner,
   options: CliTransportOptions,
+  cwd: string,
 ): Promise<CliTransportError | undefined> => {
   const sessionId = geminiSessionId(result.stdout);
   if (sessionId === undefined) {
@@ -341,7 +377,7 @@ const cleanupGeminiSession = async (
     command,
     [...(options.args ?? []), "--delete-session", sessionId],
     "",
-    { timeoutMs: options.timeoutMs ?? 120_000 },
+    { timeoutMs: options.timeoutMs ?? 120_000, cwd },
   );
   return cleanup.code === 0
     ? undefined
@@ -360,6 +396,7 @@ const cleanupOpenCodeSession = async (
   result: CliRunResult,
   run: CliRunner,
   options: CliTransportOptions,
+  cwd: string,
 ): Promise<CliTransportError | undefined> => {
   const sessionId = openCodeSessionId(result.stdout);
   if (sessionId === undefined) {
@@ -375,6 +412,7 @@ const cleanupOpenCodeSession = async (
     "",
     {
       timeoutMs: options.timeoutMs ?? 120_000,
+      cwd,
       ...cliEnvironment("opencode"),
     },
   );
@@ -406,6 +444,7 @@ const cliPrompt = (request: ProviderRequest, tool: CliTool): string =>
   ].join("\n\n");
 
 interface CliFailure {
+  readonly fatal?: boolean;
   readonly message: string;
   readonly diagnostic: string;
 }
@@ -435,12 +474,14 @@ const classify = (
   if (/login|log in|not authenticated|unauthori[sz]ed|sign in/i.test(detail)) {
     return {
       message: `${command} requires an interactive login; run it once yourself to sign in, then retry`,
+      fatal: true,
       diagnostic: detail,
     };
   }
   if (/rate limit|usage limit|quota|exhaust|too many requests/i.test(detail)) {
     return {
       message: `${command} reports its subscription allowance is exhausted; wait for the limit to reset or use a direct API provider`,
+      fatal: true,
       diagnostic: detail,
     };
   }
@@ -449,6 +490,7 @@ const classify = (
   ) {
     return {
       message: `${command} does not support the configured model: ${short}`,
+      fatal: true,
       diagnostic: detail,
     };
   }
@@ -532,13 +574,12 @@ const parseEmbeddedObject = (value: string): unknown => {
   }
 };
 
-const runProcess: CliRunner = async (command, args, input, options) =>
+export const runProcess: CliRunner = async (command, args, input, options) =>
   new Promise((resolve) => {
     const child = spawn(command, [...args], {
       stdio: ["pipe", "pipe", "pipe"],
       ...(options.cwd === undefined ? {} : { cwd: options.cwd }),
       ...(options.env === undefined ? {} : { env: options.env }),
-      ...(options.signal === undefined ? {} : { signal: options.signal }),
     });
     let stdout = "";
     let stderr = "";
@@ -550,16 +591,28 @@ const runProcess: CliRunner = async (command, args, input, options) =>
       settled = true;
       clearTimeout(timeout);
       if (forceKill !== undefined) clearTimeout(forceKill);
+      options.signal?.removeEventListener("abort", terminate);
       resolve(result);
     };
-    const timeout = setTimeout(() => {
-      timedOut = true;
+    const terminate = (): void => {
+      if (settled || forceKill !== undefined) return;
       child.kill();
       forceKill = setTimeout(() => {
         child.kill("SIGKILL");
-        finish({ code: null, stdout, stderr, timedOut: true });
+        finish({
+          code: null,
+          stdout,
+          stderr,
+          ...(timedOut ? { timedOut: true } : {}),
+        });
       }, 1_000);
+    };
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      terminate();
     }, options.timeoutMs);
+    options.signal?.addEventListener("abort", terminate, { once: true });
+    if (options.signal?.aborted === true) terminate();
     child.stdout.setEncoding("utf8");
     child.stderr.setEncoding("utf8");
     child.stdout.on("data", (chunk: string) => (stdout += chunk));

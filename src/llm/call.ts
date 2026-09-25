@@ -22,10 +22,15 @@ export interface ProviderErrorInfo {
 }
 
 export interface ProviderCallOptions {
+  readonly failureState?: ProviderFailureState;
   readonly retryCount: number;
   readonly baseDelayMs: number;
   readonly sleep: (milliseconds: number) => Promise<void>;
   readonly signal?: AbortSignal;
+}
+
+export interface ProviderFailureState {
+  reason?: string;
 }
 
 export class ProviderFailure extends Error {
@@ -67,18 +72,32 @@ export class ProviderCaller {
     readonly attempts: number;
   }> {
     for (let attempt = 0; ; attempt++) {
-      if (this.#halted !== undefined) {
+      const halted = this.#options.failureState?.reason ?? this.#halted;
+      if (halted !== undefined) {
         throw new ProviderFailure(
-          `Not sent after an earlier provider error: ${this.#halted}`,
+          `Not sent after an earlier provider error: ${halted}`,
           attempt,
         );
       }
       try {
         this.#options.signal?.throwIfAborted();
-        const response = await this.#provider.complete(request);
+        const response = await this.#provider.complete({
+          ...request,
+          beforeSend: () => {
+            request.beforeSend?.();
+            this.#options.signal?.throwIfAborted();
+            const reason = this.#options.failureState?.reason ?? this.#halted;
+            if (reason !== undefined)
+              throw new ProviderFailure(
+                `Not sent after an earlier provider error: ${reason}`,
+                0,
+              );
+          },
+        });
         this.#deterministicStreak = 0;
         return { response, attempts: attempt + 1 };
       } catch (error) {
+        if (error instanceof ProviderFailure) throw error;
         const info = this.#provider.errorInfo?.(error) ?? {};
         const wait =
           info.retryAfterMs ?? this.#options.baseDelayMs * Math.pow(2, attempt);
@@ -121,6 +140,8 @@ export class ProviderCaller {
       this.#deterministicStreak >= DETERMINISTIC_STREAK
     ) {
       this.#halted ??= message;
+      if (this.#options.failureState !== undefined)
+        this.#options.failureState.reason ??= message;
     }
   }
 }
